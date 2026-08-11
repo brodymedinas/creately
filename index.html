@@ -494,7 +494,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -600,11 +600,23 @@ async function initUserData(user){
 }
 
 const googleProvider = new GoogleAuthProvider();
+let signInInFlight = false;
 document.getElementById('btnGoogleSignIn').addEventListener('click', async ()=>{
-  try{ await signInWithPopup(auth, googleProvider); }
-  catch(err){ console.error(err); alert('No se pudo iniciar sesión: ' + (err.code || err.message)); }
+  if(signInInFlight) return;
+  signInInFlight = true;
+  try{ await signInWithRedirect(auth, googleProvider); }
+  catch(err){ console.error(err); alert('No se pudo iniciar sesión: ' + (err.code || err.message)); signInInFlight = false; }
 });
 document.getElementById('btnSignOut').addEventListener('click', ()=>{ signOut(auth); });
+
+// Al volver de Google, procesamos el resultado del redirect (más confiable en celulares
+// y navegadores dentro de apps como Instagram/WhatsApp/TikTok que un popup, que ahi suele fallar).
+getRedirectResult(auth).catch(err=>{
+  if(err && err.code && err.code !== 'auth/no-auth-event'){
+    console.error(err);
+    alert('No se pudo iniciar sesión: ' + (err.code || err.message));
+  }
+});
 
 onAuthStateChanged(auth, async (user)=>{
   document.getElementById('authLoading').classList.add('hidden');
@@ -1899,8 +1911,8 @@ function renderCurrent(){
 document.getElementById('searchInput').addEventListener('input', e=>{ filters.search = e.target.value; renderCreatorDeals(); });
 
 /* ============================================================ INIT ============================================================ */
-/* La app ya no arranca sola: espera a que Firebase confirme la sesión (ver onAuthStateChanged arriba)
-   y solo entonces carga los datos reales del usuario y dibuja la interfaz. */
+/* La app ya no arranca sola: espera a onAuthStateChanged (arriba) para saber
+   si hay una sesión de Google activa antes de cargar datos y renderizar. */
 </script>
 </body>
 </html>
