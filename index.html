@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creatly · Creadores &amp; Agencias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ig-purple:#833ab4; --ig-pink:#fd1d1d; --ig-orange:#fcb045; --ig-yellow:#fccc63;
+    --grad-main: linear-gradient(135deg, var(--ig-purple), var(--ig-pink) 55%, var(--ig-orange) 100%);
+    --grad-soft: linear-gradient(135deg, #f3e8ff, #ffe4ec 50%, #fff2df 100%);
+    --bg:#f7f5fb; --card:#ffffff; --ink:#241436; --muted:#8579a0; --border:#ece7f5;
+    --green:#1fbf75; --amber:#ffb800; --red:#ff4d6d; --blue:#4f6df5; --teal:#0a9d9d;
+    --accent: var(--ig-pink);
+    --shadow:0 8px 24px rgba(131,58,180,0.08); --shadow-lg:0 16px 40px rgba(131,58,180,0.16);
+    --radius:20px;
+  }
+  body.ws-agencia{ --accent: var(--blue); }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{height:100%;}
+  .hidden{display:none !important;}
+  body{
+    font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink);
+    background-image:
+      radial-gradient(circle at 8% 8%, rgba(131,58,180,0.06), transparent 40%),
+      radial-gradient(circle at 95% 15%, rgba(252,176,69,0.10), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(253,29,29,0.05), transparent 40%);
+  }
+  h1,h2,h3,h4{font-family:'Baloo 2',sans-serif; margin:0;}
+  #app{display:flex; min-height:100vh;}
+
+  .sidebar{width:250px; flex-shrink:0; background:var(--card); border-right:1px solid var(--border); padding:22px 16px; display:flex; flex-direction:column; gap:8px; position:sticky; top:0; height:100vh; overflow-y:auto;}
+  .brand{display:flex; align-items:center; gap:10px; padding:2px 8px 16px 8px;}
+  .brand-mark{width:36px; height:36px; border-radius:11px; background:var(--grad-main); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; box-shadow:var(--shadow);}
+  .brand-name{font-family:'Baloo 2'; font-weight:700; font-size:19px;}
+  .brand-name span{background:var(--grad-main); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .proto-badge{font-size:10px; font-weight:700; color:var(--muted); background:#f3f0fa; border:1px solid var(--border); border-radius:100px; padding:3px 9px; display:inline-block; margin:0 8px 16px 8px; letter-spacing:.03em;}
+
+  .ws-toggle{display:flex; background:#f3f0fa; border-radius:14px; padding:4px; margin:0 4px 10px 4px; gap:4px;}
+  .ws-btn{flex:1; border:none; background:transparent; padding:9px 6px; border-radius:11px; font-family:'Baloo 2'; font-weight:700; font-size:13px; color:var(--muted); cursor:pointer; transition:.15s;}
+  .ws-btn.active{background:#fff; color:var(--ink); box-shadow:var(--shadow);}
+
+  .persona-wrap{margin:0 4px 18px 4px;}
+  .persona-wrap label{font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px; padding-left:2px;}
+  .persona-select{width:100%; border:1px solid var(--border); background:#faf9fc; border-radius:12px; padding:9px 10px; font-family:'Inter'; font-weight:600; font-size:13px; color:var(--ink); cursor:pointer;}
+  .persona-row{display:flex; gap:6px;}
+  .persona-row .persona-select{flex:1; min-width:0;}
+
+  .nav{display:flex; flex-direction:column; gap:4px; margin-bottom:12px;}
+  .nav-item{display:flex; align-items:center; gap:10px; padding:10.5px 14px; border-radius:13px; color:var(--muted); font-weight:600; font-size:14px; cursor:pointer; user-select:none; border:1px solid transparent; transition:.15s;}
+  .nav-item:hover{background:#f6f2fc; color:var(--ink);}
+  .nav-item.active{background:var(--grad-soft); color:var(--ink); border-color:#eee0fa;}
+  .nav-icon{font-size:16px; width:20px; text-align:center;}
+  .sidebar-spacer{flex:1;}
+  .btn-new{background:var(--grad-main); color:#fff; border:none; padding:12px 16px; border-radius:15px; font-family:'Baloo 2'; font-weight:700; font-size:14.5px; cursor:pointer; width:100%; box-shadow:0 10px 20px rgba(253,29,29,0.22); transition:transform .12s;}
+  .btn-new:hover{transform:translateY(-2px);}
+  .sidebar-tip{font-size:11.5px; color:var(--muted); padding:10px 6px 0 6px; line-height:1.5;}
+
+  .main{flex:1; padding:24px 32px 60px 32px; min-width:0;}
+  .topbar{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:6px; flex-wrap:wrap;}
+  .topbar h1{font-size:26px;}
+  .topbar .sub{color:var(--muted); font-size:13.5px; margin-top:4px;}
+  .context-banner{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:9px 14px; margin:14px 0 22px 0; font-size:13px; color:var(--muted); font-weight:600;}
+  .context-banner b{color:var(--ink);}
+  .context-banner .tag{background:var(--grad-soft); color:var(--ig-purple); font-weight:700; font-size:11.5px; padding:3px 10px; border-radius:100px;}
+  .search-box{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 14px; min-width:220px;}
+  .search-box input{border:none; outline:none; font-family:'Inter'; font-size:14px; width:100%; background:transparent;}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:26px;}
+  .stat-card{background:var(--card); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); border:1px solid var(--border); position:relative; overflow:hidden;}
+  .stat-card .icon{font-size:21px; margin-bottom:9px; display:inline-block;}
+  .stat-card .value{font-family:'Baloo 2'; font-size:21px; font-weight:700;}
+  .stat-card .label{font-size:12px; color:var(--muted); font-weight:600; margin-top:2px;}
+  .stat-card::after{content:''; position:absolute; right:-30px; top:-30px; width:90px; height:90px; border-radius:50%; opacity:.10;}
+  .stat-card.c1::after{background:var(--ig-purple);} .stat-card.c2::after{background:var(--red);}
+  .stat-card.c3::after{background:var(--amber);} .stat-card.c4::after{background:var(--green);}
+  .stat-card.c5::after{background:var(--teal);} .stat-card.c6::after{background:var(--ig-orange);}
+
+  .panel{background:var(--card); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); padding:20px;}
+  .panel h3{font-size:16.5px; margin-bottom:14px;}
+  .dash-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:18px;}
+
+  .up-row{display:flex; align-items:center; gap:12px; padding:11px 6px; border-bottom:1px solid var(--border);}
+  .up-row:last-child{border-bottom:none;}
+  .up-info{flex:1; min-width:0;}
+  .up-title{font-weight:700; font-size:13.5px;}
+  .up-sub{font-size:11.5px; color:var(--muted);}
+  .pill{padding:4px 10px; border-radius:100px; font-size:11px; font-weight:700; white-space:nowrap; display:inline-block;}
+  .pill-red{background:#ffe4ea; color:#e0244d;} .pill-amber{background:#fff4d6; color:#a97400;}
+  .pill-green{background:#dcf7e9; color:#0e9a5c;} .pill-gray{background:#efedf5; color:#6f6485;}
+  .pill-purple{background:#f0e5fb; color:#7a2fb0;} .pill-blue{background:#e6eefd; color:#3868c9;}
+  .pill-teal{background:#e0f7f5; color:#0a7d7d;}
+
+  .brand-row{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .brand-bar-bg{flex:1; height:9px; border-radius:8px; background:#f1edf9; overflow:hidden;}
+  .brand-bar-fill{height:100%; border-radius:8px; background:var(--grad-main);}
+  .brand-row .name{width:120px; font-size:12.5px; font-weight:700; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .brand-row .amt{font-size:12px; color:var(--muted); width:80px; text-align:right; flex-shrink:0;}
+
+  .avatar-ring{width:44px; height:44px; border-radius:50%; padding:2.5px; flex-shrink:0; background:conic-gradient(from 210deg, var(--ig-purple), var(--ig-pink), var(--ig-orange), var(--ig-yellow), var(--ig-purple));}
+  .avatar-ring.sm{width:34px; height:34px;} .avatar-ring.lg{width:58px; height:58px;}
+  .avatar{width:100%; height:100%; border-radius:50%; background:#fff; padding:2.5px;}
+  .avatar-inner{width:100%; height:100%; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-family:'Baloo 2'; font-size:15px;}
+  .avatar-ring.sm .avatar-inner{font-size:12px;} .avatar-ring.lg .avatar-inner{font-size:19px;}
+
+  .board{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-items:start;}
+  .board.pipeline{grid-template-columns:repeat(6,1fr);}
+  .board-col{background:#faf8fd; border:1px dashed var(--border); border-radius:18px; padding:12px; min-height:120px;}
+  .board-col.dragover{background:#f3e8ff; border-color:var(--ig-purple);}
+  .board-col-head{display:flex; align-items:center; gap:7px; padding:6px 4px 12px 4px; font-family:'Baloo 2'; font-weight:700; font-size:13.5px;}
+  .dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .count-badge{margin-left:auto; background:#fff; border-radius:100px; padding:2px 9px; font-size:11.5px; color:var(--muted); font-weight:700; border:1px solid var(--border);}
+  .card-proj{background:var(--card); border-radius:16px; padding:12px 13px; margin-bottom:10px; box-shadow:var(--shadow); border:1px solid var(--border); cursor:grab; transition:.12s;}
+  .card-proj:active{cursor:grabbing;}
+  .card-proj:hover{box-shadow:var(--shadow-lg); transform:translateY(-2px);}
+  .card-top{display:flex; align-items:center; gap:9px; margin-bottom:9px;}
+  .card-top .names{min-width:0;}
+  .card-top .marca{font-weight:800; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .card-top .tipo{font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .card-title{font-size:12.5px; color:var(--ink); margin-bottom:8px; line-height:1.4;}
+  .card-bottom{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .price-tag{font-family:'Baloo 2'; font-weight:700; font-size:13px;}
+  .empty-col{color:var(--muted); font-size:12px; text-align:center; padding:20px 6px;}
+  .mini-progress{font-size:10.5px; color:var(--muted); font-weight:700; margin-top:6px;}
+  .mini-progress-bar{height:5px; border-radius:4px; background:#f1edf9; overflow:hidden; margin-top:3px;}
+  .mini-progress-fill{height:100%; background:var(--green);}
+
+  .filters-row{display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+  select, .btn-plain{border:1px solid var(--border); background:#fff; border-radius:12px; padding:9px 12px; font-family:'Inter'; font-size:13px; font-weight:600; color:var(--ink); cursor:pointer;}
+  table{width:100%; border-collapse:collapse;}
+  th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); padding:10px 12px; border-bottom:1px solid var(--border);}
+  td{padding:12px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .row-actions{display:flex; gap:6px;}
+  .icon-btn{border:1px solid var(--border); background:#fff; border-radius:9px; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; transition:.12s; flex-shrink:0;}
+  .icon-btn:hover{background:#f6f2fc;}
+
+  .toolbar-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+
+  .roster-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .roster-card{background:var(--card); border:1px solid var(--border); border-radius:20px; padding:18px; box-shadow:var(--shadow); cursor:pointer; transition:.12s;}
+  .roster-card:hover{box-shadow:var(--shadow-lg); transform:translateY(-2px);}
+  .roster-top{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+  .roster-name{font-weight:800; font-size:15.5px;}
+  .roster-plats{font-size:11.5px; color:var(--muted);}
+  .roster-stats{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .roster-add-card{display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; border:2px dashed var(--border); border-radius:20px; color:var(--muted); font-weight:700; cursor:pointer; min-height:150px; transition:.12s;}
+  .roster-add-card:hover{border-color:var(--ig-purple); color:var(--ig-purple); background:#faf6ff;}
+  .contact-meta{margin-top:4px; font-size:12px; color:var(--muted);}
+  .contact-agency-tag{margin-top:10px; background:#eef2ff; color:var(--blue); font-size:11px; font-weight:700; padding:5px 10px; border-radius:10px; display:inline-block;}
+
+  .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .cal-nav{display:flex; gap:8px; align-items:center;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:8px;}
+  .cal-dow{text-align:center; font-size:11px; font-weight:700; color:var(--muted); padding-bottom:6px;}
+  .cal-cell{background:#faf8fd; border-radius:14px; min-height:88px; padding:8px; border:1px solid var(--border);}
+  .cal-cell.other-month{opacity:.35;}
+  .cal-cell.today{border:2px solid var(--accent); background:#fff5f6;}
+  .cal-daynum{font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px;}
+  .cal-chip{font-size:10px; font-weight:700; padding:3px 7px; border-radius:8px; margin-bottom:4px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+  .fin-top{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px;}
+  .fin-big{background:var(--card); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); padding:20px;}
+  .fin-big .label{font-size:12.5px; color:var(--muted); font-weight:700;}
+  .fin-big .value{font-family:'Baloo 2'; font-size:24px; margin-top:6px;}
+
+  .subtab-toggle{display:inline-flex; background:#f3f0fa; border-radius:12px; padding:3px; gap:3px;}
+  .subtab-btn{border:none; background:transparent; padding:9px 16px; border-radius:9px; font-family:'Baloo 2'; font-weight:700; font-size:12.5px; color:var(--muted); cursor:pointer;}
+  .subtab-btn.active{background:#fff; color:var(--ink); box-shadow:var(--shadow);}
+  .fin-filter-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px;}
+  .fin-filter-bar .datefield{display:flex; align-items:center; gap:6px;}
+  .fin-filter-bar .datefield label{font-size:12px; font-weight:700; color:var(--muted);}
+  .fin-filter-bar input[type=date]{border:1px solid var(--border); border-radius:10px; padding:7px 9px; font-size:12.5px; font-family:'Inter';}
+
+  .plan-wrap{display:grid; grid-template-columns:1.1fr 1fr; gap:20px;}
+  .plan-card{border-radius:26px; padding:28px; color:#fff; background:var(--grad-main); box-shadow:var(--shadow-lg); position:relative; overflow:hidden;}
+  .plan-card .plan-label{font-size:12.5px; font-weight:700; opacity:.85; text-transform:uppercase; letter-spacing:.05em;}
+  .plan-card .plan-price{font-family:'Baloo 2'; font-size:42px; font-weight:800; margin:8px 0 2px 0;}
+  .plan-card .plan-price small{font-size:16px; font-weight:600; opacity:.85;}
+  .plan-card ul{list-style:none; padding:0; margin:18px 0 0 0; display:flex; flex-direction:column; gap:9px;}
+  .plan-card li{font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:8px;}
+  .plan-note{font-size:11px; opacity:.75; margin-top:16px;}
+  .plan-breakdown{background:var(--card); border:1px solid var(--border); border-radius:26px; padding:24px; box-shadow:var(--shadow);}
+  .pb-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:13.5px; gap:12px;}
+  .pb-row:last-child{border-bottom:none;}
+  .pb-row b{font-family:'Baloo 2'; font-size:15px; text-align:right;}
+  .pb-total{background:var(--grad-soft); border-radius:14px; padding:14px 16px; margin-top:12px; display:flex; justify-content:space-between; align-items:center;}
+  .pb-total .t-label{font-weight:700; font-size:13.5px;}
+  .pb-total .t-value{font-family:'Baloo 2'; font-size:21px; color:var(--ig-purple);}
+
+  .urg-ok{color:var(--green);} .urg-soon{color:var(--amber);} .urg-late{color:var(--red);}
+
+  .modal-overlay{position:fixed; inset:0; background:rgba(36,20,54,0.45); display:flex; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(2px); padding:20px;}
+  .modal-overlay.hidden{display:none;}
+  .modal{background:#fff; border-radius:24px; width:640px; max-width:94vw; max-height:90vh; overflow-y:auto; padding:26px 28px 24px 28px; box-shadow:var(--shadow-lg); position:relative;}
+  .modal.narrow{width:460px;}
+  .modal h2{font-size:20px; margin-bottom:4px;}
+  .modal .modal-sub{color:var(--muted); font-size:12.5px; margin-bottom:18px;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px 14px;}
+  .form-field{display:flex; flex-direction:column; gap:5px;}
+  .form-field.full{grid-column:1 / -1;}
+  .form-field label{font-size:11.5px; font-weight:700; color:var(--muted);}
+  .form-field input, .form-field select, .form-field textarea{border:1px solid var(--border); border-radius:11px; padding:9px 11px; font-family:'Inter'; font-size:13px; outline:none; background:#faf9fc;}
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus{border-color:var(--ig-purple); background:#fff;}
+  .form-field textarea{resize:vertical; min-height:50px;}
+  .section-label{font-family:'Baloo 2'; font-weight:700; font-size:14.5px; margin:18px 0 8px 0; display:flex; align-items:center; gap:8px;}
+  .chip-select{display:flex; flex-wrap:wrap; gap:7px;}
+  .chip-option{border:1px solid var(--border); background:#faf9fc; border-radius:100px; padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer; user-select:none; color:var(--ink);}
+  .chip-option.selected{background:var(--grad-main); color:#fff; border-color:transparent;}
+  .recur-fields{display:grid; grid-template-columns:1fr 1fr; gap:12px 14px; margin-top:10px; padding:12px; background:#faf6ff; border-radius:14px; border:1px dashed #e6d5f7;}
+  .checkbox-row{display:flex; align-items:center; gap:9px; font-size:13px; font-weight:700; color:var(--ink); cursor:pointer; padding:4px 0;}
+  .checkbox-row input{width:17px; height:17px; accent-color:var(--ig-purple);}
+  .pago-type-toggle{display:flex; gap:8px;}
+  .pago-type-btn{flex:1; border:1px solid var(--border); background:#faf9fc; border-radius:12px; padding:10px; text-align:center; font-weight:700; font-size:13px; cursor:pointer; color:var(--muted); font-family:'Inter';}
+  .pago-type-btn.selected{background:var(--grad-main); color:#fff; border-color:transparent;}
+
+  .entregable-row-wrap{border:1px solid var(--border); border-radius:14px; padding:10px; margin-bottom:9px; background:#fcfbfe;}
+  .entregable-row{display:grid; grid-template-columns:1.6fr 0.9fr 0.9fr 0.9fr auto auto; gap:6px; align-items:center;}
+  .entregable-row input, .entregable-row select{border:1px solid var(--border); border-radius:9px; padding:7px 8px; font-size:12px; font-family:'Inter'; background:#fff;}
+  .er-remove{border:none; background:#fff0f2; color:var(--red); border-radius:8px; width:28px; height:28px; cursor:pointer; font-weight:700;}
+  .checklist-toggle{background:#f3f0fa; border:1px solid var(--border); border-radius:9px; padding:7px 9px; font-size:11px; font-weight:700; color:var(--ig-purple); cursor:pointer; white-space:nowrap;}
+  .checklist-panel{margin-top:9px; padding:10px; background:#faf8fd; border:1px dashed var(--border); border-radius:12px;}
+  .checklist-panel.hidden{display:none;}
+  .checklist-item{display:flex; align-items:center; gap:8px; padding:4px 0; font-size:12.5px;}
+  .checklist-item input[type=checkbox]{width:15px; height:15px; accent-color:var(--ig-purple); flex-shrink:0;}
+  .checklist-item.done span{text-decoration:line-through; color:var(--muted);}
+  .checklist-item span{flex:1;}
+  .ci-remove{background:none; border:none; color:var(--red); cursor:pointer; font-size:12px;}
+  .checklist-add-row{display:flex; gap:6px; margin-top:6px;}
+  .checklist-add-row input{flex:1; border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:12px; background:#fff;}
+  .checklist-add-row button{border:none; background:var(--ig-purple); color:#fff; border-radius:8px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer;}
+  .btn-add-row{background:#f3f0fa; border:1px dashed var(--border); color:var(--ig-purple); font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:11px; cursor:pointer; width:100%; margin-top:2px;}
+  .rate-row{display:grid; grid-template-columns:1.5fr 1fr auto; gap:6px; margin-bottom:7px; align-items:center;}
+  .rate-row select, .rate-row input{border:1px solid var(--border); border-radius:9px; padding:7px 8px; font-size:12px; font-family:'Inter'; background:#fff;}
+  .username-field-row{display:flex; align-items:center; gap:8px; margin-bottom:7px;}
+  .username-field-row label{width:120px; font-size:12px; font-weight:700; color:var(--muted); flex-shrink:0;}
+  .username-field-row input{flex:1; border:1px solid var(--border); border-radius:9px; padding:7px 9px; font-size:12.5px; background:#faf9fc; font-family:'Inter';}
+  .modal-actions{display:flex; justify-content:space-between; align-items:center; margin-top:20px;}
+  .btn-primary{background:var(--grad-main); color:#fff; border:none; padding:11px 22px; border-radius:13px; font-family:'Baloo 2'; font-weight:700; font-size:14px; cursor:pointer;}
+  .btn-secondary{background:#f1edf9; color:var(--ink); border:none; padding:11px 18px; border-radius:13px; font-weight:700; font-size:13px; cursor:pointer; font-family:'Inter';}
+  .btn-danger-text{background:none; border:none; color:var(--red); font-weight:700; font-size:12.5px; cursor:pointer;}
+  .close-x{position:absolute; top:20px; right:24px; cursor:pointer; font-size:18px; color:var(--muted); background:none; border:none;}
+  .hint{font-size:11px; color:var(--muted); margin-top:2px;}
+
+  #toast-container{position:fixed; bottom:22px; right:22px; display:flex; flex-direction:column; gap:8px; z-index:200;}
+  .toast{background:var(--ink); color:#fff; padding:12px 18px; border-radius:13px; font-size:13px; font-weight:600; box-shadow:var(--shadow-lg); animation:pop .18s ease-out;}
+  @keyframes pop{from{transform:translateY(10px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+
+  .empty-state{text-align:center; padding:56px 20px; color:var(--muted);}
+  .empty-state .big{font-size:40px; margin-bottom:10px;}
+  .plat-chip{background:#f1edf9; color:var(--ig-purple); font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:100px; margin-right:3px; display:inline-block;}
+
+  .auth-screen{min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg);}
+  .auth-spinner{color:var(--muted); font-weight:700; font-size:14px;}
+  .auth-card{background:#fff; border-radius:28px; padding:48px 40px; box-shadow:var(--shadow-lg); text-align:center; max-width:380px; width:90vw;}
+  .auth-card h1{font-size:28px; margin:10px 0 6px 0;}
+  .auth-card p{color:var(--muted); font-size:14px; margin-bottom:28px;}
+  .btn-google{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; background:#fff; border:1.5px solid var(--border); border-radius:14px; padding:13px; font-family:'Inter'; font-weight:700; font-size:14.5px; cursor:pointer; color:var(--ink); transition:.15s;}
+  .btn-google:hover{box-shadow:var(--shadow); border-color:#ddd;}
+  .user-chip{display:flex; align-items:center; gap:10px; padding:10px; background:#faf8fd; border-radius:14px; margin-top:10px;}
+  .user-chip img{width:34px; height:34px; border-radius:50%; background:var(--border); flex-shrink:0;}
+  .user-info{min-width:0;}
+  .user-name{font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .user-signout{background:none; border:none; color:var(--red); font-size:11px; font-weight:700; cursor:pointer; padding:0;}
+
+  @media (max-width: 1080px){ .board.pipeline{grid-template-columns:repeat(3,1fr);} .roster-grid{grid-template-columns:repeat(2,1fr);} .plan-wrap{grid-template-columns:1fr;} }
+  @media (max-width: 900px){
+    .sidebar{width:74px; padding:16px 8px;}
+    .brand-name, .proto-badge, .ws-btn span.label, .persona-wrap, .nav-item span.label, .sidebar-tip, .btn-new span.label{display:none;}
+    .brand{justify-content:center;}
+    .board{grid-template-columns:repeat(2,1fr);} .board.pipeline{grid-template-columns:repeat(2,1fr);}
+    .fin-top{grid-template-columns:repeat(2,1fr);} .dash-grid{grid-template-columns:1fr;} .roster-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="authLoading" class="auth-screen"><div class="auth-spinner">Cargando…</div></div>
+<div id="authGate" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="brand-mark" style="margin:0 auto 16px auto;">✨</div>
+    <h1>Crea<span style="background:var(--grad-main); -webkit-background-clip:text; background-clip:text; color:transparent;">tly</span></h1>
+    <p>Tu estudio de contenido, todo en un solo lugar.</p>
+    <button id="btnGoogleSignIn" class="btn-google"><svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg> Continuar con Google</button>
+  </div>
+</div>
+<div id="app" class="hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">✨</div><div class="brand-name">Crea<span>tly</span></div></div>
+    <div class="proto-badge">🔥 Conectado a Firebase</div>
+    <div class="ws-toggle" id="wsToggle">
+      <button class="ws-btn active" data-ws="creador">👤 <span class="label">Creador</span></button>
+      <button class="ws-btn" data-ws="agencia">🏢 <span class="label">Agencia</span></button>
+    </div>
+    <div class="persona-wrap">
+      <label id="personaLabel">Viendo como</label>
+      <div class="persona-row">
+        <select class="persona-select" id="personaSelect"></select>
+        <button class="icon-btn" id="btnEditProfile" title="Editar perfil">✏️</button>
+      </div>
+      <button class="btn-plain" id="btnNewProfile" style="width:100%; margin-top:7px; font-size:12px; padding:8px;">＋ Nuevo perfil</button>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-spacer"></div>
+    <button class="btn-new" id="btnNewDeal">＋ <span class="label">Nuevo deal</span></button>
+    <div class="user-chip" id="userChip">
+      <img id="userPhoto" src="" alt="">
+      <div class="user-info">
+        <div id="userName" class="user-name"></div>
+        <button class="user-signout" id="btnSignOut">Cerrar sesión</button>
+      </div>
+    </div>
+    <div class="sidebar-tip">Tus datos se guardan en la nube (Firebase), ligados a tu cuenta de Google. El workspace Creador y el de Agencia no comparten información entre sí.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div><h1 id="viewTitle">Dashboard</h1><div class="sub" id="viewSub"></div></div>
+      <div class="search-box" id="searchBoxWrap" style="display:none;"><span>🔍</span><input type="text" id="searchInput" placeholder="Buscar marca o entregable…"></div>
+    </div>
+    <div class="context-banner" id="contextBanner"></div>
+    <div id="view-root"></div>
+  </main>
+</div>
+
+<!-- ============ CREATOR DEAL MODAL ============ -->
+<div class="modal-overlay hidden" id="creatorDealOverlay">
+  <div class="modal">
+    <button class="close-x" id="closeCreatorDeal">✕</button>
+    <h2 id="creatorDealTitle">Nuevo deal</h2>
+    <div class="modal-sub">Tu acuerdo con la marca, completo.</div>
+    <form id="creatorDealForm">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>Marca</label>
+          <input type="text" id="cd_marca" list="cd_marcaList" required placeholder="Escribe o elige una marca existente">
+          <datalist id="cd_marcaList"></datalist>
+        </div>
+        <div class="form-field"><label>Fecha del deal</label><input type="date" id="cd_fechaDeal"></div>
+        <div class="form-field"><label>Moneda</label><select id="cd_moneda"><option>MXN</option><option>USD</option><option>EUR</option></select></div>
+        <div class="form-field full"><label>Plataformas de este deal</label><div class="chip-select" id="creatorPlatChips"></div></div>
+        <div class="form-field full">
+          <label>Tipo de pago</label>
+          <div class="pago-type-toggle">
+            <button type="button" class="pago-type-btn selected" id="cd_tipoPresupuesto">💰 Con presupuesto</button>
+            <button type="button" class="pago-type-btn" id="cd_tipoIntercambio">🎁 Intercambio</button>
+          </div>
+        </div>
+        <div id="cd_presupuestoBlock" style="display:contents;">
+          <div class="form-field"><label>Monto total</label><input type="number" id="cd_monto" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div id="cd_intercambioBlock" style="display:none;">
+          <div class="form-field full"><label>¿Qué te dan a cambio?</label><textarea id="cd_intercambioDescripcion" placeholder="Ej. Productos de la marca, viaje con todo pagado, servicio…"></textarea></div>
+          <div class="form-field"><label>Valor estimado (opcional)</label><input type="number" id="cd_intercambioValorEstimado" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div class="form-field"><label id="cd_estadoPagoLabel">Estado de pago</label>
+          <select id="cd_estadoPago"><option value="pendiente">Pendiente</option><option value="parcial">Anticipo pagado</option><option value="pagado">Pagado por completo</option></select>
+        </div>
+        <div class="form-field"><label>Contrato (archivo)</label><input type="file" id="cd_contratoFile"><input type="hidden" id="cd_contratoNombre"></div>
+        <div class="form-field full">
+          <label class="checkbox-row"><input type="checkbox" id="cd_recurrente"> 🔁 Este deal es un retainer / ingreso recurrente</label>
+          <div class="recur-fields hidden" id="cd_recurFields">
+            <div class="form-field"><label>Frecuencia</label><select id="cd_frecuencia"><option value="semanal">Semanal</option><option value="quincenal">Quincenal</option><option value="mensual" selected>Mensual</option></select></div>
+            <div class="form-field"><label>Próximo cobro</label><input type="date" id="cd_proximoCobro"></div>
+          </div>
+        </div>
+        <div class="form-field"><label>Vencimiento del contrato</label><input type="date" id="cd_contratoVencimiento"></div>
+        <div class="form-field full"><label>Notas</label><textarea id="cd_notas" placeholder="Brief, condiciones, referencias…"></textarea></div>
+      </div>
+      <div class="section-label">📦 Entregables de este deal</div>
+      <div id="creatorEntregablesList"></div>
+      <button type="button" class="btn-add-row" id="btnAddCreatorEntregable">＋ Agregar entregable</button>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger-text" id="btnDeleteCreatorDeal" style="visibility:hidden;">Eliminar deal</button>
+        <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelCreatorDeal">Cancelar</button><button type="submit" class="btn-primary">Guardar deal</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ AGENCY DEAL MODAL ============ -->
+<div class="modal-overlay hidden" id="agencyDealOverlay">
+  <div class="modal">
+    <button class="close-x" id="closeAgencyDeal">✕</button>
+    <h2 id="agencyDealTitle">Nuevo deal</h2>
+    <div class="modal-sub">El acuerdo con la marca para uno de tus representados.</div>
+    <form id="agencyDealForm">
+      <div class="form-grid">
+        <div class="form-field"><label>Marca</label><input type="text" id="ad_marca" required placeholder="Ej. Glow Cosmetics"></div>
+        <div class="form-field"><label>Talento</label><select id="ad_talento"></select></div>
+        <div class="form-field full"><label>Plataformas de este deal</label><div class="chip-select" id="agencyPlatChips"></div></div>
+        <div class="form-field"><label>Etapa del pipeline</label><select id="ad_etapa"></select></div>
+        <div class="form-field"><label>Monto total</label><input type="number" id="ad_monto" min="0" step="0.01" required placeholder="0.00"></div>
+        <div class="form-field"><label>Moneda</label><select id="ad_moneda"><option>MXN</option><option>USD</option><option>EUR</option></select></div>
+        <div class="form-field"><label>% Comisión de agencia</label><input type="number" id="ad_comision" min="0" max="100" step="1" placeholder="20"></div>
+        <div class="form-field"><label>Estado de pago (marca → agencia)</label><select id="ad_estadoPagoMarca"><option value="pendiente">Pendiente</option><option value="parcial">Anticipo pagado</option><option value="pagado">Pagado por completo</option></select></div>
+        <div class="form-field"><label>Estado de pago al talento</label><select id="ad_estadoPagoCreador"><option value="pendiente">Pendiente</option><option value="parcial">Anticipo pagado</option><option value="pagado">Pagado por completo</option></select></div>
+        <div class="form-field"><label>Contrato (archivo)</label><input type="file" id="ad_contratoFile"><input type="hidden" id="ad_contratoNombre"></div>
+        <div class="form-field"><label>Vencimiento del contrato</label><input type="date" id="ad_contratoVencimiento"></div>
+        <div class="form-field full"><label>Notas</label><textarea id="ad_notas" placeholder="Brief, condiciones, contacto de la marca…"></textarea></div>
+      </div>
+      <div class="section-label">📦 Entregables de este deal</div>
+      <div id="agencyEntregablesList"></div>
+      <button type="button" class="btn-add-row" id="btnAddAgencyEntregable">＋ Agregar entregable</button>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger-text" id="btnDeleteAgencyDeal" style="visibility:hidden;">Eliminar deal</button>
+        <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelAgencyDeal">Cancelar</button><button type="submit" class="btn-primary">Guardar deal</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ BRAND (CRM) MODAL ============ -->
+<div class="modal-overlay hidden" id="brandModalOverlay">
+  <div class="modal narrow">
+    <button class="close-x" id="closeBrandModal">✕</button>
+    <h2 id="brandModalTitle">Nuevo contacto</h2>
+    <div class="modal-sub">Guarda quién es tu contacto en cada marca.</div>
+    <form id="brandForm">
+      <div class="form-grid">
+        <div class="form-field full"><label>Nombre de la marca</label><input type="text" id="b_nombre" required placeholder="Ej. Glow Cosmetics"></div>
+        <div class="form-field full"><label>Nombre del contacto</label><input type="text" id="b_contactoNombre" placeholder="Ej. Wendy Paredes"></div>
+        <div class="form-field"><label>Email</label><input type="email" id="b_contactoEmail" placeholder="wendy@marca.com"></div>
+        <div class="form-field"><label>Instagram del contacto</label><input type="text" id="b_instagram" placeholder="@wendyparedes"></div>
+        <div class="form-field full"><label>Teléfono</label><input type="text" id="b_contactoTelefono" placeholder="55 1234 5678"></div>
+        <div class="form-field full"><label>Notas</label><textarea id="b_notas" placeholder="Preferencias, historial, condiciones…"></textarea></div>
+      </div>
+      <div class="section-label">🏢 ¿Trabaja con una agencia? (opcional)</div>
+      <div class="form-grid">
+        <div class="form-field"><label>Nombre de la agencia</label><input type="text" id="b_agenciaNombre" placeholder="Ej. Nova Media Group"></div>
+        <div class="form-field"><label>Instagram de la agencia</label><input type="text" id="b_agenciaUsername" placeholder="@novamediagroup"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger-text" id="btnDeleteBrand" style="visibility:hidden;">Eliminar contacto</button>
+        <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelBrand">Cancelar</button><button type="submit" class="btn-primary">Guardar</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ NUEVO REPRESENTADO MODAL ============ -->
+<div class="modal-overlay hidden" id="talentModalOverlay">
+  <div class="modal narrow">
+    <button class="close-x" id="closeTalentModal">✕</button>
+    <h2>Nuevo representado</h2>
+    <div class="modal-sub">Agrégalo a tu roster de talento.</div>
+    <form id="talentForm">
+      <div class="form-grid">
+        <div class="form-field full"><label>Nombre del creador</label><input type="text" id="nt_nombre" required placeholder="Ej. Renata Cruz"></div>
+        <div class="form-field full"><label>Plataformas (separadas por coma)</label><input type="text" id="nt_plataformas" placeholder="Instagram, TikTok"></div>
+      </div>
+      <div class="modal-actions"><div></div><div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelTalent">Cancelar</button><button type="submit" class="btn-primary">Agregar</button></div></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ TALENT DETAIL MODAL ============ -->
+<div class="modal-overlay hidden" id="talentDetailOverlay">
+  <div class="modal"><button class="close-x" id="closeTalentDetail">✕</button><div id="talentDetailContent"></div></div>
+</div>
+
+<!-- ============ CREATOR PROFILE MODAL ============ -->
+<div class="modal-overlay hidden" id="profileModalOverlay">
+  <div class="modal">
+    <button class="close-x" id="closeProfileModal">✕</button>
+    <h2 id="profileModalTitle">Nuevo perfil</h2>
+    <div class="modal-sub">Tu información como creador.</div>
+    <form id="profileForm">
+      <div class="form-grid">
+        <div class="form-field full"><label>Nombre</label><input type="text" id="pf_nombre" required placeholder="Ej. Brodymedinas"></div>
+        <div class="form-field full"><label>Plataformas que manejas</label><div class="chip-select" id="profilePlatChips"></div></div>
+        <div class="form-field full" id="profileUsernamesWrap"><label>Usuario por cada red</label><div id="profileUsernamesList"></div></div>
+        <div class="form-field">
+          <label>Nicho de contenido</label>
+          <input type="text" id="pf_nicho" list="nichoList" placeholder="Ej. Belleza, Gaming, Fitness…">
+          <datalist id="nichoList"><option>Belleza</option><option>Moda</option><option>Gaming</option><option>Fitness</option><option>Comida</option><option>Viajes</option><option>Lifestyle</option><option>Tech</option><option>Familia</option><option>Otro</option></datalist>
+        </div>
+        <div class="form-field"><label>Email de contacto</label><input type="email" id="pf_email" placeholder="tucorreo@ejemplo.com"></div>
+      </div>
+      <div class="section-label">💵 Tu tarifa base (referencia)</div>
+      <div id="rateCardList"></div>
+      <button type="button" class="btn-add-row" id="btnAddRate">＋ Agregar tarifa</button>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger-text" id="btnDeleteProfile" style="visibility:hidden;">Eliminar perfil</button>
+        <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelProfile">Cancelar</button><button type="submit" class="btn-primary">Guardar perfil</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXNroGX2qq3OjOXFZ1x3AVxlxb6maom3g",
+  authDomain: "creately-965f0.firebaseapp.com",
+  projectId: "creately-965f0",
+  storageBucket: "creately-965f0.firebasestorage.app",
+  messagingSenderId: "58955749347",
+  appId: "1:58955749347:web:c5099b1111e9bad288b2d6",
+  measurementId: "G-1JTXDJQRFG"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const dbFs = getFirestore(fbApp);
+
+/* ============================================================ CONSTANTS ============================================================ */
+const LS_KEY = 'creatly_v4';
+const ESTADOS = [
+  {key:'por-hacer', label:'Por hacer', color:'#a78bfa'},
+  {key:'en-proceso', label:'En proceso', color:'#5b8def'},
+  {key:'revision', label:'En revisión', color:'#ffb800'},
+  {key:'entregado', label:'Entregado', color:'#1fbf75'},
+];
+const PIPELINE = [
+  {key:'prospecto', label:'Prospecto', color:'#c4b5fd'},
+  {key:'negociacion', label:'Negociación', color:'#93c5fd'},
+  {key:'contrato', label:'Contrato firmado', color:'#fcd34d'},
+  {key:'produccion', label:'En producción', color:'#67e8f9'},
+  {key:'completado', label:'Completado', color:'#86efac'},
+  {key:'pagado', label:'Pagado', color:'#34d399'},
+];
+const TIPOS = ['Reel','Post','Story','Carrusel','Video largo','TikTok','Blog','UGC','Otro'];
+const PLATAFORMAS = ['Instagram','TikTok','YouTube','Blog','Facebook','Otro'];
+const PLAT_ICON = {Instagram:'📸', TikTok:'🎵', YouTube:'▶️', Blog:'📝', Facebook:'📘', Otro:'🌐'};
+const MONEY_SYM = {MXN:'$', USD:'US$', EUR:'€'};
+const CREATOR_MONTHLY_PRICE = 15;
+const AGENCY_BASE_FEE = 49;
+const AGENCY_PER_TALENT = 20;
+const DEFAULT_CHECKLIST_STEPS = ['Guion / planeación','Grabación','Edición','Aprobación del cliente','Publicado'];
+const CONTACT_HEADERS = ['Marca','Contacto','Email','Instagram','Telefono','AgenciaRepresentante','InstagramAgencia','Notas'];
+const DEAL_HEADERS = ['Marca','Plataformas','TipoPago','Monto','Moneda','DescripcionIntercambio','ValorEstimadoIntercambio','EstadoPago','FechaDelDeal','EsRecurrente','Frecuencia','ProximoCobro','Notas'];
+
+/* ============================================================ STATE ============================================================ */
+let DB = null;
+let currentUser = null;
+let unsubscribeSnapshot = null;
+let workspace = 'creador';
+let viewingCreatorId = null;
+let viewingAgencyId = null;
+let currentTab = 'dashboard';
+let editingCreatorDealId = null;
+let editingAgencyDealId = null;
+let editingBrandId = null;
+let editingProfileId = null;
+let calCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let filters = {search:'', sort:'fecha-asc'};
+let creatorSelectedPlats = [];
+let agencySelectedPlats = [];
+let profileSelectedPlats = [];
+let profileUsernamesDraft = {};
+let checklistStore = {};
+let creatorTipoPagoSelected = 'presupuesto';
+let financeDateFrom = '';
+let financeDateTo = '';
+let financeSubTab = 'general';
+
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function saveAll(){
+  if(!currentUser || !DB) return;
+  setDoc(doc(dbFs, 'userdata', currentUser.uid), DB).catch(err=>{
+    console.error(err);
+    toast('⚠️ No se pudo guardar en la nube: revisa las reglas de Firestore');
+  });
+}
+function uid(p){ return (p||'x') + '_' + Math.random().toString(36).slice(2,9); }
+
+/* ============================================================ AUTH (Firebase) ============================================================ */
+async function initUserData(user){
+  const ref = doc(dbFs, 'userdata', user.uid);
+  const snap = await getDoc(ref);
+  if(!snap.exists()){
+    const starter = {
+      creatorProfiles: [{id:uid('cp'), nombre: user.displayName || 'Mi perfil', plataformas:[], usernames:{}, nicho:'', email: user.email||'', rateCard:[]}],
+      creatorBrands: [],
+      creatorDeals: [],
+      agencies: [{id:uid('ag'), nombre:'Mi Agencia', comisionDefault:20}],
+      talent: [],
+      agencyDeals: [],
+    };
+    await setDoc(ref, starter);
+  }
+  if(unsubscribeSnapshot) unsubscribeSnapshot();
+  unsubscribeSnapshot = onSnapshot(ref, (docSnap)=>{
+    if(!docSnap.exists()) return;
+    DB = docSnap.data();
+    if(!viewingCreatorId || !getCreatorProfile(viewingCreatorId)) viewingCreatorId = (DB.creatorProfiles[0]||{}).id || null;
+    if(!viewingAgencyId || !getAgency(viewingAgencyId)) viewingAgencyId = (DB.agencies[0]||{}).id || null;
+    renderPersonaSelect(); renderContextBanner(); renderCurrent();
+  }, err=>{
+    console.error(err);
+    toast('⚠️ Error leyendo tus datos: revisa las reglas de Firestore');
+  });
+}
+
+const googleProvider = new GoogleAuthProvider();
+document.getElementById('btnGoogleSignIn').addEventListener('click', async ()=>{
+  try{ await signInWithPopup(auth, googleProvider); }
+  catch(err){ console.error(err); alert('No se pudo iniciar sesión: ' + (err.code || err.message)); }
+});
+document.getElementById('btnSignOut').addEventListener('click', ()=>{ signOut(auth); });
+
+onAuthStateChanged(auth, async (user)=>{
+  document.getElementById('authLoading').classList.add('hidden');
+  if(user){
+    currentUser = user;
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('userPhoto').src = user.photoURL || '';
+    document.getElementById('userName').textContent = user.displayName || user.email || 'Cuenta';
+    await initUserData(user);
+  } else {
+    currentUser = null;
+    if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+    DB = null;
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('authGate').classList.remove('hidden');
+  }
+});
+
+/* ============================================================ SEED DATA ============================================================ */
+function seedIfEmpty(){
+  if(DB) return;
+  const today = new Date();
+  const d = (offset) => { const dt = new Date(today); dt.setDate(dt.getDate()+offset); return dt.toISOString().slice(0,10); };
+  const ck = (doneCount) => DEFAULT_CHECKLIST_STEPS.map((t,i)=>({id:uid('cl'), texto:t, hecho:i<doneCount}));
+
+  const creatorProfiles = [
+    {id:'cp1', nombre:'Ana Beltrán', plataformas:['Instagram','TikTok'], usernames:{Instagram:'@anabeltran', TikTok:'@anabeltran'}, nicho:'Belleza y lifestyle', email:'ana@anabeltran.com', rateCard:[{id:uid('rr'),tipo:'Reel',monto:3000},{id:uid('rr'),tipo:'Story',monto:800},{id:uid('rr'),tipo:'TikTok',monto:2000}]},
+    {id:'cp2', nombre:'Luna Vidal', plataformas:['Blog','Instagram'], usernames:{Blog:'lunavidal.com', Instagram:'@lunavidal'}, nicho:'Sustentabilidad', email:'luna@lunavidal.com', rateCard:[{id:uid('rr'),tipo:'Blog',monto:2500},{id:uid('rr'),tipo:'Reel',monto:2000}]},
+    {id:'cp3', nombre:'Sam Torres', plataformas:['YouTube','TikTok'], usernames:{YouTube:'@samtorresgaming', TikTok:'@samtorres'}, nicho:'Gaming', email:'sam@samtorres.gg', rateCard:[{id:uid('rr'),tipo:'Video largo',monto:6000},{id:uid('rr'),tipo:'TikTok',monto:1500}]},
+  ];
+  const creatorBrands = [
+    {id:'b1', creadorId:'cp1', nombre:'Glow Cosmetics', contactoNombre:'Wendy Paredes', contactoEmail:'wendy@glowcosmetics.com', instagram:'@wendyparedes', contactoTelefono:'55 1234 5678', agenciaRepNombre:'', agenciaRepUsername:'', notas:'Prefiere Reels cortos, menos de 30s.'},
+    {id:'b2', creadorId:'cp1', nombre:'Casa Verde Muebles', contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''},
+    {id:'b3', creadorId:'cp1', nombre:'Pulse Energy Drink', contactoNombre:'Iván Reyes', contactoEmail:'ivan@pulseenergy.com', instagram:'@pulseenergy', contactoTelefono:'', agenciaRepNombre:'Nova Media Group', agenciaRepUsername:'@novamediagroup', notas:'Retainer mensual, entrega el día 1.'},
+    {id:'b4', creadorId:'cp2', nombre:'Bloom Skincare', contactoNombre:'Carla Núñez', contactoEmail:'carla@bloomskincare.com', instagram:'@carlanunez', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''},
+    {id:'b5', creadorId:'cp2', nombre:'Nómada Coffee', contactoNombre:'', contactoEmail:'', instagram:'@nomadacoffee', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:'Contactar antes de aceptar, suelen atrasarse.'},
+    {id:'b6', creadorId:'cp3', nombre:'GameByte Studios', contactoNombre:'Rodrigo Salas', contactoEmail:'rodrigo@gamebyte.gg', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''},
+    {id:'b7', creadorId:'cp3', nombre:'FitZone App', contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''},
+  ];
+  const creatorDeals = [
+    {id:uid('cd'), creadorId:'cp1', marcaId:'b1', plataformas:['Instagram'], tipoPago:'presupuesto', montoTotal:15000, moneda:'MXN', estadoPago:'pendiente',
+      intercambioDescripcion:'', intercambioValorEstimado:0, esRecurrente:false, frecuencia:'', proximoCobro:'',
+      fechaDeal:d(-6), contratoNombre:'contrato_glow_ana.pdf', contratoVencimiento:d(23), notas:'Incluir código CREATLY10.',
+      entregables:[{id:uid('e'), titulo:'3 Reels de unboxing', tipo:'Reel', fecha:d(2), estado:'en-proceso', checklist:ck(2)}, {id:uid('e'), titulo:'2 Stories destacadas', tipo:'Story', fecha:d(5), estado:'por-hacer', checklist:ck(0)}]},
+    {id:uid('cd'), creadorId:'cp1', marcaId:'b3', plataformas:['TikTok','Instagram'], tipoPago:'presupuesto', montoTotal:9000, moneda:'USD', estadoPago:'parcial',
+      intercambioDescripcion:'', intercambioValorEstimado:0, esRecurrente:true, frecuencia:'mensual', proximoCobro:d(20),
+      fechaDeal:d(-35), contratoNombre:'', contratoVencimiento:'', notas:'',
+      entregables:[{id:uid('e'), titulo:'UGC mensual x3 videos', tipo:'UGC', fecha:d(0), estado:'en-proceso', checklist:ck(3)}]},
+    {id:uid('cd'), creadorId:'cp1', marcaId:'b2', plataformas:['Instagram'], tipoPago:'intercambio', montoTotal:0, moneda:'MXN', estadoPago:'pendiente',
+      intercambioDescripcion:'2 piezas de mobiliario para su casa (valor catálogo)', intercambioValorEstimado:6000, esRecurrente:false, frecuencia:'', proximoCobro:'',
+      fechaDeal:d(-2), contratoNombre:'', contratoVencimiento:'', notas:'Grabar en locación, coordinar horario.',
+      entregables:[{id:uid('e'), titulo:'2 Reels de showroom', tipo:'Reel', fecha:d(10), estado:'por-hacer', checklist:ck(0)}]},
+    {id:uid('cd'), creadorId:'cp2', marcaId:'b4', plataformas:['Instagram'], tipoPago:'presupuesto', montoTotal:5400, moneda:'MXN', estadoPago:'pagado',
+      intercambioDescripcion:'', intercambioValorEstimado:0, esRecurrente:false, frecuencia:'', proximoCobro:'',
+      fechaDeal:d(-50), contratoNombre:'contrato_bloom_luna.pdf', contratoVencimiento:d(-40), notas:'',
+      entregables:[{id:uid('e'), titulo:'Carrusel educativo', tipo:'Carrusel', fecha:d(-12), estado:'entregado', checklist:ck(5)}]},
+    {id:uid('cd'), creadorId:'cp2', marcaId:'b5', plataformas:['TikTok'], tipoPago:'intercambio', montoTotal:0, moneda:'MXN', estadoPago:'pagado',
+      intercambioDescripcion:'Café gratis por 6 meses + mercancía de la marca', intercambioValorEstimado:3000, esRecurrente:false, frecuencia:'', proximoCobro:'',
+      fechaDeal:d(-15), contratoNombre:'', contratoVencimiento:'', notas:'',
+      entregables:[{id:uid('e'), titulo:'1 Video unboxing', tipo:'TikTok', fecha:d(9), estado:'por-hacer', checklist:ck(1)}]},
+    {id:uid('cd'), creadorId:'cp3', marcaId:'b7', plataformas:['YouTube'], tipoPago:'presupuesto', montoTotal:12000, moneda:'MXN', estadoPago:'pendiente',
+      intercambioDescripcion:'', intercambioValorEstimado:0, esRecurrente:false, frecuencia:'', proximoCobro:'',
+      fechaDeal:d(-3), contratoNombre:'', contratoVencimiento:'', notas:'Incluir código de descuento.',
+      entregables:[{id:uid('e'), titulo:'Reseña de la app (8 min)', tipo:'Video largo', fecha:d(14), estado:'por-hacer', checklist:ck(0)}]},
+    {id:uid('cd'), creadorId:'cp3', marcaId:'b6', plataformas:['TikTok','YouTube'], tipoPago:'presupuesto', montoTotal:4000, moneda:'MXN', estadoPago:'pendiente',
+      intercambioDescripcion:'', intercambioValorEstimado:0, esRecurrente:true, frecuencia:'quincenal', proximoCobro:d(6),
+      fechaDeal:d(-9), contratoNombre:'', contratoVencimiento:'', notas:'',
+      entregables:[{id:uid('e'), titulo:'Clips de gameplay', tipo:'TikTok', fecha:d(3), estado:'en-proceso', checklist:ck(2)}]},
+  ];
+
+  const agencies = [
+    {id:'ag1', nombre:'PixelPR Talent', comisionDefault:20},
+    {id:'ag2', nombre:'Nova Creators Agency', comisionDefault:25},
+  ];
+  const talent = [
+    {id:'t1', agenciaId:'ag1', nombre:'Diego Reyes', plataformas:['YouTube','Instagram']},
+    {id:'t2', agenciaId:'ag1', nombre:'Marifer Soto', plataformas:['TikTok','Instagram']},
+    {id:'t3', agenciaId:'ag1', nombre:'Kevin Ortiz', plataformas:['Instagram']},
+    {id:'t4', agenciaId:'ag2', nombre:'Sofía Ramírez', plataformas:['Instagram','YouTube']},
+    {id:'t5', agenciaId:'ag2', nombre:'Bruno Aguilar', plataformas:['TikTok']},
+  ];
+  const agencyDeals = [
+    {id:uid('ad'), marca:'Glow Cosmetics', talentoId:'t1', agenciaId:'ag1', plataformas:['Instagram'], etapa:'produccion',
+      montoTotal:15000, moneda:'MXN', comisionPct:20, estadoPagoMarca:'pendiente', estadoPagoCreador:'pendiente',
+      contratoNombre:'contrato_glow_diego.pdf', contratoVencimiento:d(23), notas:'',
+      entregables:[{id:uid('e'), titulo:'3 Reels de unboxing', tipo:'Reel', fecha:d(2), estado:'en-proceso'}, {id:uid('e'), titulo:'2 Stories', tipo:'Story', fecha:d(5), estado:'por-hacer'}]},
+    {id:uid('ad'), marca:'Nómada Coffee', talentoId:'t2', agenciaId:'ag1', plataformas:['TikTok'], etapa:'contrato',
+      montoTotal:8200, moneda:'MXN', comisionPct:20, estadoPagoMarca:'pendiente', estadoPagoCreador:'pendiente',
+      contratoNombre:'contrato_nomada_marifer.pdf', contratoVencimiento:d(6), notas:'',
+      entregables:[{id:uid('e'), titulo:'1 Video unboxing', tipo:'TikTok', fecha:d(9), estado:'por-hacer'}]},
+    {id:uid('ad'), marca:'FitZone App', talentoId:'t3', agenciaId:'ag1', plataformas:['YouTube'], etapa:'negociacion',
+      montoTotal:12000, moneda:'MXN', comisionPct:20, estadoPagoMarca:'pendiente', estadoPagoCreador:'pendiente',
+      contratoNombre:'', contratoVencimiento:'', notas:'Falta cerrar exclusividad.',
+      entregables:[{id:uid('e'), titulo:'Reseña de la app (Reel)', tipo:'Reel', fecha:d(14), estado:'por-hacer'}]},
+    {id:uid('ad'), marca:'Bloom Skincare', talentoId:'t1', agenciaId:'ag1', plataformas:['Instagram'], etapa:'pagado',
+      montoTotal:5400, moneda:'MXN', comisionPct:20, estadoPagoMarca:'pagado', estadoPagoCreador:'pagado',
+      contratoNombre:'contrato_bloom_diego.pdf', contratoVencimiento:d(-40), notas:'',
+      entregables:[{id:uid('e'), titulo:'Carrusel educativo', tipo:'Carrusel', fecha:d(-12), estado:'entregado'}]},
+    {id:uid('ad'), marca:'Aurora Jewelry', talentoId:'t4', agenciaId:'ag2', plataformas:['Instagram'], etapa:'produccion',
+      montoTotal:11000, moneda:'MXN', comisionPct:25, estadoPagoMarca:'parcial', estadoPagoCreador:'pendiente',
+      contratoNombre:'contrato_aurora_sofia.pdf', contratoVencimiento:d(4), notas:'Cliente pide entrega adelantada.',
+      entregables:[{id:uid('e'), titulo:'Reel + Carrusel de colección', tipo:'Reel', fecha:d(1), estado:'revision'}]},
+    {id:uid('ad'), marca:'GameByte Studios', talentoId:'t5', agenciaId:'ag2', plataformas:['TikTok'], etapa:'prospecto',
+      montoTotal:7000, moneda:'MXN', comisionPct:25, estadoPagoMarca:'pendiente', estadoPagoCreador:'pendiente',
+      contratoNombre:'', contratoVencimiento:'', notas:'Primer contacto, esperando propuesta.', entregables:[]},
+  ];
+
+  DB = {creatorProfiles, creatorBrands, creatorDeals, agencies, talent, agencyDeals};
+  saveAll();
+}
+/* Nota: seedIfEmpty() ya no se ejecuta automáticamente — cada cuenta nueva de Google arranca
+   con un perfil propio vacío (ver initUserData). Se deja la función por si algún día quieres
+   un botón de "cargar datos de ejemplo". */
+
+/* ============================================================ HELPERS ============================================================ */
+function fmtMoney(n, cur){ return (MONEY_SYM[cur]||'$') + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:0, maximumFractionDigits:2}); }
+function fmtDate(iso){ if(!iso) return '—'; const dt=new Date(iso+'T00:00:00'); return dt.toLocaleDateString('es-MX',{day:'numeric', month:'short'}); }
+function daysUntil(iso){ if(!iso) return null; const today=new Date(); today.setHours(0,0,0,0); const due=new Date(iso+'T00:00:00'); return Math.round((due-today)/86400000); }
+function dueBadge(iso, entregado){
+  if(entregado) return {text:'Entregado', cls:'pill-green'};
+  const dd = daysUntil(iso);
+  if(dd===null) return {text:'Sin fecha', cls:'pill-gray'};
+  if(dd<0) return {text:`Atrasado ${Math.abs(dd)}d`, cls:'pill-red'};
+  if(dd===0) return {text:'Hoy', cls:'pill-amber'};
+  if(dd<=3) return {text:`En ${dd}d`, cls:'pill-amber'};
+  return {text:`En ${dd}d`, cls:'pill-purple'};
+}
+function pagoBadge(estado){
+  if(estado==='pagado') return {text:'Pagado', cls:'pill-green'};
+  if(estado==='parcial') return {text:'Anticipo', cls:'pill-amber'};
+  return {text:'Pendiente', cls:'pill-red'};
+}
+function etapaInfo(key){ return PIPELINE.find(e=>e.key===key) || PIPELINE[0]; }
+function estadoInfo(key){ return ESTADOS.find(e=>e.key===key) || ESTADOS[0]; }
+function hashHue(str){ let h=0; for(let i=0;i<str.length;i++){ h=str.charCodeAt(i)+((h<<5)-h);} return Math.abs(h)%360; }
+function brandColor(name){ return `hsl(${hashHue(name||'?')}, 62%, 52%)`; }
+function initials(name){ return (name||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join(''); }
+function avatarHTML(name, size){
+  const cls = size==='sm' ? 'avatar-ring sm' : size==='lg' ? 'avatar-ring lg' : 'avatar-ring';
+  return `<div class="${cls}"><div class="avatar"><div class="avatar-inner" style="background:${brandColor(name)}">${initials(name)}</div></div></div>`;
+}
+function platChipsHTML(arr){ return (arr||[]).map(p=>`<span class="plat-chip">${PLAT_ICON[p]||''} ${p}</span>`).join(''); }
+function toast(msg){ const c=document.getElementById('toast-container'); const t=document.createElement('div'); t.className='toast'; t.textContent=msg; c.appendChild(t); setTimeout(()=>t.remove(),2600); }
+
+function getCreatorProfile(id){ return DB.creatorProfiles.find(c=>c.id===id); }
+function getBrand(id){ return DB.creatorBrands.find(b=>b.id===id); }
+function getAgency(id){ return DB.agencies.find(a=>a.id===id); }
+function getTalent(id){ return DB.talent.find(t=>t.id===id); }
+function findCreatorDeal(id){ return DB.creatorDeals.find(d=>d.id===id); }
+function findAgencyDeal(id){ return DB.agencyDeals.find(d=>d.id===id); }
+function findBrand(id){ return DB.creatorBrands.find(b=>b.id===id); }
+
+function creatorDealsFor(creadorId){ return DB.creatorDeals.filter(d=>d.creadorId===creadorId); }
+function brandsFor(creadorId){ return DB.creatorBrands.filter(b=>b.creadorId===creadorId); }
+function talentForAgency(agenciaId){ return DB.talent.filter(t=>t.agenciaId===agenciaId); }
+function agencyDealsFor(agenciaId){ return DB.agencyDeals.filter(d=>d.agenciaId===agenciaId); }
+
+function flattenCreatorEntregables(deals){
+  const out = [];
+  deals.forEach(deal=>{ (deal.entregables||[]).forEach(e=>{ out.push({...e, dealId:deal.id, marca: getBrand(deal.marcaId) ? getBrand(deal.marcaId).nombre : '(sin marca)', plataformas:deal.plataformas, tipoPago:deal.tipoPago}); }); });
+  return out;
+}
+function flattenAgencyEntregables(deals){
+  const out = [];
+  deals.forEach(deal=>{ (deal.entregables||[]).forEach(e=>{ out.push({...e, dealId:deal.id, marca:deal.marca, talentoId:deal.talentoId, plataformas:deal.plataformas}); }); });
+  return out;
+}
+function agencyDealMoney(deal){
+  const montoAgencia = Math.round(deal.montoTotal * (deal.comisionPct||0) / 100 * 100)/100;
+  const montoCreador = Math.round((deal.montoTotal - montoAgencia)*100)/100;
+  return {montoAgencia, montoCreador};
+}
+function monthlyNormalized(deal){
+  if(!deal.esRecurrente) return 0;
+  const factor = deal.frecuencia==='semanal' ? 4.33 : deal.frecuencia==='quincenal' ? 2 : 1;
+  return deal.montoTotal * factor;
+}
+function checklistProgress(entregable){
+  const list = entregable.checklist || [];
+  const done = list.filter(i=>i.hecho).length;
+  return {done, total:list.length};
+}
+
+/* ============================================================ CSV HELPERS ============================================================ */
+function csvEscape(val){
+  const s = val===null || val===undefined ? '' : String(val);
+  if(/[",\n;]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+function toCSV(rows, headers){
+  const lines = [headers.join(',')];
+  rows.forEach(r=>{ lines.push(headers.map(h=>csvEscape(r[h])).join(',')); });
+  return lines.join('\r\n');
+}
+function detectDelimiter(text){
+  const firstLine = (text.split(/\r\n|\n|\r/)[0]) || '';
+  const commas = (firstLine.match(/,/g)||[]).length;
+  const semis = (firstLine.match(/;/g)||[]).length;
+  return semis > commas ? ';' : ',';
+}
+function parseCSV(text, delimiter){
+  delimiter = delimiter || ',';
+  if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+  const rows = []; let row = []; let field = ''; let inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=false; } }
+      else field += c;
+    } else {
+      if(c==='"'){ inQuotes = true; }
+      else if(c===delimiter){ row.push(field); field=''; }
+      else if(c==='\n' || c==='\r'){
+        if(c==='\r' && text[i+1]==='\n') i++;
+        row.push(field); field=''; rows.push(row); row=[];
+      } else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  while(rows.length && rows[rows.length-1].every(f=>f==='')) rows.pop();
+  return rows;
+}
+function downloadCSV(filename, csvString){
+  const blob = new Blob(['﻿'+csvString], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function downloadContactsTemplate(){
+  const example = {Marca:'Glow Cosmetics', Contacto:'Wendy Paredes', Email:'wendy@marca.com', Instagram:'@glowcosmetics', Telefono:'55 1234 5678', AgenciaRepresentante:'', InstagramAgencia:'', Notas:'Fila de ejemplo, bórrala antes de importar'};
+  downloadCSV('plantilla_contactos_creatly.csv', toCSV([example], CONTACT_HEADERS));
+}
+function downloadDealsTemplate(){
+  const example = {Marca:'Glow Cosmetics', Plataformas:'Instagram;TikTok', TipoPago:'presupuesto', Monto:'15000', Moneda:'MXN', DescripcionIntercambio:'', ValorEstimadoIntercambio:'', EstadoPago:'pendiente', FechaDelDeal:todayISO(), EsRecurrente:'no', Frecuencia:'', ProximoCobro:'', Notas:'Fila de ejemplo, bórrala antes de importar'};
+  downloadCSV('plantilla_deals_creatly.csv', toCSV([example], DEAL_HEADERS));
+}
+function exportContacts(){
+  const rows = brandsFor(viewingCreatorId).map(b=>({Marca:b.nombre, Contacto:b.contactoNombre||'', Email:b.contactoEmail||'', Instagram:b.instagram||'', Telefono:b.contactoTelefono||'', AgenciaRepresentante:b.agenciaRepNombre||'', InstagramAgencia:b.agenciaRepUsername||'', Notas:b.notas||''}));
+  downloadCSV('mis_contactos_creatly.csv', toCSV(rows, CONTACT_HEADERS));
+  toast('Contactos exportados ⬇️');
+}
+function exportDeals(){
+  const rows = creatorDealsFor(viewingCreatorId).map(dl=>{ const b=getBrand(dl.marcaId);
+    return {Marca:b?b.nombre:'', Plataformas:(dl.plataformas||[]).join(';'), TipoPago:dl.tipoPago||'presupuesto', Monto:dl.montoTotal||0, Moneda:dl.moneda||'MXN', DescripcionIntercambio:dl.intercambioDescripcion||'', ValorEstimadoIntercambio:dl.intercambioValorEstimado||'', EstadoPago:dl.estadoPago||'pendiente', FechaDelDeal:dl.fechaDeal||'', EsRecurrente: dl.esRecurrente?'si':'no', Frecuencia:dl.frecuencia||'', ProximoCobro:dl.proximoCobro||'', Notas:dl.notas||''};
+  });
+  downloadCSV('mis_deals_creatly.csv', toCSV(rows, DEAL_HEADERS));
+  toast('Deals exportados ⬇️');
+}
+function importContactsFile(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const text = reader.result;
+    const rows = parseCSV(text, detectDelimiter(text));
+    if(!rows.length){ toast('Archivo vacío'); return; }
+    const headers = rows[0].map(h=>(h||'').trim());
+    const idx = {}; CONTACT_HEADERS.forEach(h=>{ idx[h] = headers.findIndex(x=>x.toLowerCase()===h.toLowerCase()); });
+    let count = 0;
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i]; if(!r || !r.length) continue;
+      const marca = idx.Marca>-1 ? (r[idx.Marca]||'').trim() : '';
+      if(!marca) continue;
+      DB.creatorBrands.push({
+        id:uid('b'), creadorId:viewingCreatorId, nombre:marca,
+        contactoNombre: idx.Contacto>-1 ? (r[idx.Contacto]||'').trim() : '',
+        contactoEmail: idx.Email>-1 ? (r[idx.Email]||'').trim() : '',
+        instagram: idx.Instagram>-1 ? (r[idx.Instagram]||'').trim() : '',
+        contactoTelefono: idx.Telefono>-1 ? (r[idx.Telefono]||'').trim() : '',
+        agenciaRepNombre: idx.AgenciaRepresentante>-1 ? (r[idx.AgenciaRepresentante]||'').trim() : '',
+        agenciaRepUsername: idx.InstagramAgencia>-1 ? (r[idx.InstagramAgencia]||'').trim() : '',
+        notas: idx.Notas>-1 ? (r[idx.Notas]||'').trim() : '',
+      });
+      count++;
+    }
+    saveAll(); renderCurrent(); toast(`${count} contacto(s) importado(s) 🎉`);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+function importDealsFile(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const text = reader.result;
+    const rows = parseCSV(text, detectDelimiter(text));
+    if(!rows.length){ toast('Archivo vacío'); return; }
+    const headers = rows[0].map(h=>(h||'').trim());
+    const idx = {}; DEAL_HEADERS.forEach(h=>{ idx[h] = headers.findIndex(x=>x.toLowerCase()===h.toLowerCase()); });
+    let count = 0;
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i]; if(!r || !r.length) continue;
+      const marcaNombre = idx.Marca>-1 ? (r[idx.Marca]||'').trim() : '';
+      if(!marcaNombre) continue;
+      let brand = brandsFor(viewingCreatorId).find(b=>b.nombre.toLowerCase()===marcaNombre.toLowerCase());
+      if(!brand){ brand = {id:uid('b'), creadorId:viewingCreatorId, nombre:marcaNombre, contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''}; DB.creatorBrands.push(brand); }
+      const tipoRaw = (idx.TipoPago>-1 ? (r[idx.TipoPago]||'') : '').trim().toLowerCase();
+      const tipoPago = tipoRaw.includes('intercambio') ? 'intercambio' : 'presupuesto';
+      const estadoRaw = (idx.EstadoPago>-1 ? (r[idx.EstadoPago]||'') : '').trim().toLowerCase();
+      const estadoPago = ['pagado','parcial','pendiente'].includes(estadoRaw) ? estadoRaw : 'pendiente';
+      const recRaw = (idx.EsRecurrente>-1 ? (r[idx.EsRecurrente]||'') : '').trim().toLowerCase();
+      const esRecurrente = ['si','sí','yes','true','1'].includes(recRaw);
+      const plataformasRaw = (idx.Plataformas>-1 ? (r[idx.Plataformas]||'') : '').trim();
+      const plataformas = plataformasRaw ? plataformasRaw.split(/[;,]/).map(s=>s.trim()).filter(Boolean) : [];
+      DB.creatorDeals.push({
+        id: uid('cd'), creadorId: viewingCreatorId, marcaId: brand.id, plataformas,
+        tipoPago,
+        montoTotal: tipoPago==='presupuesto' ? (Number(idx.Monto>-1?r[idx.Monto]:0)||0) : 0,
+        moneda: (idx.Moneda>-1 ? (r[idx.Moneda]||'') : '') || 'MXN',
+        estadoPago,
+        intercambioDescripcion: tipoPago==='intercambio' ? (idx.DescripcionIntercambio>-1?(r[idx.DescripcionIntercambio]||''):'') : '',
+        intercambioValorEstimado: tipoPago==='intercambio' ? (Number(idx.ValorEstimadoIntercambio>-1?r[idx.ValorEstimadoIntercambio]:0)||0) : 0,
+        esRecurrente, frecuencia: esRecurrente ? ((idx.Frecuencia>-1?r[idx.Frecuencia]:'')||'mensual') : '',
+        proximoCobro: esRecurrente ? (idx.ProximoCobro>-1?(r[idx.ProximoCobro]||''):'') : '',
+        fechaDeal: (idx.FechaDelDeal>-1 ? (r[idx.FechaDelDeal]||'') : '') || todayISO(),
+        contratoNombre:'', contratoVencimiento:'',
+        notas: idx.Notas>-1 ? (r[idx.Notas]||'') : '',
+        entregables: [],
+      });
+      count++;
+    }
+    saveAll(); renderCurrent(); toast(`${count} deal(s) importado(s) 🎉`);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+/* ============================================================ NAV CONFIG ============================================================ */
+const CREATOR_TABS = [
+  {key:'dashboard', icon:'🏠', label:'Dashboard'},
+  {key:'board', icon:'🗂️', label:'Tablero'},
+  {key:'deals', icon:'🤝', label:'Deals'},
+  {key:'contacts', icon:'📇', label:'Contactos'},
+  {key:'calendar', icon:'📅', label:'Calendario'},
+  {key:'finance', icon:'💰', label:'Finanzas'},
+  {key:'plan', icon:'⭐', label:'Mi plan'},
+];
+const AGENCY_TABS = [
+  {key:'dashboard', icon:'🏠', label:'Dashboard'},
+  {key:'roster', icon:'🎤', label:'Roster'},
+  {key:'pipeline', icon:'🔀', label:'Pipeline'},
+  {key:'contracts', icon:'📄', label:'Contratos'},
+  {key:'calendar', icon:'📅', label:'Calendario'},
+  {key:'finance', icon:'💰', label:'Finanzas'},
+  {key:'plan', icon:'⭐', label:'Plan de agencia'},
+];
+const CREATOR_TAB_META = {
+  dashboard:{title:'Dashboard', sub:'Tu resumen de un vistazo.'},
+  board:{title:'Tablero', sub:'Arrastra tus entregables entre estados.'},
+  deals:{title:'Deals', sub:'Todos tus acuerdos con marcas.', search:true},
+  contacts:{title:'Contactos', sub:'Tu directorio de marcas y personas de contacto.'},
+  calendar:{title:'Calendario', sub:'Nunca más se te pasa una fecha de entrega.'},
+  finance:{title:'Finanzas', sub:'Cuánto has cobrado y cuánto te deben.'},
+  plan:{title:'Mi plan', sub:'Tu suscripción en Creatly.'},
+};
+const AGENCY_TAB_META = {
+  dashboard:{title:'Dashboard', sub:'Tu resumen de un vistazo.'},
+  roster:{title:'Roster', sub:'Tu talento representado.'},
+  pipeline:{title:'Pipeline de deals', sub:'De prospecto a pagado, arrastra para avanzar.'},
+  contracts:{title:'Contratos', sub:'Todo firmado, nada vencido sin avisarte.'},
+  calendar:{title:'Calendario', sub:'Entregas de todo tu roster.'},
+  finance:{title:'Finanzas', sub:'Comisión ganada y lo que le corresponde a cada talento.'},
+  plan:{title:'Plan de agencia', sub:'Tu suscripción en Creatly.'},
+};
+
+function renderNav(){
+  const tabs = workspace==='creador' ? CREATOR_TABS : AGENCY_TABS;
+  document.getElementById('nav').innerHTML = tabs.map(t=>`<div class="nav-item ${t.key===currentTab?'active':''}" data-tab="${t.key}"><span class="nav-icon">${t.icon}</span><span class="label">${t.label}</span></div>`).join('');
+  document.querySelectorAll('.nav-item').forEach(item=>{ item.addEventListener('click', ()=>{ currentTab = item.dataset.tab; renderCurrent(); }); });
+}
+function updateProfileButtonsVisibility(){
+  const show = workspace==='creador';
+  document.getElementById('btnNewProfile').style.display = show ? 'block' : 'none';
+  document.getElementById('btnEditProfile').style.display = show ? 'flex' : 'none';
+}
+function renderPersonaSelect(){
+  const label = document.getElementById('personaLabel'); const sel = document.getElementById('personaSelect');
+  if(workspace==='creador'){
+    label.textContent = 'Viendo como';
+    sel.innerHTML = DB.creatorProfiles.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+    if(!viewingCreatorId || !getCreatorProfile(viewingCreatorId)) viewingCreatorId = DB.creatorProfiles[0].id;
+    sel.value = viewingCreatorId;
+  } else {
+    label.textContent = 'Agencia activa';
+    sel.innerHTML = DB.agencies.map(a=>`<option value="${a.id}">${a.nombre}</option>`).join('');
+    if(!viewingAgencyId || !getAgency(viewingAgencyId)) viewingAgencyId = DB.agencies[0].id;
+    sel.value = viewingAgencyId;
+  }
+  sel.onchange = e=>{ if(workspace==='creador') viewingCreatorId = e.target.value; else viewingAgencyId = e.target.value; renderContextBanner(); renderCurrent(); };
+  updateProfileButtonsVisibility();
+}
+function renderContextBanner(){
+  const el = document.getElementById('contextBanner');
+  if(workspace==='creador'){
+    const c = getCreatorProfile(viewingCreatorId);
+    const tag = c.nicho ? `🚀 ${c.nicho}` : '🚀 Cuenta independiente';
+    el.innerHTML = `${avatarHTML(c.nombre,'sm')}<span>Viendo el panel personal de <b>${c.nombre}</b></span><span class="tag">${tag}</span>`;
+  } else {
+    const ag = getAgency(viewingAgencyId); const n = talentForAgency(ag.id).length;
+    el.innerHTML = `${avatarHTML(ag.nombre,'sm')}<span>Panel de agencia de <b>${ag.nombre}</b></span><span class="tag">🎤 ${n} representado${n===1?'':'s'}</span>`;
+  }
+}
+
+/* ============================================================ CREATOR VIEWS ============================================================ */
+function renderCreatorDashboard(){
+  const deals = creatorDealsFor(viewingCreatorId);
+  const entregables = flattenCreatorEntregables(deals);
+  const cash = deals.filter(dl=>dl.tipoPago!=='intercambio');
+  const barter = deals.filter(dl=>dl.tipoPago==='intercambio');
+  const activos = deals.filter(dl=> (dl.entregables||[]).some(e=>e.estado!=='entregado') || dl.esRecurrente);
+  const porCobrar = cash.reduce((s,dl)=> s + (dl.estadoPago!=='pagado' ? dl.montoTotal*(dl.estadoPago==='parcial'?0.5:1) : 0), 0);
+  const ganado = cash.reduce((s,dl)=> s + (dl.estadoPago==='pagado' ? dl.montoTotal : 0), 0);
+  const mrr = cash.reduce((s,dl)=> s + monthlyNormalized(dl), 0);
+  const valorIntercambios = barter.reduce((s,dl)=>s+(dl.intercambioValorEstimado||0),0);
+  const prox7 = entregables.filter(e=>e.estado!=='entregado' && daysUntil(e.fecha)!==null && daysUntil(e.fecha)<=7 && daysUntil(e.fecha)>=0).length;
+  const upcoming = entregables.filter(e=>e.estado!=='entregado').sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).slice(0,6);
+
+  const byBrand = {};
+  cash.forEach(dl=>{ const b = getBrand(dl.marcaId); const name = b?b.nombre:'(sin marca)'; byBrand[name]=(byBrand[name]||0)+dl.montoTotal; });
+  const maxBrand = Math.max(1, ...Object.values(byBrand));
+  const brandRows = Object.entries(byBrand).sort((a,b)=>b[1]-a[1]).slice(0,6);
+
+  document.getElementById('view-root').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card c1"><div class="icon">🤝</div><div class="value">${activos.length}</div><div class="label">Deals activos</div></div>
+      <div class="stat-card c2"><div class="icon">💸</div><div class="value">${fmtMoney(porCobrar,'MXN')}</div><div class="label">Por cobrar (aprox.)</div></div>
+      <div class="stat-card c3"><div class="icon">⏰</div><div class="value">${prox7}</div><div class="label">Entregas en 7 días</div></div>
+      <div class="stat-card c4"><div class="icon">✅</div><div class="value">${fmtMoney(ganado,'MXN')}</div><div class="label">Cobrado a la fecha</div></div>
+      <div class="stat-card c5"><div class="icon">🔁</div><div class="value">${fmtMoney(mrr,'MXN')}</div><div class="label">Ingreso recurrente / mes</div></div>
+      <div class="stat-card c6"><div class="icon">🎁</div><div class="value">${fmtMoney(valorIntercambios,'MXN')}</div><div class="label">Valor en intercambios</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="panel"><h3>📅 Próximas entregas</h3>
+        ${upcoming.length ? upcoming.map(e=>{ const b=dueBadge(e.fecha,e.estado==='entregado'); const cp=checklistProgress(e);
+          return `<div class="up-row">${avatarHTML(e.marca,'sm')}<div class="up-info"><div class="up-title">${e.titulo}${e.tipoPago==='intercambio'?' 🎁':''}</div><div class="up-sub">${e.marca} · ${fmtDate(e.fecha)}${cp.total?` · ☑ ${cp.done}/${cp.total}`:''}</div></div><span class="pill ${b.cls}">${b.text}</span></div>`;
+        }).join('') : `<div class="empty-state"><div class="big">🎉</div>Sin entregas pendientes.</div>`}
+      </div>
+      <div class="panel"><h3>💰 Ingresos por marca (efectivo)</h3>
+        ${brandRows.length ? brandRows.map(([marca,total])=>`<div class="brand-row"><div class="name">${marca}</div><div class="brand-bar-bg"><div class="brand-bar-fill" style="width:${(total/maxBrand*100).toFixed(0)}%"></div></div><div class="amt">${fmtMoney(total,'MXN')}</div></div>`).join('') : `<div class="empty-state">Aún no hay datos.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderCreatorBoard(){
+  const deals = creatorDealsFor(viewingCreatorId);
+  const entregables = flattenCreatorEntregables(deals);
+  document.getElementById('view-root').innerHTML = `<div class="board">
+    ${ESTADOS.map(col=>{
+      const items = entregables.filter(e=>e.estado===col.key);
+      return `<div class="board-col" data-status="${col.key}"><div class="board-col-head"><span class="dot" style="background:${col.color}"></span>${col.label}<span class="count-badge">${items.length}</span></div>
+      ${items.length ? items.map(e=>creatorEntregableCardHTML(e)).join('') : `<div class="empty-col">Sin entregables aquí</div>`}</div>`;
+    }).join('')}
+  </div>`;
+  attachCreatorEntregableDrag();
+}
+function creatorEntregableCardHTML(e){
+  const db = dueBadge(e.fecha, e.estado==='entregado'); const cp = checklistProgress(e);
+  return `<div class="card-proj" draggable="true" data-eid="${e.id}" data-dealid="${e.dealId}" data-action="edit-creator-deal" data-id="${e.dealId}">
+    <div class="card-top">${avatarHTML(e.marca,'sm')}<div class="names"><div class="marca">${e.marca}${e.tipoPago==='intercambio'?' 🎁':''}</div><div class="tipo">${platChipsHTML(e.plataformas)}</div></div></div>
+    <div class="card-title">${e.titulo}</div>
+    <div class="card-bottom"><span class="pill ${db.cls}">${db.text}</span></div>
+    ${cp.total ? `<div class="mini-progress">☑ ${cp.done}/${cp.total} pasos<div class="mini-progress-bar"><div class="mini-progress-fill" style="width:${(cp.done/cp.total*100).toFixed(0)}%"></div></div></div>` : ''}
+  </div>`;
+}
+function attachCreatorEntregableDrag(){
+  document.querySelectorAll('.card-proj[draggable="true"]').forEach(card=>{
+    card.addEventListener('dragstart', ev=>{ ev.stopPropagation(); ev.dataTransfer.setData('text/plain', JSON.stringify({eid:card.dataset.eid, dealId:card.dataset.dealid})); setTimeout(()=>card.style.opacity='0.4',0); });
+    card.addEventListener('dragend', ()=>{ card.style.opacity='1'; });
+  });
+  document.querySelectorAll('.board-col').forEach(col=>{
+    col.addEventListener('dragover', ev=>{ ev.preventDefault(); col.classList.add('dragover'); });
+    col.addEventListener('dragleave', ()=>col.classList.remove('dragover'));
+    col.addEventListener('drop', ev=>{
+      ev.preventDefault(); col.classList.remove('dragover');
+      const {eid, dealId} = JSON.parse(ev.dataTransfer.getData('text/plain'));
+      const dl = findCreatorDeal(dealId); const ent = dl && dl.entregables.find(x=>x.id===eid);
+      if(ent){ ent.estado = col.dataset.status; saveAll(); renderCreatorBoard(); toast(`Movido a "${estadoInfo(col.dataset.status).label}"`); }
+    });
+  });
+}
+
+function renderCreatorDeals(){
+  let deals = creatorDealsFor(viewingCreatorId);
+  if(filters.search){ const s=filters.search.toLowerCase(); deals = deals.filter(dl=>{ const b=getBrand(dl.marcaId); return (b&&b.nombre.toLowerCase().includes(s)) || (dl.entregables||[]).some(e=>e.titulo.toLowerCase().includes(s)); }); }
+  deals = deals.slice().sort((a,b)=>{ const fa=(a.entregables[0]||{}).fecha||'9999'; const fb=(b.entregables[0]||{}).fecha||'9999'; return fa.localeCompare(fb); });
+
+  const toolbarHTML = `<div class="toolbar-row">
+    <button class="btn-plain" id="btnDealsTemplate">⬇️ Plantilla</button>
+    <button class="btn-plain" id="btnDealsImport">⬆️ Importar CSV</button>
+    <input type="file" id="dealsFileInput" accept=".csv" class="hidden">
+    <button class="btn-plain" id="btnDealsExport">⬇️ Exportar mis deals</button>
+  </div>`;
+
+  document.getElementById('view-root').innerHTML = toolbarHTML + `
+    <div class="panel" style="padding:6px 20px 12px 20px;">
+      ${deals.length ? `<table>
+        <thead><tr><th>Marca</th><th>Plataformas</th><th>Entregables</th><th>Monto / Intercambio</th><th>Pago</th><th>Frecuencia</th><th></th></tr></thead>
+        <tbody>
+        ${deals.map(dl=>{ const b=getBrand(dl.marcaId); const pb=pagoBadge(dl.estadoPago);
+          return `<tr>
+            <td><div style="display:flex; align-items:center; gap:9px;">${avatarHTML(b?b.nombre:'?','sm')}<span style="font-weight:700;">${b?b.nombre:'(sin marca)'}</span></div></td>
+            <td>${platChipsHTML(dl.plataformas)}</td>
+            <td>${(dl.entregables||[]).length} entregable${(dl.entregables||[]).length===1?'':'s'}</td>
+            <td>${dl.tipoPago==='intercambio' ? `<span class="pill pill-teal">🎁 Intercambio${dl.intercambioValorEstimado?` (~${fmtMoney(dl.intercambioValorEstimado,dl.moneda)})`:''}</span>` : `<span style="font-weight:700;">${fmtMoney(dl.montoTotal,dl.moneda)}</span>`}</td>
+            <td><span class="pill ${pb.cls}">${pb.text}</span></td>
+            <td>${dl.esRecurrente ? `<span class="pill pill-teal">🔁 ${dl.frecuencia} · ${fmtDate(dl.proximoCobro)}</span>` : `<span class="pill pill-gray">Único</span>`}</td>
+            <td><div class="row-actions"><button class="icon-btn" data-action="edit-creator-deal" data-id="${dl.id}" title="Editar">✏️</button><button class="icon-btn" data-action="delete-creator-deal" data-id="${dl.id}" title="Eliminar">🗑️</button></div></td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table>` : `<div class="empty-state"><div class="big">📭</div>No hay deals que coincidan.</div>`}
+    </div>
+  `;
+  document.getElementById('btnDealsTemplate').addEventListener('click', downloadDealsTemplate);
+  document.getElementById('btnDealsExport').addEventListener('click', exportDeals);
+  document.getElementById('btnDealsImport').addEventListener('click', ()=>document.getElementById('dealsFileInput').click());
+  document.getElementById('dealsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importDealsFile(f); ev.target.value=''; });
+}
+
+function renderCreatorContacts(){
+  const brands = brandsFor(viewingCreatorId);
+  const toolbarHTML = `<div class="toolbar-row">
+    <button class="btn-plain" id="btnContactsTemplate">⬇️ Plantilla</button>
+    <button class="btn-plain" id="btnContactsImport">⬆️ Importar CSV</button>
+    <input type="file" id="contactsFileInput" accept=".csv" class="hidden">
+    <button class="btn-plain" id="btnContactsExport">⬇️ Exportar mis contactos</button>
+  </div>`;
+  document.getElementById('view-root').innerHTML = toolbarHTML + `<div class="roster-grid">
+    ${brands.map(b=>{
+      const deals = DB.creatorDeals.filter(dl=>dl.marcaId===b.id);
+      const total = deals.filter(dl=>dl.tipoPago!=='intercambio').reduce((s,dl)=>s+dl.montoTotal,0);
+      return `<div class="roster-card" data-action="edit-brand" data-id="${b.id}">
+        <div class="roster-top">${avatarHTML(b.nombre,'lg')}<div><div class="roster-name">${b.nombre}</div><div class="roster-plats">${b.contactoNombre || 'Sin contacto guardado'}</div></div></div>
+        <div class="roster-stats">
+          <span class="pill pill-purple">${deals.length} deal${deals.length===1?'':'s'}</span>
+          <span class="pill pill-green">${fmtMoney(total,'MXN')} facturado</span>
+        </div>
+        ${b.contactoEmail ? `<div class="contact-meta">✉️ ${b.contactoEmail}</div>` : ''}
+        ${b.instagram ? `<div class="contact-meta">📸 ${b.instagram}</div>` : ''}
+        ${b.contactoTelefono ? `<div class="contact-meta">📞 ${b.contactoTelefono}</div>` : ''}
+        ${b.agenciaRepNombre ? `<div class="contact-agency-tag">🏢 ${b.agenciaRepNombre}${b.agenciaRepUsername?' · '+b.agenciaRepUsername:''}</div>` : ''}
+      </div>`;
+    }).join('')}
+    <div class="roster-add-card" id="btnAddBrand"><div style="font-size:26px;">＋</div>Nuevo contacto</div>
+  </div>`;
+  document.getElementById('btnAddBrand').addEventListener('click', ()=>openBrandModal(null));
+  document.getElementById('btnContactsTemplate').addEventListener('click', downloadContactsTemplate);
+  document.getElementById('btnContactsExport').addEventListener('click', exportContacts);
+  document.getElementById('btnContactsImport').addEventListener('click', ()=>document.getElementById('contactsFileInput').click());
+  document.getElementById('contactsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importContactsFile(f); ev.target.value=''; });
+}
+
+function renderCreatorFinance(){
+  let deals = creatorDealsFor(viewingCreatorId);
+  if(financeDateFrom) deals = deals.filter(dl => (dl.fechaDeal||'') >= financeDateFrom);
+  if(financeDateTo) deals = deals.filter(dl => (dl.fechaDeal||'') <= financeDateTo);
+  const cash = deals.filter(dl=>dl.tipoPago!=='intercambio');
+  const barter = deals.filter(dl=>dl.tipoPago==='intercambio');
+
+  const filterBarHTML = `
+    <div class="fin-filter-bar">
+      <div class="subtab-toggle">
+        <button class="subtab-btn ${financeSubTab==='general'?'active':''}" data-finsub="general">💰 General</button>
+        <button class="subtab-btn ${financeSubTab==='intercambios'?'active':''}" data-finsub="intercambios">🎁 Solo intercambios</button>
+      </div>
+      <div class="datefield"><label>Desde</label><input type="date" id="finFrom" value="${financeDateFrom}"></div>
+      <div class="datefield"><label>Hasta</label><input type="date" id="finTo" value="${financeDateTo}"></div>
+      <button class="btn-plain" id="finClear">Limpiar filtro</button>
+    </div>
+  `;
+
+  let bodyHTML = '';
+  if(financeSubTab === 'intercambios'){
+    const totalValor = barter.reduce((s,dl)=>s+(dl.intercambioValorEstimado||0),0);
+    bodyHTML = `
+      <div class="fin-top" style="grid-template-columns:repeat(2,1fr);">
+        <div class="fin-big"><div class="label">🎁 Deals de intercambio</div><div class="value">${barter.length}</div></div>
+        <div class="fin-big"><div class="label">💎 Valor estimado total</div><div class="value" style="color:var(--teal)">${fmtMoney(totalValor,'MXN')}</div></div>
+      </div>
+      <div class="panel"><h3>Detalle de intercambios</h3>
+        ${barter.length ? `<table><thead><tr><th>Marca</th><th>Qué te dieron</th><th>Valor estimado</th><th>Fecha del deal</th></tr></thead><tbody>
+          ${barter.map(dl=>{ const b=getBrand(dl.marcaId);
+            return `<tr><td style="font-weight:700;">${b?b.nombre:'(sin marca)'}</td><td>${dl.intercambioDescripcion||'—'}</td><td>${dl.intercambioValorEstimado?fmtMoney(dl.intercambioValorEstimado,dl.moneda):'—'}</td><td>${fmtDate(dl.fechaDeal)}</td></tr>`;
+          }).join('')}
+        </tbody></table>` : `<div class="empty-state"><div class="big">🎁</div>No hay deals de intercambio en este rango.</div>`}
+      </div>
+    `;
+  } else {
+    const total = cash.reduce((s,dl)=>s+dl.montoTotal,0);
+    const cobrado = cash.reduce((s,dl)=> s + (dl.estadoPago==='pagado' ? dl.montoTotal : 0), 0);
+    const pendiente = total - cobrado;
+    const mrr = cash.reduce((s,dl)=>s+monthlyNormalized(dl),0);
+    bodyHTML = `
+      <div class="fin-top">
+        <div class="fin-big"><div class="label">💵 Total facturado</div><div class="value">${fmtMoney(total,'MXN')}</div></div>
+        <div class="fin-big"><div class="label">✅ Cobrado</div><div class="value" style="color:var(--green)">${fmtMoney(cobrado,'MXN')}</div></div>
+        <div class="fin-big"><div class="label">⏳ Pendiente</div><div class="value" style="color:var(--red)">${fmtMoney(pendiente,'MXN')}</div></div>
+        <div class="fin-big"><div class="label">🔁 Recurrente / mes</div><div class="value" style="color:var(--teal)">${fmtMoney(mrr,'MXN')}</div></div>
+      </div>
+      <div class="panel"><h3>Detalle por deal</h3>
+        ${cash.length ? `<table><thead><tr><th>Marca</th><th>Monto</th><th>Pago</th><th>Tipo</th><th>Fecha del deal</th></tr></thead><tbody>
+          ${cash.map(dl=>{ const b=getBrand(dl.marcaId); const pb=pagoBadge(dl.estadoPago);
+            return `<tr><td style="font-weight:700;">${b?b.nombre:'(sin marca)'}</td><td>${fmtMoney(dl.montoTotal,dl.moneda)}</td><td><span class="pill ${pb.cls}">${pb.text}</span></td><td>${dl.esRecurrente?'🔁 Retainer':'Único'}</td><td>${fmtDate(dl.fechaDeal)}</td></tr>`;
+          }).join('')}
+        </tbody></table>` : `<div class="empty-state">Sin datos en este rango.</div>`}
+      </div>
+    `;
+  }
+  document.getElementById('view-root').innerHTML = filterBarHTML + bodyHTML;
+  document.getElementById('finFrom').addEventListener('change', e=>{ financeDateFrom = e.target.value; renderCreatorFinance(); });
+  document.getElementById('finTo').addEventListener('change', e=>{ financeDateTo = e.target.value; renderCreatorFinance(); });
+  document.getElementById('finClear').addEventListener('click', ()=>{ financeDateFrom=''; financeDateTo=''; renderCreatorFinance(); });
+  document.querySelectorAll('.subtab-btn').forEach(btn=>btn.addEventListener('click', ()=>{ financeSubTab = btn.dataset.finsub; renderCreatorFinance(); }));
+}
+
+function renderCreatorPlan(){
+  const c = getCreatorProfile(viewingCreatorId);
+  const deals = creatorDealsFor(viewingCreatorId); const brands = brandsFor(viewingCreatorId);
+  document.getElementById('view-root').innerHTML = `
+    <div class="plan-wrap">
+      <div class="plan-card">
+        <div class="plan-label">Plan Creador</div>
+        <div class="plan-price">$${CREATOR_MONTHLY_PRICE} <small>USD / mes</small></div>
+        <ul>
+          <li>✅ Deals y entregables ilimitados</li>
+          <li>✅ Tablero, calendario y finanzas</li>
+          <li>✅ CRM de contactos por marca</li>
+          <li>✅ Checklist interno, retainers e intercambios</li>
+          <li>✅ Importar/exportar tus datos en CSV</li>
+        </ul>
+        <div class="plan-note">Precio de ejemplo para este prototipo — ajustable antes de lanzar.</div>
+      </div>
+      <div class="plan-breakdown">
+        <h3 style="margin-bottom:14px;">Tu situación</h3>
+        <div class="pb-row"><span>Cuenta</span><b>${c.nombre}</b></div>
+        <div class="pb-row"><span>Nicho</span><b>${c.nicho||'—'}</b></div>
+        <div class="pb-row"><span>Email de contacto</span><b>${c.email||'—'}</b></div>
+        <div class="pb-row"><span>Deals activos</span><b>${deals.length}</b></div>
+        <div class="pb-row"><span>Marcas en tu CRM</span><b>${brands.length}</b></div>
+        <div class="pb-total"><span class="t-label">Tu costo mensual en Creatly</span><span class="t-value">$${CREATOR_MONTHLY_PRICE} USD</span></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:18px;"><h3>💵 Tu tarifa base de referencia</h3>
+      ${(c.rateCard&&c.rateCard.length) ? c.rateCard.map(r=>`<div class="pb-row"><span>${r.tipo}</span><b>${fmtMoney(r.monto,'MXN')}</b></div>`).join('') : `<div class="empty-state">Aún no has definido tarifas. Edítalas desde tu perfil (✏️).</div>`}
+    </div>
+  `;
+}
+
+/* ============================================================ AGENCY VIEWS (sin cambios de fondo) ============================================================ */
+function renderAgencyDashboard(){
+  const roster = talentForAgency(viewingAgencyId); const deals = agencyDealsFor(viewingAgencyId);
+  const activos = deals.filter(dl=>dl.etapa!=='pagado');
+  const porCobrar = deals.reduce((s,dl)=> s + (dl.estadoPagoMarca!=='pagado' ? dl.montoTotal*(dl.estadoPagoMarca==='parcial'?0.5:1) : 0), 0);
+  const vencenPronto = deals.filter(dl=>{ const dd=daysUntil(dl.contratoVencimiento); return dd!==null && dd>=0 && dd<=30; }).length;
+  const entregables = flattenAgencyEntregables(deals);
+  const upcoming = entregables.filter(e=>e.estado!=='entregado').sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).slice(0,6);
+  const byTalent = {}; deals.forEach(dl=>{ const {montoAgencia}=agencyDealMoney(dl); byTalent[dl.talentoId]=(byTalent[dl.talentoId]||0)+montoAgencia; });
+  const maxT = Math.max(1, ...Object.values(byTalent)); const rows = Object.entries(byTalent).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById('view-root').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card c1"><div class="icon">🎤</div><div class="value">${roster.length}</div><div class="label">Talentos representados</div></div>
+      <div class="stat-card c2"><div class="icon">🤝</div><div class="value">${activos.length}</div><div class="label">Deals activos</div></div>
+      <div class="stat-card c3"><div class="icon">💸</div><div class="value">${fmtMoney(porCobrar,'MXN')}</div><div class="label">Por cobrar de marcas</div></div>
+      <div class="stat-card c4"><div class="icon">📄</div><div class="value">${vencenPronto}</div><div class="label">Contratos vencen en 30d</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="panel"><h3>📅 Próximas entregas del roster</h3>
+        ${upcoming.length ? upcoming.map(e=>{ const b=dueBadge(e.fecha,e.estado==='entregado'); const t=getTalent(e.talentoId);
+          return `<div class="up-row">${avatarHTML(t.nombre,'sm')}<div class="up-info"><div class="up-title">${e.titulo}</div><div class="up-sub">${t.nombre} · ${e.marca} · ${fmtDate(e.fecha)}</div></div><span class="pill ${b.cls}">${b.text}</span></div>`;
+        }).join('') : `<div class="empty-state"><div class="big">🎉</div>Sin entregas pendientes.</div>`}
+      </div>
+      <div class="panel"><h3>💰 Comisión ganada por talento</h3>
+        ${rows.length ? rows.map(([tid,total])=>{ const t=getTalent(tid);
+          return `<div class="brand-row"><div class="name">${t.nombre}</div><div class="brand-bar-bg"><div class="brand-bar-fill" style="width:${(total/maxT*100).toFixed(0)}%"></div></div><div class="amt">${fmtMoney(total,'MXN')}</div></div>`;
+        }).join('') : `<div class="empty-state">Aún no hay datos.</div>`}
+      </div>
+    </div>
+  `;
+}
+function renderAgencyRoster(){
+  const roster = talentForAgency(viewingAgencyId);
+  document.getElementById('view-root').innerHTML = `<div class="roster-grid">
+    ${roster.map(t=>{
+      const deals = agencyDealsFor(viewingAgencyId).filter(dl=>dl.talentoId===t.id);
+      const activos = deals.filter(dl=>dl.etapa!=='pagado').length;
+      const entregables = flattenAgencyEntregables(deals).filter(e=>e.estado!=='entregado');
+      const next = entregables.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''))[0];
+      const contratosPorVencer = deals.filter(dl=>{ const dd=daysUntil(dl.contratoVencimiento); return dd!==null && dd>=0 && dd<=30; }).length;
+      const ingreso = deals.reduce((s,dl)=>{ const {montoAgencia}=agencyDealMoney(dl); return s+montoAgencia; },0);
+      return `<div class="roster-card" data-action="view-talent" data-id="${t.id}">
+        <div class="roster-top">${avatarHTML(t.nombre,'lg')}<div><div class="roster-name">${t.nombre}</div><div class="roster-plats">${(t.plataformas||[]).map(p=>PLAT_ICON[p]||'').join(' ')} ${(t.plataformas||[]).join(' · ')}</div></div></div>
+        <div class="roster-stats">
+          <span class="pill pill-purple">${activos} deal${activos===1?'':'s'} activo${activos===1?'':'s'}</span>
+          ${next ? `<span class="pill ${dueBadge(next.fecha,false).cls}">Próx: ${fmtDate(next.fecha)}</span>` : ''}
+          ${contratosPorVencer>0 ? `<span class="pill pill-red">📄 ${contratosPorVencer} por vencer</span>` : ''}
+        </div>
+        <div style="margin-top:12px; font-size:12.5px; color:var(--muted); font-weight:700;">Comisión generada: <span style="color:var(--ink)">${fmtMoney(ingreso,'MXN')}</span></div>
+      </div>`;
+    }).join('')}
+    <div class="roster-add-card" id="btnAddTalent"><div style="font-size:26px;">＋</div>Nuevo representado</div>
+  </div>`;
+  document.getElementById('btnAddTalent').addEventListener('click', ()=>openTalentModal());
+}
+function renderAgencyPipeline(){
+  const deals = agencyDealsFor(viewingAgencyId);
+  document.getElementById('view-root').innerHTML = `<div class="board pipeline">
+    ${PIPELINE.map(col=>{ const items = deals.filter(dl=>dl.etapa===col.key);
+      return `<div class="board-col" data-status="${col.key}"><div class="board-col-head"><span class="dot" style="background:${col.color}"></span>${col.label}<span class="count-badge">${items.length}</span></div>
+      ${items.length ? items.map(dl=>agencyDealCardHTML(dl)).join('') : `<div class="empty-col">Vacío</div>`}</div>`;
+    }).join('')}
+  </div>`;
+  attachAgencyDealDrag();
+}
+function agencyDealCardHTML(dl){
+  const t = getTalent(dl.talentoId); const pb = pagoBadge(dl.estadoPagoMarca);
+  return `<div class="card-proj" draggable="true" data-id="${dl.id}" data-action="edit-agency-deal">
+    <div class="card-top">${avatarHTML(t.nombre,'sm')}<div class="names"><div class="marca">${t.nombre}</div><div class="tipo">${dl.marca}</div></div></div>
+    <div class="card-title">${(dl.entregables||[]).length} entregable${(dl.entregables||[]).length===1?'':'s'} · ${platChipsHTML(dl.plataformas)}</div>
+    <div class="card-bottom"><span class="price-tag">${fmtMoney(dl.montoTotal,dl.moneda)}</span><span class="pill ${pb.cls}">${pb.text}</span></div>
+  </div>`;
+}
+function attachAgencyDealDrag(){
+  document.querySelectorAll('.board-col .card-proj[draggable="true"]').forEach(card=>{
+    card.addEventListener('dragstart', ev=>{ ev.dataTransfer.setData('text/plain', card.dataset.id); setTimeout(()=>card.style.opacity='0.4',0); });
+    card.addEventListener('dragend', ()=>{ card.style.opacity='1'; });
+  });
+  document.querySelectorAll('.board-col').forEach(col=>{
+    col.addEventListener('dragover', ev=>{ ev.preventDefault(); col.classList.add('dragover'); });
+    col.addEventListener('dragleave', ()=>col.classList.remove('dragover'));
+    col.addEventListener('drop', ev=>{
+      ev.preventDefault(); col.classList.remove('dragover');
+      const id = ev.dataTransfer.getData('text/plain'); const dl = findAgencyDeal(id);
+      if(dl){ dl.etapa = col.dataset.status; saveAll(); renderAgencyPipeline(); toast(`Deal movido a "${etapaInfo(col.dataset.status).label}"`); }
+    });
+  });
+}
+function renderAgencyContracts(){
+  const deals = agencyDealsFor(viewingAgencyId).filter(dl=>dl.contratoNombre);
+  const rows = deals.slice().sort((a,b)=>(a.contratoVencimiento||'9999').localeCompare(b.contratoVencimiento||'9999'));
+  document.getElementById('view-root').innerHTML = `
+    <div class="panel" style="padding:6px 20px 12px 20px;">
+      ${rows.length ? `<table><thead><tr><th>Talento</th><th>Marca</th><th>Archivo</th><th>Vence</th><th>Estado</th><th></th></tr></thead><tbody>
+        ${rows.map(dl=>{ const t=getTalent(dl.talentoId); const dd=daysUntil(dl.contratoVencimiento);
+          let urg='urg-ok', txt=`${dd}d restantes`;
+          if(dd===null){ urg='pill-gray'; txt='Sin fecha'; } else if(dd<0){ urg='urg-late'; txt=`Vencido hace ${Math.abs(dd)}d`; } else if(dd<=30){ urg='urg-soon'; txt=`Vence en ${dd}d`; } else { txt=`Vence en ${dd}d`; }
+          return `<tr><td><div style="display:flex; align-items:center; gap:9px;">${avatarHTML(t.nombre,'sm')}<span style="font-weight:700;">${t.nombre}</span></div></td><td>${dl.marca}</td><td>📎 ${dl.contratoNombre}</td><td>${fmtDate(dl.contratoVencimiento)}</td><td class="${urg}" style="font-weight:700;">${txt}</td><td><button class="icon-btn" data-action="edit-agency-deal" data-id="${dl.id}" title="Ver deal">✏️</button></td></tr>`;
+        }).join('')}
+      </tbody></table>` : `<div class="empty-state"><div class="big">📄</div>Ningún deal tiene contrato adjunto todavía.</div>`}
+    </div>
+  `;
+}
+function renderAgencyFinance(){
+  const deals = agencyDealsFor(viewingAgencyId);
+  const facturado = deals.reduce((s,dl)=>s+dl.montoTotal,0);
+  const comisionGanada = deals.reduce((s,dl)=>{ const {montoAgencia}=agencyDealMoney(dl); return s+montoAgencia; },0);
+  const pendienteMarcas = deals.reduce((s,dl)=> s + (dl.estadoPagoMarca!=='pagado' ? dl.montoTotal*(dl.estadoPagoMarca==='parcial'?0.5:1) : 0), 0);
+  const pendienteTalento = deals.reduce((s,dl)=>{ const {montoCreador}=agencyDealMoney(dl); return s + (dl.estadoPagoCreador!=='pagado' ? montoCreador*(dl.estadoPagoCreador==='parcial'?0.5:1) : 0); },0);
+  const byTalent = {}; deals.forEach(dl=>{ if(!byTalent[dl.talentoId]) byTalent[dl.talentoId]={total:0,comision:0,talento:0,count:0}; const {montoAgencia,montoCreador}=agencyDealMoney(dl); byTalent[dl.talentoId].total+=dl.montoTotal; byTalent[dl.talentoId].comision+=montoAgencia; byTalent[dl.talentoId].talento+=montoCreador; byTalent[dl.talentoId].count+=1; });
+  const rows = Object.entries(byTalent).sort((a,b)=>b[1].total-a[1].total);
+
+  document.getElementById('view-root').innerHTML = `
+    <div class="fin-top">
+      <div class="fin-big"><div class="label">💵 Total facturado</div><div class="value">${fmtMoney(facturado,'MXN')}</div></div>
+      <div class="fin-big"><div class="label">🏢 Comisión de agencia</div><div class="value" style="color:var(--blue)">${fmtMoney(comisionGanada,'MXN')}</div></div>
+      <div class="fin-big"><div class="label">⏳ Pendiente de marcas</div><div class="value" style="color:var(--red)">${fmtMoney(pendienteMarcas,'MXN')}</div></div>
+      <div class="fin-big"><div class="label">📤 Pendiente a talento</div><div class="value" style="color:var(--amber)">${fmtMoney(pendienteTalento,'MXN')}</div></div>
+    </div>
+    <div class="panel"><h3>Desglose por talento</h3>
+      ${rows.length ? `<table><thead><tr><th>Talento</th><th>Deals</th><th>Facturado</th><th>Comisión agencia</th><th>Le corresponde al talento</th></tr></thead><tbody>
+        ${rows.map(([tid,dd])=>{ const t=getTalent(tid);
+          return `<tr><td><div style="display:flex; align-items:center; gap:9px;">${avatarHTML(t.nombre,'sm')}<span style="font-weight:700;">${t.nombre}</span></div></td><td>${dd.count}</td><td style="font-weight:700;">${fmtMoney(dd.total,'MXN')}</td><td style="color:var(--blue); font-weight:700;">${fmtMoney(dd.comision,'MXN')}</td><td style="color:var(--green); font-weight:700;">${fmtMoney(dd.talento,'MXN')}</td></tr>`;
+        }).join('')}
+      </tbody></table>` : `<div class="empty-state">Sin datos todavía.</div>`}
+    </div>
+  `;
+}
+function renderAgencyPlan(){
+  const ag = getAgency(viewingAgencyId); const roster = talentForAgency(ag.id);
+  const total = AGENCY_BASE_FEE + roster.length * AGENCY_PER_TALENT;
+  document.getElementById('view-root').innerHTML = `
+    <div class="plan-wrap">
+      <div class="plan-card">
+        <div class="plan-label">Plan Agencia</div>
+        <div class="plan-price">$${AGENCY_BASE_FEE} <small>USD / mes base</small></div>
+        <ul><li>✅ Roster de talento ilimitado</li><li>✅ Pipeline de deals y contratos</li><li>✅ Split automático de comisiones</li><li>✅ Finanzas consolidadas por talento</li></ul>
+        <div class="plan-note">+ $${AGENCY_PER_TALENT} USD/mes por cada representado activo. Cifras de ejemplo para este prototipo.</div>
+      </div>
+      <div class="plan-breakdown">
+        <h3 style="margin-bottom:14px;">Tu factura estimada — ${ag.nombre}</h3>
+        <div class="pb-row"><span>Tarifa base</span><b>$${AGENCY_BASE_FEE} USD</b></div>
+        <div class="pb-row"><span>Representados activos</span><b>${roster.length} × $${AGENCY_PER_TALENT} USD</b></div>
+        <div class="pb-row"><span>Subtotal por representados</span><b>$${roster.length*AGENCY_PER_TALENT} USD</b></div>
+        <div class="pb-total"><span class="t-label">Total mensual estimado</span><span class="t-value">$${total} USD</span></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================ SHARED CALENDAR ============================================================ */
+function renderCalendar(){
+  const entregables = workspace==='creador' ? flattenCreatorEntregables(creatorDealsFor(viewingCreatorId)) : flattenAgencyEntregables(agencyDealsFor(viewingAgencyId));
+  const year = calCursor.getFullYear(), month = calCursor.getMonth();
+  const first = new Date(year, month, 1); const startOffset = (first.getDay()+6)%7;
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+  const monthLabel = calCursor.toLocaleDateString('es-MX', {month:'long', year:'numeric'});
+  let cells = ''; for(let i=0;i<startOffset;i++){ cells += `<div class="cal-cell other-month"></div>`; }
+  for(let dnum=1; dnum<=daysInMonth; dnum++){
+    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(dnum).padStart(2,'0')}`;
+    const dayItems = entregables.filter(e=>e.fecha===iso);
+    cells += `<div class="cal-cell ${iso===todayStr?'today':''}"><div class="cal-daynum">${dnum}</div>
+      ${dayItems.map(e=>{ const label = workspace==='agencia' ? getTalent(e.talentoId).nombre : e.marca; const cls = e.estado==='entregado' ? 'pill-green' : 'pill-purple'; const action = workspace==='agencia' ? 'edit-agency-deal' : 'edit-creator-deal';
+        return `<div class="cal-chip pill ${cls}" data-action="${action}" data-id="${e.dealId}" title="${e.titulo}">${label}</div>`; }).join('')}
+    </div>`;
+  }
+  document.getElementById('view-root').innerHTML = `<div class="panel">
+    <div class="cal-head"><h3 style="text-transform:capitalize;">${monthLabel}</h3><div class="cal-nav"><button class="icon-btn" id="calPrev">‹</button><button class="btn-plain" id="calToday">Hoy</button><button class="icon-btn" id="calNext">›</button></div></div>
+    <div class="cal-grid">${['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}${cells}</div>
+  </div>`;
+  document.getElementById('calPrev').onclick = ()=>{ calCursor=new Date(year,month-1,1); renderCalendar(); };
+  document.getElementById('calNext').onclick = ()=>{ calCursor=new Date(year,month+1,1); renderCalendar(); };
+  document.getElementById('calToday').onclick = ()=>{ const n=new Date(); calCursor=new Date(n.getFullYear(),n.getMonth(),1); renderCalendar(); };
+}
+
+/* ============================================================ CHIP SELECT ============================================================ */
+function renderPlatChips(containerId, selected){
+  document.getElementById(containerId).innerHTML = PLATAFORMAS.map(p=>`<button type="button" class="chip-option ${selected.includes(p)?'selected':''}" data-val="${p}">${PLAT_ICON[p]||''} ${p}</button>`).join('');
+}
+document.getElementById('creatorPlatChips').addEventListener('click', ev=>{
+  const btn = ev.target.closest('.chip-option'); if(!btn) return; const v = btn.dataset.val;
+  const idx = creatorSelectedPlats.indexOf(v); if(idx>-1) creatorSelectedPlats.splice(idx,1); else creatorSelectedPlats.push(v);
+  renderPlatChips('creatorPlatChips', creatorSelectedPlats);
+});
+document.getElementById('agencyPlatChips').addEventListener('click', ev=>{
+  const btn = ev.target.closest('.chip-option'); if(!btn) return; const v = btn.dataset.val;
+  const idx = agencySelectedPlats.indexOf(v); if(idx>-1) agencySelectedPlats.splice(idx,1); else agencySelectedPlats.push(v);
+  renderPlatChips('agencyPlatChips', agencySelectedPlats);
+});
+document.getElementById('profilePlatChips').addEventListener('click', ev=>{
+  const btn = ev.target.closest('.chip-option'); if(!btn) return; const v = btn.dataset.val;
+  const idx = profileSelectedPlats.indexOf(v); if(idx>-1) profileSelectedPlats.splice(idx,1); else profileSelectedPlats.push(v);
+  renderPlatChips('profilePlatChips', profileSelectedPlats);
+  renderProfileUsernameFields();
+});
+
+/* ============================================================ CHECKLIST (shared) ============================================================ */
+function defaultChecklist(){ return DEFAULT_CHECKLIST_STEPS.map(t=>({id:uid('cl'), texto:t, hecho:false})); }
+function renderChecklistMini(rid){
+  const items = checklistStore[rid]||[]; const done = items.filter(i=>i.hecho).length;
+  const btn = document.querySelector(`.checklist-toggle[data-rid="${rid}"]`);
+  if(btn) btn.textContent = `☑ ${done}/${items.length}`;
+}
+function renderChecklistPanel(rid){
+  const panel = document.querySelector(`.checklist-panel[data-rid="${rid}"]`); if(!panel) return;
+  const items = checklistStore[rid]||[];
+  panel.innerHTML = items.map(it=>`
+    <div class="checklist-item ${it.hecho?'done':''}">
+      <input type="checkbox" data-rid="${rid}" data-clid="${it.id}" ${it.hecho?'checked':''}>
+      <span>${it.texto}</span>
+      <button type="button" class="ci-remove" data-rid="${rid}" data-clid="${it.id}">✕</button>
+    </div>`).join('') + `<div class="checklist-add-row"><input type="text" placeholder="Nuevo paso…" data-newstep="${rid}"><button type="button" data-addstep="${rid}">＋</button></div>`;
+  renderChecklistMini(rid);
+}
+function setupChecklistDelegation(containerId){
+  const container = document.getElementById(containerId);
+  container.addEventListener('click', ev=>{
+    const toggle = ev.target.closest('.checklist-toggle');
+    if(toggle){ const rid=toggle.dataset.rid; const panel=document.querySelector(`.checklist-panel[data-rid="${rid}"]`); if(panel){ if(panel.classList.contains('hidden')){ renderChecklistPanel(rid); panel.classList.remove('hidden'); } else { panel.classList.add('hidden'); } } return; }
+    const rm = ev.target.closest('.er-remove');
+    if(rm){ const rid=rm.dataset.rid; delete checklistStore[rid]; rm.closest('.entregable-row-wrap').remove(); return; }
+    const ciRemove = ev.target.closest('.ci-remove');
+    if(ciRemove){ const rid=ciRemove.dataset.rid, clid=ciRemove.dataset.clid; checklistStore[rid] = (checklistStore[rid]||[]).filter(i=>i.id!==clid); renderChecklistPanel(rid); return; }
+    const addBtn = ev.target.closest('[data-addstep]');
+    if(addBtn){ const rid=addBtn.dataset.addstep; const input=container.querySelector(`input[data-newstep="${rid}"]`); const txt=(input.value||'').trim(); if(txt){ checklistStore[rid]=checklistStore[rid]||[]; checklistStore[rid].push({id:uid('cl'), texto:txt, hecho:false}); renderChecklistPanel(rid); } return; }
+  });
+  container.addEventListener('change', ev=>{
+    const cb = ev.target.closest('input[type=checkbox][data-clid]'); if(!cb) return;
+    const rid=cb.dataset.rid, clid=cb.dataset.clid; const item=(checklistStore[rid]||[]).find(i=>i.id===clid);
+    if(item){ item.hecho = cb.checked; renderChecklistPanel(rid); }
+  });
+}
+setupChecklistDelegation('creatorEntregablesList');
+setupChecklistDelegation('agencyEntregablesList');
+
+function entregableRowHTML(rid, e){
+  e = e||{};
+  return `<div class="entregable-row-wrap" data-rid="${rid}">
+    <div class="entregable-row">
+      <input type="text" class="er-titulo" placeholder="Título (ej. 2 Reels)" value="${e.titulo||''}">
+      <select class="er-tipo">${TIPOS.map(t=>`<option ${e.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+      <input type="date" class="er-fecha" value="${e.fecha||''}">
+      <select class="er-estado">${ESTADOS.map(s=>`<option value="${s.key}" ${e.estado===s.key?'selected':''}>${s.label}</option>`).join('')}</select>
+      <button type="button" class="checklist-toggle" data-rid="${rid}">☑ 0/0</button>
+      <button type="button" class="er-remove" data-rid="${rid}">✕</button>
+    </div>
+    <div class="checklist-panel hidden" data-rid="${rid}"></div>
+  </div>`;
+}
+function addEntregableRow(containerId, e, withChecklist){
+  const rid = uid('r');
+  document.getElementById(containerId).insertAdjacentHTML('beforeend', entregableRowHTML(rid, e));
+  if(withChecklist) checklistStore[rid] = (e && e.checklist && e.checklist.length) ? JSON.parse(JSON.stringify(e.checklist)) : defaultChecklist();
+  else checklistStore[rid] = [];
+  renderChecklistMini(rid);
+}
+
+/* ============================================================ RATE CARD (profile) ============================================================ */
+function rateRowHTML(rid, r){
+  r = r||{};
+  return `<div class="rate-row" data-rid="${rid}">
+    <select class="rr-tipo">${TIPOS.map(t=>`<option ${r.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+    <input type="number" class="rr-monto" min="0" step="0.01" placeholder="Monto MXN" value="${r.monto!=null?r.monto:''}">
+    <button type="button" class="er-remove rr-remove" data-rid="${rid}">✕</button>
+  </div>`;
+}
+function addRateRow(r){ document.getElementById('rateCardList').insertAdjacentHTML('beforeend', rateRowHTML(uid('rr'), r)); }
+document.getElementById('btnAddRate').addEventListener('click', ()=>addRateRow());
+document.getElementById('rateCardList').addEventListener('click', ev=>{ const rm = ev.target.closest('.rr-remove'); if(rm) rm.closest('.rate-row').remove(); });
+
+/* ============================================================ PROFILE USERNAMES ============================================================ */
+function renderProfileUsernameFields(){
+  const wrapList = document.getElementById('profileUsernamesList');
+  if(!profileSelectedPlats.length){ wrapList.innerHTML = `<div class="hint">Selecciona al menos una plataforma arriba.</div>`; return; }
+  wrapList.innerHTML = profileSelectedPlats.map(p=>`<div class="username-field-row"><label>${PLAT_ICON[p]||''} ${p}</label><input type="text" class="pf-username" data-plat="${p}" placeholder="@usuario" value="${(profileUsernamesDraft[p]||'').replace(/"/g,'&quot;')}"></div>`).join('');
+}
+document.getElementById('profileUsernamesList').addEventListener('input', ev=>{
+  const inp = ev.target.closest('.pf-username'); if(!inp) return;
+  profileUsernamesDraft[inp.dataset.plat] = inp.value;
+});
+
+/* ============================================================ CREATOR PROFILE MODAL ============================================================ */
+const profileModalOverlay = document.getElementById('profileModalOverlay');
+const profileForm = document.getElementById('profileForm');
+function openProfileModal(profile){
+  editingProfileId = profile ? profile.id : null;
+  document.getElementById('profileModalTitle').textContent = profile ? 'Editar perfil' : 'Nuevo perfil';
+  document.getElementById('btnDeleteProfile').style.visibility = (profile && DB.creatorProfiles.length>1) ? 'visible' : 'hidden';
+  document.getElementById('pf_nombre').value = profile ? profile.nombre : '';
+  document.getElementById('pf_nicho').value = profile ? (profile.nicho||'') : '';
+  document.getElementById('pf_email').value = profile ? (profile.email||'') : '';
+  profileSelectedPlats = profile ? [...(profile.plataformas||[])] : [];
+  profileUsernamesDraft = profile ? {...(profile.usernames||{})} : {};
+  renderPlatChips('profilePlatChips', profileSelectedPlats);
+  renderProfileUsernameFields();
+  document.getElementById('rateCardList').innerHTML = '';
+  if(profile && profile.rateCard && profile.rateCard.length) profile.rateCard.forEach(r=>addRateRow(r));
+  profileModalOverlay.classList.remove('hidden');
+}
+function closeProfileModal(){ profileModalOverlay.classList.add('hidden'); editingProfileId = null; }
+document.getElementById('btnNewProfile').addEventListener('click', ()=>openProfileModal(null));
+document.getElementById('btnEditProfile').addEventListener('click', ()=>openProfileModal(getCreatorProfile(viewingCreatorId)));
+document.getElementById('closeProfileModal').addEventListener('click', closeProfileModal);
+document.getElementById('btnCancelProfile').addEventListener('click', closeProfileModal);
+profileModalOverlay.addEventListener('click', e=>{ if(e.target===profileModalOverlay) closeProfileModal(); });
+profileForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const nombre = document.getElementById('pf_nombre').value.trim();
+  const usernames = {}; profileSelectedPlats.forEach(p=>{ usernames[p] = profileUsernamesDraft[p] || ''; });
+  const rateCard = Array.from(document.querySelectorAll('#rateCardList .rate-row')).map(row=>({id:uid('rr'), tipo: row.querySelector('.rr-tipo').value, monto: Number(row.querySelector('.rr-monto').value)||0}));
+  const data = {nombre, plataformas: profileSelectedPlats.slice(), usernames, nicho: document.getElementById('pf_nicho').value.trim(), email: document.getElementById('pf_email').value.trim(), rateCard};
+  if(editingProfileId){ const p = getCreatorProfile(editingProfileId); Object.assign(p, data); toast('Perfil actualizado ✨'); }
+  else { const np = {id:uid('cp'), ...data}; DB.creatorProfiles.push(np); viewingCreatorId = np.id; toast('Perfil creado 🎉'); }
+  saveAll(); closeProfileModal(); renderPersonaSelect(); renderContextBanner(); renderCurrent();
+});
+document.getElementById('btnDeleteProfile').addEventListener('click', ()=>{
+  if(!editingProfileId) return;
+  if(DB.creatorProfiles.length<=1){ toast('Debes tener al menos un perfil.'); return; }
+  if(confirm('¿Eliminar este perfil? Sus deals y contactos quedarán guardados pero ocultos.')){
+    DB.creatorProfiles = DB.creatorProfiles.filter(p=>p.id!==editingProfileId);
+    if(viewingCreatorId===editingProfileId) viewingCreatorId = DB.creatorProfiles[0].id;
+    saveAll(); closeProfileModal(); renderPersonaSelect(); renderContextBanner(); renderCurrent();
+    toast('Perfil eliminado 🗑️');
+  }
+});
+
+/* ============================================================ CREATOR DEAL MODAL ============================================================ */
+const creatorDealOverlay = document.getElementById('creatorDealOverlay');
+const creatorDealForm = document.getElementById('creatorDealForm');
+document.getElementById('btnAddCreatorEntregable').addEventListener('click', ()=>addEntregableRow('creatorEntregablesList', null, true));
+document.getElementById('cd_contratoFile').addEventListener('change', ev=>{ const f=ev.target.files[0]; document.getElementById('cd_contratoNombre').value = f?f.name:''; });
+document.getElementById('cd_recurrente').addEventListener('change', ev=>{ document.getElementById('cd_recurFields').classList.toggle('hidden', !ev.target.checked); });
+
+function setCreatorTipoPago(tipo){
+  creatorTipoPagoSelected = tipo;
+  document.getElementById('cd_tipoPresupuesto').classList.toggle('selected', tipo==='presupuesto');
+  document.getElementById('cd_tipoIntercambio').classList.toggle('selected', tipo==='intercambio');
+  document.getElementById('cd_presupuestoBlock').style.display = tipo==='presupuesto' ? 'contents' : 'none';
+  document.getElementById('cd_intercambioBlock').style.display = tipo==='intercambio' ? 'contents' : 'none';
+  document.getElementById('cd_estadoPagoLabel').textContent = tipo==='presupuesto' ? 'Estado de pago' : '¿Ya recibiste el intercambio?';
+}
+document.getElementById('cd_tipoPresupuesto').addEventListener('click', ()=>setCreatorTipoPago('presupuesto'));
+document.getElementById('cd_tipoIntercambio').addEventListener('click', ()=>setCreatorTipoPago('intercambio'));
+
+function refreshMarcaDatalist(){
+  const dl = document.getElementById('cd_marcaList');
+  dl.innerHTML = brandsFor(viewingCreatorId).map(b=>`<option value="${b.nombre}">`).join('');
+}
+function openCreatorDealModal(deal){
+  editingCreatorDealId = deal ? deal.id : null;
+  document.getElementById('creatorDealTitle').textContent = deal ? 'Editar deal' : 'Nuevo deal';
+  document.getElementById('btnDeleteCreatorDeal').style.visibility = deal ? 'visible' : 'hidden';
+  refreshMarcaDatalist();
+  const brand = deal ? getBrand(deal.marcaId) : null;
+  document.getElementById('cd_marca').value = brand ? brand.nombre : '';
+  document.getElementById('cd_fechaDeal').value = deal ? (deal.fechaDeal||todayISO()) : todayISO();
+  document.getElementById('cd_moneda').value = deal ? deal.moneda : 'MXN';
+  setCreatorTipoPago(deal ? (deal.tipoPago||'presupuesto') : 'presupuesto');
+  document.getElementById('cd_monto').value = deal ? deal.montoTotal : '';
+  document.getElementById('cd_intercambioDescripcion').value = deal ? (deal.intercambioDescripcion||'') : '';
+  document.getElementById('cd_intercambioValorEstimado').value = deal ? (deal.intercambioValorEstimado||'') : '';
+  document.getElementById('cd_estadoPago').value = deal ? deal.estadoPago : 'pendiente';
+  document.getElementById('cd_contratoNombre').value = deal ? (deal.contratoNombre||'') : '';
+  document.getElementById('cd_contratoFile').value = '';
+  document.getElementById('cd_contratoVencimiento').value = deal ? (deal.contratoVencimiento||'') : '';
+  document.getElementById('cd_notas').value = deal ? (deal.notas||'') : '';
+  document.getElementById('cd_recurrente').checked = deal ? !!deal.esRecurrente : false;
+  document.getElementById('cd_recurFields').classList.toggle('hidden', !(deal && deal.esRecurrente));
+  document.getElementById('cd_frecuencia').value = deal ? (deal.frecuencia||'mensual') : 'mensual';
+  document.getElementById('cd_proximoCobro').value = deal ? (deal.proximoCobro||'') : '';
+
+  creatorSelectedPlats = deal ? [...(deal.plataformas||[])] : [];
+  renderPlatChips('creatorPlatChips', creatorSelectedPlats);
+
+  document.getElementById('creatorEntregablesList').innerHTML = '';
+  if(deal && deal.entregables && deal.entregables.length){ deal.entregables.forEach(e=>addEntregableRow('creatorEntregablesList', e, true)); }
+  else { addEntregableRow('creatorEntregablesList', null, true); }
+  creatorDealOverlay.classList.remove('hidden');
+}
+function closeCreatorDealModal(){ creatorDealOverlay.classList.add('hidden'); editingCreatorDealId = null; }
+document.getElementById('btnNewDeal').addEventListener('click', ()=>{ if(workspace==='creador') openCreatorDealModal(null); else openAgencyDealModal(null); });
+document.getElementById('closeCreatorDeal').addEventListener('click', closeCreatorDealModal);
+document.getElementById('btnCancelCreatorDeal').addEventListener('click', closeCreatorDealModal);
+creatorDealOverlay.addEventListener('click', e=>{ if(e.target===creatorDealOverlay) closeCreatorDealModal(); });
+
+creatorDealForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const marcaNombre = document.getElementById('cd_marca').value.trim();
+  let brand = brandsFor(viewingCreatorId).find(b=>b.nombre.toLowerCase()===marcaNombre.toLowerCase());
+  if(!brand){ brand = {id:uid('b'), creadorId:viewingCreatorId, nombre:marcaNombre, contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''}; DB.creatorBrands.push(brand); }
+
+  const rows = Array.from(document.querySelectorAll('#creatorEntregablesList .entregable-row-wrap')).map(wrap=>{
+    const rid = wrap.dataset.rid;
+    return {
+      id: uid('e'),
+      titulo: wrap.querySelector('.er-titulo').value.trim() || 'Entregable sin título',
+      tipo: wrap.querySelector('.er-tipo').value,
+      fecha: wrap.querySelector('.er-fecha').value,
+      estado: wrap.querySelector('.er-estado').value,
+      checklist: checklistStore[rid] || [],
+    };
+  });
+
+  const esRecurrente = document.getElementById('cd_recurrente').checked;
+  const tipoPago = creatorTipoPagoSelected;
+  const data = {
+    creadorId: viewingCreatorId,
+    marcaId: brand.id,
+    plataformas: creatorSelectedPlats.slice(),
+    fechaDeal: document.getElementById('cd_fechaDeal').value || todayISO(),
+    tipoPago,
+    montoTotal: tipoPago==='presupuesto' ? (Number(document.getElementById('cd_monto').value) || 0) : 0,
+    moneda: document.getElementById('cd_moneda').value,
+    estadoPago: document.getElementById('cd_estadoPago').value,
+    intercambioDescripcion: tipoPago==='intercambio' ? document.getElementById('cd_intercambioDescripcion').value.trim() : '',
+    intercambioValorEstimado: tipoPago==='intercambio' ? (Number(document.getElementById('cd_intercambioValorEstimado').value) || 0) : 0,
+    esRecurrente,
+    frecuencia: esRecurrente ? document.getElementById('cd_frecuencia').value : '',
+    proximoCobro: esRecurrente ? document.getElementById('cd_proximoCobro').value : '',
+    contratoNombre: document.getElementById('cd_contratoNombre').value,
+    contratoVencimiento: document.getElementById('cd_contratoVencimiento').value,
+    notas: document.getElementById('cd_notas').value.trim(),
+    entregables: rows,
+  };
+  if(editingCreatorDealId){ const dl = findCreatorDeal(editingCreatorDealId); Object.assign(dl, data); toast('Deal actualizado ✨'); }
+  else { DB.creatorDeals.push({id:uid('cd'), ...data}); toast('Deal creado 🎉'); }
+  saveAll(); closeCreatorDealModal(); renderCurrent();
+});
+document.getElementById('btnDeleteCreatorDeal').addEventListener('click', ()=>{
+  if(!editingCreatorDealId) return;
+  if(confirm('¿Eliminar este deal y todos sus entregables?')){ DB.creatorDeals = DB.creatorDeals.filter(dl=>dl.id!==editingCreatorDealId); saveAll(); closeCreatorDealModal(); renderCurrent(); toast('Deal eliminado 🗑️'); }
+});
+
+/* ============================================================ AGENCY DEAL MODAL ============================================================ */
+const agencyDealOverlay = document.getElementById('agencyDealOverlay');
+const agencyDealForm = document.getElementById('agencyDealForm');
+document.getElementById('btnAddAgencyEntregable').addEventListener('click', ()=>addEntregableRow('agencyEntregablesList', null, false));
+document.getElementById('ad_contratoFile').addEventListener('change', ev=>{ const f=ev.target.files[0]; document.getElementById('ad_contratoNombre').value = f?f.name:''; });
+
+function populateTalentoSelect(){ document.getElementById('ad_talento').innerHTML = talentForAgency(viewingAgencyId).map(t=>`<option value="${t.id}">${t.nombre}</option>`).join(''); }
+function populateEtapaSelect(){ document.getElementById('ad_etapa').innerHTML = PIPELINE.map(p=>`<option value="${p.key}">${p.label}</option>`).join(''); }
+
+function openAgencyDealModal(deal){
+  editingAgencyDealId = deal ? deal.id : null;
+  document.getElementById('agencyDealTitle').textContent = deal ? 'Editar deal' : 'Nuevo deal';
+  document.getElementById('btnDeleteAgencyDeal').style.visibility = deal ? 'visible' : 'hidden';
+  populateTalentoSelect(); populateEtapaSelect();
+  document.getElementById('ad_marca').value = deal ? deal.marca : '';
+  if(deal) document.getElementById('ad_talento').value = deal.talentoId;
+  document.getElementById('ad_etapa').value = deal ? deal.etapa : 'prospecto';
+  document.getElementById('ad_monto').value = deal ? deal.montoTotal : '';
+  document.getElementById('ad_moneda').value = deal ? deal.moneda : 'MXN';
+  document.getElementById('ad_comision').value = deal ? (deal.comisionPct||0) : getAgency(viewingAgencyId).comisionDefault;
+  document.getElementById('ad_estadoPagoMarca').value = deal ? deal.estadoPagoMarca : 'pendiente';
+  document.getElementById('ad_estadoPagoCreador').value = deal ? deal.estadoPagoCreador : 'pendiente';
+  document.getElementById('ad_contratoNombre').value = deal ? (deal.contratoNombre||'') : '';
+  document.getElementById('ad_contratoFile').value = '';
+  document.getElementById('ad_contratoVencimiento').value = deal ? (deal.contratoVencimiento||'') : '';
+  document.getElementById('ad_notas').value = deal ? (deal.notas||'') : '';
+
+  agencySelectedPlats = deal ? [...(deal.plataformas||[])] : [];
+  renderPlatChips('agencyPlatChips', agencySelectedPlats);
+
+  document.getElementById('agencyEntregablesList').innerHTML = '';
+  if(deal && deal.entregables && deal.entregables.length){ deal.entregables.forEach(e=>addEntregableRow('agencyEntregablesList', e, false)); }
+  else { addEntregableRow('agencyEntregablesList', null, false); }
+  agencyDealOverlay.classList.remove('hidden');
+}
+function closeAgencyDealModal(){ agencyDealOverlay.classList.add('hidden'); editingAgencyDealId = null; }
+document.getElementById('closeAgencyDeal').addEventListener('click', closeAgencyDealModal);
+document.getElementById('btnCancelAgencyDeal').addEventListener('click', closeAgencyDealModal);
+agencyDealOverlay.addEventListener('click', e=>{ if(e.target===agencyDealOverlay) closeAgencyDealModal(); });
+
+agencyDealForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const rows = Array.from(document.querySelectorAll('#agencyEntregablesList .entregable-row-wrap')).map(wrap=>({
+    id: uid('e'),
+    titulo: wrap.querySelector('.er-titulo').value.trim() || 'Entregable sin título',
+    tipo: wrap.querySelector('.er-tipo').value,
+    fecha: wrap.querySelector('.er-fecha').value,
+    estado: wrap.querySelector('.er-estado').value,
+  }));
+  const data = {
+    marca: document.getElementById('ad_marca').value.trim(),
+    talentoId: document.getElementById('ad_talento').value,
+    agenciaId: viewingAgencyId,
+    plataformas: agencySelectedPlats.slice(),
+    etapa: document.getElementById('ad_etapa').value,
+    montoTotal: Number(document.getElementById('ad_monto').value) || 0,
+    moneda: document.getElementById('ad_moneda').value,
+    comisionPct: Number(document.getElementById('ad_comision').value) || 0,
+    estadoPagoMarca: document.getElementById('ad_estadoPagoMarca').value,
+    estadoPagoCreador: document.getElementById('ad_estadoPagoCreador').value,
+    contratoNombre: document.getElementById('ad_contratoNombre').value,
+    contratoVencimiento: document.getElementById('ad_contratoVencimiento').value,
+    notas: document.getElementById('ad_notas').value.trim(),
+    entregables: rows,
+  };
+  if(editingAgencyDealId){ const dl = findAgencyDeal(editingAgencyDealId); Object.assign(dl, data); toast('Deal actualizado ✨'); }
+  else { DB.agencyDeals.push({id:uid('ad'), ...data}); toast('Deal creado 🎉'); }
+  saveAll(); closeAgencyDealModal(); renderCurrent();
+});
+document.getElementById('btnDeleteAgencyDeal').addEventListener('click', ()=>{
+  if(!editingAgencyDealId) return;
+  if(confirm('¿Eliminar este deal?')){ DB.agencyDeals = DB.agencyDeals.filter(dl=>dl.id!==editingAgencyDealId); saveAll(); closeAgencyDealModal(); renderCurrent(); toast('Deal eliminado 🗑️'); }
+});
+
+/* ============================================================ BRAND MODAL ============================================================ */
+const brandOverlay = document.getElementById('brandModalOverlay');
+const brandForm = document.getElementById('brandForm');
+function openBrandModal(brand){
+  editingBrandId = brand ? brand.id : null;
+  document.getElementById('brandModalTitle').textContent = brand ? 'Editar contacto' : 'Nuevo contacto';
+  document.getElementById('btnDeleteBrand').style.visibility = brand ? 'visible' : 'hidden';
+  document.getElementById('b_nombre').value = brand ? brand.nombre : '';
+  document.getElementById('b_contactoNombre').value = brand ? brand.contactoNombre : '';
+  document.getElementById('b_contactoEmail').value = brand ? brand.contactoEmail : '';
+  document.getElementById('b_instagram').value = brand ? (brand.instagram||'') : '';
+  document.getElementById('b_contactoTelefono').value = brand ? brand.contactoTelefono : '';
+  document.getElementById('b_agenciaNombre').value = brand ? (brand.agenciaRepNombre||'') : '';
+  document.getElementById('b_agenciaUsername').value = brand ? (brand.agenciaRepUsername||'') : '';
+  document.getElementById('b_notas').value = brand ? brand.notas : '';
+  brandOverlay.classList.remove('hidden');
+}
+function closeBrandModal(){ brandOverlay.classList.add('hidden'); editingBrandId = null; }
+document.getElementById('closeBrandModal').addEventListener('click', closeBrandModal);
+document.getElementById('btnCancelBrand').addEventListener('click', closeBrandModal);
+brandOverlay.addEventListener('click', e=>{ if(e.target===brandOverlay) closeBrandModal(); });
+brandForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const data = {
+    nombre: document.getElementById('b_nombre').value.trim(),
+    contactoNombre: document.getElementById('b_contactoNombre').value.trim(),
+    contactoEmail: document.getElementById('b_contactoEmail').value.trim(),
+    instagram: document.getElementById('b_instagram').value.trim(),
+    contactoTelefono: document.getElementById('b_contactoTelefono').value.trim(),
+    agenciaRepNombre: document.getElementById('b_agenciaNombre').value.trim(),
+    agenciaRepUsername: document.getElementById('b_agenciaUsername').value.trim(),
+    notas: document.getElementById('b_notas').value.trim(),
+  };
+  if(editingBrandId){ const b = findBrand(editingBrandId); Object.assign(b, data); toast('Contacto actualizado ✨'); }
+  else { DB.creatorBrands.push({id:uid('b'), creadorId:viewingCreatorId, ...data}); toast('Contacto agregado 🎉'); }
+  saveAll(); closeBrandModal(); renderCurrent();
+});
+document.getElementById('btnDeleteBrand').addEventListener('click', ()=>{
+  if(!editingBrandId) return;
+  if(confirm('¿Eliminar este contacto? Los deals ligados a esta marca no se borrarán.')){ DB.creatorBrands = DB.creatorBrands.filter(b=>b.id!==editingBrandId); saveAll(); closeBrandModal(); renderCurrent(); toast('Contacto eliminado 🗑️'); }
+});
+
+/* ============================================================ TALENT MODAL (nuevo representado) ============================================================ */
+const talentOverlay = document.getElementById('talentModalOverlay');
+const talentForm = document.getElementById('talentForm');
+function openTalentModal(){ talentForm.reset(); talentOverlay.classList.remove('hidden'); }
+function closeTalentModal(){ talentOverlay.classList.add('hidden'); }
+document.getElementById('closeTalentModal').addEventListener('click', closeTalentModal);
+document.getElementById('btnCancelTalent').addEventListener('click', closeTalentModal);
+talentOverlay.addEventListener('click', e=>{ if(e.target===talentOverlay) closeTalentModal(); });
+talentForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const nombre = document.getElementById('nt_nombre').value.trim();
+  const plataformas = document.getElementById('nt_plataformas').value.split(',').map(s=>s.trim()).filter(Boolean);
+  DB.talent.push({id:uid('t'), agenciaId:viewingAgencyId, nombre, plataformas: plataformas.length?plataformas:['Instagram']});
+  saveAll(); closeTalentModal(); toast(`${nombre} se unió al roster 🎉`); renderCurrent();
+});
+
+/* ============================================================ TALENT DETAIL MODAL ============================================================ */
+const talentDetailOverlay = document.getElementById('talentDetailOverlay');
+function openTalentDetail(talentId){
+  const t = getTalent(talentId);
+  const deals = agencyDealsFor(viewingAgencyId).filter(dl=>dl.talentoId===talentId);
+  const activos = deals.filter(dl=>dl.etapa!=='pagado').length;
+  const ingreso = deals.reduce((s,dl)=>{ const {montoAgencia}=agencyDealMoney(dl); return s+montoAgencia; },0);
+  const contratosPorVencer = deals.filter(dl=>{ const dd=daysUntil(dl.contratoVencimiento); return dd!==null && dd>=0 && dd<=30; }).length;
+  document.getElementById('talentDetailContent').innerHTML = `
+    <div class="roster-top" style="margin-bottom:16px;">${avatarHTML(t.nombre,'lg')}<div><h2>${t.nombre}</h2><div class="roster-plats">${(t.plataformas||[]).join(' · ')}</div></div></div>
+    <div class="roster-stats" style="margin-bottom:18px;">
+      <span class="pill pill-purple">${activos} deal${activos===1?'':'s'} activo${activos===1?'':'s'}</span>
+      <span class="pill pill-green">${fmtMoney(ingreso,'MXN')} comisión generada</span>
+      ${contratosPorVencer>0 ? `<span class="pill pill-red">📄 ${contratosPorVencer} contrato(s) por vencer</span>` : ''}
+    </div>
+    <button type="button" class="btn-primary" data-action="new-deal-for-talent" data-id="${t.id}" style="margin-bottom:16px;">＋ Nuevo deal para ${t.nombre}</button>
+    ${deals.length ? `<table><thead><tr><th>Marca</th><th>Monto</th><th>Etapa</th><th>Pago</th><th></th></tr></thead><tbody>
+      ${deals.map(dl=>{ const pb=pagoBadge(dl.estadoPagoMarca); const et=etapaInfo(dl.etapa);
+        return `<tr><td style="font-weight:700;">${dl.marca}</td><td>${fmtMoney(dl.montoTotal,dl.moneda)}</td><td><span class="pill" style="background:${et.color}33;">${et.label}</span></td><td><span class="pill ${pb.cls}">${pb.text}</span></td><td><button class="icon-btn" data-action="edit-agency-deal" data-id="${dl.id}">✏️</button></td></tr>`;
+      }).join('')}
+    </tbody></table>` : `<div class="empty-state">Este talento aún no tiene deals.</div>`}
+  `;
+  talentDetailOverlay.classList.remove('hidden');
+}
+document.getElementById('closeTalentDetail').addEventListener('click', ()=>talentDetailOverlay.classList.add('hidden'));
+talentDetailOverlay.addEventListener('click', e=>{ if(e.target===talentDetailOverlay) talentDetailOverlay.classList.add('hidden'); });
+talentDetailOverlay.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-action]'); if(!btn) return;
+  if(btn.dataset.action==='edit-agency-deal'){ talentDetailOverlay.classList.add('hidden'); openAgencyDealModal(findAgencyDeal(btn.dataset.id)); }
+  if(btn.dataset.action==='new-deal-for-talent'){ talentDetailOverlay.classList.add('hidden'); openAgencyDealModal(null); setTimeout(()=>{ document.getElementById('ad_talento').value = btn.dataset.id; }, 0); }
+});
+
+/* ============================================================ DELEGATED ACTIONS (view-root) ============================================================ */
+document.getElementById('view-root').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-action]'); if(!btn) return;
+  const id = btn.dataset.id; const action = btn.dataset.action;
+  if(action==='edit-creator-deal') openCreatorDealModal(findCreatorDeal(id));
+  if(action==='delete-creator-deal'){ if(confirm('¿Eliminar este deal?')){ DB.creatorDeals = DB.creatorDeals.filter(dl=>dl.id!==id); saveAll(); renderCurrent(); toast('Deal eliminado 🗑️'); } }
+  if(action==='edit-agency-deal') openAgencyDealModal(findAgencyDeal(id));
+  if(action==='delete-agency-deal'){ if(confirm('¿Eliminar este deal?')){ DB.agencyDeals = DB.agencyDeals.filter(dl=>dl.id!==id); saveAll(); renderCurrent(); toast('Deal eliminado 🗑️'); } }
+  if(action==='edit-brand') openBrandModal(findBrand(id));
+  if(action==='view-talent') openTalentDetail(id);
+});
+
+/* ============================================================ WORKSPACE TOGGLE + MAIN RENDER ============================================================ */
+document.querySelectorAll('.ws-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    workspace = btn.dataset.ws; currentTab = 'dashboard';
+    document.body.classList.toggle('ws-agencia', workspace==='agencia');
+    document.querySelectorAll('.ws-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    renderNav(); renderPersonaSelect(); renderContextBanner(); renderCurrent();
+  });
+});
+
+function renderCurrent(){
+  const metaSet = workspace==='creador' ? CREATOR_TAB_META : AGENCY_TAB_META;
+  const meta = metaSet[currentTab] || metaSet.dashboard;
+  document.getElementById('viewTitle').textContent = meta.title;
+  document.getElementById('viewSub').textContent = meta.sub;
+  document.getElementById('searchBoxWrap').style.display = meta.search ? 'flex' : 'none';
+  renderNav();
+  if(workspace==='creador'){
+    if(currentTab==='dashboard') renderCreatorDashboard();
+    else if(currentTab==='board') renderCreatorBoard();
+    else if(currentTab==='deals') renderCreatorDeals();
+    else if(currentTab==='contacts') renderCreatorContacts();
+    else if(currentTab==='calendar') renderCalendar();
+    else if(currentTab==='finance') renderCreatorFinance();
+    else if(currentTab==='plan') renderCreatorPlan();
+  } else {
+    if(currentTab==='dashboard') renderAgencyDashboard();
+    else if(currentTab==='roster') renderAgencyRoster();
+    else if(currentTab==='pipeline') renderAgencyPipeline();
+    else if(currentTab==='contracts') renderAgencyContracts();
+    else if(currentTab==='calendar') renderCalendar();
+    else if(currentTab==='finance') renderAgencyFinance();
+    else if(currentTab==='plan') renderAgencyPlan();
+  }
+}
+document.getElementById('searchInput').addEventListener('input', e=>{ filters.search = e.target.value; renderCreatorDeals(); });
+
+/* ============================================================ INIT ============================================================ */
+/* La app ya no arranca sola: espera a que Firebase confirme la sesión (ver onAuthStateChanged arriba)
+   y solo entonces carga los datos reales del usuario y dibuja la interfaz. */
+</script>
+</body>
+</html>
