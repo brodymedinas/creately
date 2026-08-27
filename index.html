@@ -1263,7 +1263,7 @@ function renderCreatorPropuestas(){
         return `<tr><td style="font-weight:700;">${b?b.nombre:'(sin marca)'}</td><td>${p.campana||'—'}</td>
           <td><span class="pill ${ganado?'pill-green':'pill-red'}">${ganado?'Ganado ✅':'Perdido ❌'}</span></td>
           <td>${fmtDate(p.fechaCierre)}</td>
-          <td>${dealExiste ? `<button class="icon-btn" data-action="edit-creator-deal" data-id="${p.origenDealId}" title="Ver deal">👁️</button>` : ''}<button class="icon-btn" data-action="delete-propuesta" data-id="${p.id}" title="Eliminar">🗑️</button></td></tr>`;
+          <td>${dealExiste ? `<button class="icon-btn" data-action="edit-creator-deal" data-id="${p.origenDealId}" title="Ver deal">👁️</button>` : ''}${!ganado ? `<button class="icon-btn" data-action="reactivar-propuesta" data-id="${p.id}" title="Reactivar">↩️</button>` : ''}<button class="icon-btn" data-action="delete-propuesta" data-id="${p.id}" title="Eliminar">🗑️</button></td></tr>`;
       }).join('')}
     </tbody></table></div>` : `<div class="empty-state"><div class="big">🗄️</div>Aún no hay propuestas ganadas o perdidas.</div>`;
   }
@@ -1384,6 +1384,12 @@ function deletePropuesta(id){
   if(!confirm('¿Eliminar esta propuesta?')) return;
   DB.creatorPropuestas = (DB.creatorPropuestas||[]).filter(p=>p.id!==id);
   saveAll(); renderCurrent(); toast('Propuesta eliminada 🗑️');
+}
+function reactivarPropuesta(id){
+  const p = findPropuesta(id); if(!p) return;
+  if(!confirm(`¿Reactivar la propuesta con ${(getBrand(p.marcaId)||{}).nombre||'esta marca'}? Vuelve al tablero activo en "Contacto inicial".`)) return;
+  p.etapa = 'contacto'; p.fechaContacto = todayISO(); p.fechaCierre = '';
+  saveAll(); propuestasView = 'activas'; renderCurrent(); toast('Propuesta reactivada ↩️');
 }
 
 function renderCreatorDeals(){
@@ -2427,6 +2433,7 @@ document.getElementById('view-root').addEventListener('click', e=>{
   if(action==='ganar-propuesta') marcarPropuestaGanada(id);
   if(action==='perder-propuesta') marcarPropuestaPerdida(id);
   if(action==='delete-propuesta') deletePropuesta(id);
+  if(action==='reactivar-propuesta') reactivarPropuesta(id);
 });
 
 /* ============================================================ WORKSPACE TOGGLE + MAIN RENDER ============================================================ */
