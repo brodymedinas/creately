@@ -138,6 +138,26 @@
   .icon-btn{border:1px solid var(--border); background:#fff; border-radius:9px; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; transition:.12s; flex-shrink:0;}
   .icon-btn:hover{background:#f6f2fc;}
 
+  .grid-scroll{overflow-x:auto;}
+  table.editable-grid{min-width:100%;}
+  table.editable-grid th{white-space:nowrap;}
+  .col-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .col-head-actions{display:flex; gap:2px; opacity:0; transition:.12s;}
+  th:hover .col-head-actions{opacity:1;}
+  .col-mini-btn{border:none; background:none; cursor:pointer; font-size:11px; padding:2px 3px; border-radius:6px; line-height:1;}
+  .col-mini-btn:hover{background:#f1edf9;}
+  .btn-addcol{border:1px dashed var(--border); background:#faf8fd; color:var(--ig-purple); font-weight:700; font-size:11.5px; padding:6px 10px; border-radius:9px; cursor:pointer; white-space:nowrap;}
+  td.grid-cell{padding:5px 8px;}
+  .grid-input{width:100%; min-width:90px; border:1px solid transparent; border-radius:8px; padding:6px 7px; font-family:'Inter'; font-size:12.5px; background:transparent; color:var(--ink);}
+  .grid-input:hover{border-color:var(--border); background:#fff;}
+  .grid-input:focus{border-color:var(--ig-purple); background:#fff; outline:none;}
+  .grid-select{cursor:pointer;}
+  .grid-multiselect{min-width:130px;}
+  .grid-check{width:16px; height:16px; accent-color:var(--ig-purple); cursor:pointer;}
+  .view-toggle{display:inline-flex; background:#f3f0fa; border-radius:12px; padding:3px; gap:3px; margin-bottom:14px;}
+  .view-toggle-btn{border:none; background:transparent; padding:8px 14px; border-radius:9px; font-family:'Baloo 2'; font-weight:700; font-size:12.5px; color:var(--muted); cursor:pointer;}
+  .view-toggle-btn.active{background:#fff; color:var(--ink); box-shadow:var(--shadow);}
+
   .toolbar-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
 
   .roster-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
@@ -490,6 +510,34 @@
   </div>
 </div>
 
+<!-- ============ COLUMNA PERSONALIZADA MODAL (compartido por Deals/Contactos/Roster) ============ -->
+<div class="modal-overlay hidden" id="columnDefModalOverlay">
+  <div class="modal narrow">
+    <button class="close-x" id="closeColumnDefModal">✕</button>
+    <h2 id="columnDefModalTitle">Nueva columna</h2>
+    <div class="modal-sub">Agrega un campo personalizado a esta tabla.</div>
+    <form id="columnDefForm">
+      <div class="form-grid">
+        <div class="form-field full"><label>Nombre de la columna</label><input type="text" id="cold_nombre" required placeholder="Ej. Prioridad"></div>
+        <div class="form-field full"><label>Tipo de dato</label>
+          <select id="cold_tipo">
+            <option value="texto">Texto</option>
+            <option value="numero">Número</option>
+            <option value="fecha">Fecha</option>
+            <option value="selector">Selector</option>
+            <option value="casilla">Casilla</option>
+          </select>
+        </div>
+        <div class="form-field full hidden" id="cold_opcionesWrap"><label>Opciones (separadas por coma)</label><input type="text" id="cold_opciones" placeholder="Ej. Alta, Media, Baja"></div>
+      </div>
+      <div class="modal-actions">
+        <div></div>
+        <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelColumnDef">Cancelar</button><button type="submit" class="btn-primary">Guardar columna</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
 <script type="module">
@@ -536,6 +584,14 @@ const AGENCY_PER_TALENT = 20;
 const DEFAULT_CHECKLIST_STEPS = ['Guion / planeación','Grabación','Edición','Aprobación del cliente','Publicado'];
 const CONTACT_HEADERS = ['Marca','Contacto','Email','Instagram','Telefono','AgenciaRepresentante','InstagramAgencia','Notas'];
 const DEAL_HEADERS = ['Marca','Plataformas','TipoPago','Monto','Moneda','DescripcionIntercambio','ValorEstimadoIntercambio','EstadoPago','FechaDelDeal','EsRecurrente','Frecuencia','ProximoCobro','Notas'];
+const COLUMN_TYPES = [
+  {key:'texto', label:'Texto'},
+  {key:'numero', label:'Número'},
+  {key:'fecha', label:'Fecha'},
+  {key:'selector', label:'Selector'},
+  {key:'casilla', label:'Casilla'},
+];
+const SELECTOR_COLORS = ['#a78bfa','#5b8def','#ffb800','#1fbf75','#ff4d6d','#0a9d9d','#fd7e14','#f472b6'];
 
 /* ============================================================ STATE ============================================================ */
 let DB = null;
@@ -560,6 +616,9 @@ let creatorTipoPagoSelected = 'presupuesto';
 let financeDateFrom = '';
 let financeDateTo = '';
 let financeSubTab = 'general';
+let contactsView = 'tarjetas';
+let rosterView = 'tarjetas';
+let columnModalCtx = null;
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function saveAll(){
@@ -570,6 +629,11 @@ function saveAll(){
   });
 }
 function uid(p){ return (p||'x') + '_' + Math.random().toString(36).slice(2,9); }
+function ensureColumnDefs(){
+  DB.creatorDealColumnDefs = DB.creatorDealColumnDefs || [];
+  DB.creatorContactColumnDefs = DB.creatorContactColumnDefs || [];
+  DB.agencyTalentColumnDefs = DB.agencyTalentColumnDefs || [];
+}
 
 /* ============================================================ AUTH (Firebase) ============================================================ */
 async function initUserData(user){
@@ -583,6 +647,9 @@ async function initUserData(user){
       agencies: [{id:uid('ag'), nombre:'Mi Agencia', comisionDefault:20}],
       talent: [],
       agencyDeals: [],
+      creatorDealColumnDefs: [],
+      creatorContactColumnDefs: [],
+      agencyTalentColumnDefs: [],
     };
     await setDoc(ref, starter);
   }
@@ -590,6 +657,7 @@ async function initUserData(user){
   unsubscribeSnapshot = onSnapshot(ref, (docSnap)=>{
     if(!docSnap.exists()) return;
     DB = docSnap.data();
+    ensureColumnDefs();
     if(!viewingCreatorId || !getCreatorProfile(viewingCreatorId)) viewingCreatorId = (DB.creatorProfiles[0]||{}).id || null;
     if(!viewingAgencyId || !getAgency(viewingAgencyId)) viewingAgencyId = (DB.agencies[0]||{}).id || null;
     renderPersonaSelect(); renderContextBanner(); renderCurrent();
@@ -1113,28 +1181,47 @@ function renderCreatorDeals(){
 
   document.getElementById('view-root').innerHTML = toolbarHTML + `
     <div class="panel" style="padding:6px 20px 12px 20px;">
-      ${deals.length ? `<table>
-        <thead><tr><th>Marca</th><th>Plataformas</th><th>Entregables</th><th>Monto / Intercambio</th><th>Pago</th><th>Frecuencia</th><th></th></tr></thead>
-        <tbody>
-        ${deals.map(dl=>{ const b=getBrand(dl.marcaId); const pb=pagoBadge(dl.estadoPago);
-          return `<tr>
-            <td><div style="display:flex; align-items:center; gap:9px;">${avatarHTML(b?b.nombre:'?','sm')}<span style="font-weight:700;">${b?b.nombre:'(sin marca)'}</span></div></td>
-            <td>${platChipsHTML(dl.plataformas)}</td>
-            <td>${(dl.entregables||[]).length} entregable${(dl.entregables||[]).length===1?'':'s'}</td>
-            <td>${dl.tipoPago==='intercambio' ? `<span class="pill pill-teal">🎁 Intercambio${dl.intercambioValorEstimado?` (~${fmtMoney(dl.intercambioValorEstimado,dl.moneda)})`:''}</span>` : `<span style="font-weight:700;">${fmtMoney(dl.montoTotal,dl.moneda)}</span>`}</td>
-            <td><span class="pill ${pb.cls}">${pb.text}</span></td>
-            <td>${dl.esRecurrente ? `<span class="pill pill-teal">🔁 ${dl.frecuencia} · ${fmtDate(dl.proximoCobro)}</span>` : `<span class="pill pill-gray">Único</span>`}</td>
-            <td><div class="row-actions"><button class="icon-btn" data-action="edit-creator-deal" data-id="${dl.id}" title="Editar">✏️</button><button class="icon-btn" data-action="delete-creator-deal" data-id="${dl.id}" title="Eliminar">🗑️</button></div></td>
-          </tr>`;
-        }).join('')}
-        </tbody>
-      </table>` : `<div class="empty-state"><div class="big">📭</div>No hay deals que coincidan.</div>`}
+      <div id="creatorDealsGrid"></div>
     </div>
   `;
   document.getElementById('btnDealsTemplate').addEventListener('click', downloadDealsTemplate);
   document.getElementById('btnDealsExport').addEventListener('click', exportDeals);
   document.getElementById('btnDealsImport').addEventListener('click', ()=>document.getElementById('dealsFileInput').click());
   document.getElementById('dealsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importDealsFile(f); ev.target.value=''; });
+
+  const marcaOptions = brandsFor(viewingCreatorId).map(b=>`<option value="${(b.nombre||'').replace(/"/g,'&quot;')}">`).join('');
+  renderEditableGrid({
+    containerId: 'creatorDealsGrid',
+    rows: deals,
+    defsKey: 'creatorDealColumnDefs',
+    emptyMessage: 'No hay deals que coincidan.',
+    rerender: renderCreatorDeals,
+    marcaDatalist: `<datalist id="gridMarcaList_creatorDeals">${marcaOptions}</datalist>`,
+    fixed: [
+      { key:'marca', label:'Marca', render(dl){ const b=getBrand(dl.marcaId); return `<input type="text" list="gridMarcaList_creatorDeals" class="grid-input" value="${(b?b.nombre:'').replace(/"/g,'&quot;')}" style="font-weight:700; min-width:130px;">`; },
+        commit(dl, td){ const nombre = td.querySelector('input').value.trim(); if(!nombre) return; let brand = brandsFor(viewingCreatorId).find(b=>b.nombre.toLowerCase()===nombre.toLowerCase()); if(!brand){ brand = {id:uid('b'), creadorId:viewingCreatorId, nombre, contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''}; DB.creatorBrands.push(brand); } dl.marcaId = brand.id; } },
+      { key:'plataformas', label:'Plataformas', render(dl){ return platformsSelectHTML(dl.plataformas); }, commit(dl, td){ dl.plataformas = readPlatformsSelect(td.querySelector('select')); } },
+      { key:'tipoPago', label:'Tipo de pago', render(dl){ return `<select class="grid-input"><option value="presupuesto" ${dl.tipoPago!=='intercambio'?'selected':''}>💰 Presupuesto</option><option value="intercambio" ${dl.tipoPago==='intercambio'?'selected':''}>🎁 Intercambio</option></select>`; }, commit(dl, td){ dl.tipoPago = td.querySelector('select').value; } },
+      { key:'monto', label:'Monto', render(dl){ const v = dl.tipoPago==='intercambio' ? dl.intercambioValorEstimado : dl.montoTotal; return `<input type="number" step="0.01" class="grid-input" value="${v||''}" placeholder="0.00">`; }, commit(dl, td){ const n = Number(td.querySelector('input').value)||0; if(dl.tipoPago==='intercambio') dl.intercambioValorEstimado = n; else dl.montoTotal = n; } },
+      { key:'moneda', label:'Moneda', render(dl){ return `<select class="grid-input">${['MXN','USD','EUR'].map(m=>`<option ${dl.moneda===m?'selected':''}>${m}</option>`).join('')}</select>`; }, commit(dl, td){ dl.moneda = td.querySelector('select').value; } },
+      { key:'estadoPago', label:'Estado de pago', render(dl){ return `<select class="grid-input"><option value="pendiente" ${dl.estadoPago==='pendiente'?'selected':''}>Pendiente</option><option value="parcial" ${dl.estadoPago==='parcial'?'selected':''}>Anticipo</option><option value="pagado" ${dl.estadoPago==='pagado'?'selected':''}>Pagado</option></select>`; }, commit(dl, td){ dl.estadoPago = td.querySelector('select').value; } },
+      { key:'recurrente', label:'Recurrencia', render(dl){
+          const rec = `<label style="display:flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:var(--muted); white-space:nowrap;"><input type="checkbox" class="grid-check" data-rec="1" ${dl.esRecurrente?'checked':''}> Recurrente</label>`;
+          if(!dl.esRecurrente) return rec;
+          return rec + `<div style="display:flex; gap:4px; margin-top:4px;"><select class="grid-input" data-frec="1" style="font-size:11px;"><option value="semanal" ${dl.frecuencia==='semanal'?'selected':''}>Semanal</option><option value="quincenal" ${dl.frecuencia==='quincenal'?'selected':''}>Quincenal</option><option value="mensual" ${dl.frecuencia==='mensual'?'selected':''}>Mensual</option></select><input type="date" class="grid-input" data-prox="1" value="${dl.proximoCobro||''}" style="font-size:11px;"></div>`;
+        },
+        commit(dl, td){
+          const chk = td.querySelector('[data-rec]'); dl.esRecurrente = chk.checked;
+          if(dl.esRecurrente) dl.frecuencia = dl.frecuencia || 'mensual';
+          const frecEl = td.querySelector('[data-frec]'); if(frecEl) dl.frecuencia = frecEl.value;
+          const proxEl = td.querySelector('[data-prox]'); if(proxEl) dl.proximoCobro = proxEl.value;
+        }
+      },
+      { key:'fechaDeal', label:'Fecha del deal', render(dl){ return `<input type="date" class="grid-input" value="${dl.fechaDeal||''}">`; }, commit(dl, td){ dl.fechaDeal = td.querySelector('input').value || todayISO(); } },
+      { key:'entregables', label:'Entregables', render(dl){ return `<span style="font-size:12.5px; color:var(--muted);">${(dl.entregables||[]).length} entregable${(dl.entregables||[]).length===1?'':'s'}</span>`; } },
+    ],
+    rowActions(dl){ return `<button class="icon-btn" data-action="edit-creator-deal" data-id="${dl.id}" title="Editar completo (entregables, checklist, notas…)">✏️</button><button class="icon-btn" data-action="duplicate-creator-deal" data-id="${dl.id}" title="Duplicar deal">📋</button><button class="icon-btn" data-action="delete-creator-deal" data-id="${dl.id}" title="Eliminar">🗑️</button>`; }
+  });
 }
 
 function renderCreatorContacts(){
@@ -1145,7 +1232,13 @@ function renderCreatorContacts(){
     <input type="file" id="contactsFileInput" accept=".csv" class="hidden">
     <button class="btn-plain" id="btnContactsExport">⬇️ Exportar mis contactos</button>
   </div>`;
-  document.getElementById('view-root').innerHTML = toolbarHTML + `<div class="roster-grid">
+  const toggleHTML = `<div class="view-toggle" id="contactsViewToggle">
+    <button type="button" class="view-toggle-btn ${contactsView==='tarjetas'?'active':''}" data-view="tarjetas">🪪 Tarjetas</button>
+    <button type="button" class="view-toggle-btn ${contactsView==='tabla'?'active':''}" data-view="tabla">📊 Tabla</button>
+  </div>`;
+  const bodyHTML = contactsView==='tabla'
+    ? `<div class="panel" style="padding:6px 20px 12px 20px;"><div id="creatorContactsGrid"></div></div>`
+    : `<div class="roster-grid">
     ${brands.map(b=>{
       const deals = DB.creatorDeals.filter(dl=>dl.marcaId===b.id);
       const total = deals.filter(dl=>dl.tipoPago!=='intercambio').reduce((s,dl)=>s+dl.montoTotal,0);
@@ -1163,11 +1256,32 @@ function renderCreatorContacts(){
     }).join('')}
     <div class="roster-add-card" id="btnAddBrand"><div style="font-size:26px;">＋</div>Nuevo contacto</div>
   </div>`;
-  document.getElementById('btnAddBrand').addEventListener('click', ()=>openBrandModal(null));
+  document.getElementById('view-root').innerHTML = toolbarHTML + toggleHTML + bodyHTML;
+  document.querySelectorAll('#contactsViewToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ contactsView = btn.dataset.view; renderCreatorContacts(); }));
+  if(contactsView==='tarjetas') document.getElementById('btnAddBrand').addEventListener('click', ()=>openBrandModal(null));
   document.getElementById('btnContactsTemplate').addEventListener('click', downloadContactsTemplate);
   document.getElementById('btnContactsExport').addEventListener('click', exportContacts);
   document.getElementById('btnContactsImport').addEventListener('click', ()=>document.getElementById('contactsFileInput').click());
   document.getElementById('contactsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importContactsFile(f); ev.target.value=''; });
+  if(contactsView==='tabla'){
+    renderEditableGrid({
+      containerId:'creatorContactsGrid',
+      rows: brands,
+      defsKey: 'creatorContactColumnDefs',
+      emptyMessage: 'No hay contactos todavía.',
+      rerender: renderCreatorContacts,
+      fixed: [
+        {key:'nombre', label:'Marca', render(b){ return `<input type="text" class="grid-input" value="${(b.nombre||'').replace(/"/g,'&quot;')}" style="font-weight:700;">`; }, commit(b, td){ b.nombre = td.querySelector('input').value.trim() || b.nombre; } },
+        {key:'contactoNombre', label:'Contacto', render(b){ return `<input type="text" class="grid-input" value="${(b.contactoNombre||'').replace(/"/g,'&quot;')}">`; }, commit(b, td){ b.contactoNombre = td.querySelector('input').value; } },
+        {key:'contactoEmail', label:'Email', render(b){ return `<input type="email" class="grid-input" value="${(b.contactoEmail||'').replace(/"/g,'&quot;')}">`; }, commit(b, td){ b.contactoEmail = td.querySelector('input').value; } },
+        {key:'instagram', label:'Instagram', render(b){ return `<input type="text" class="grid-input" value="${(b.instagram||'').replace(/"/g,'&quot;')}">`; }, commit(b, td){ b.instagram = td.querySelector('input').value; } },
+        {key:'contactoTelefono', label:'Teléfono', render(b){ return `<input type="text" class="grid-input" value="${(b.contactoTelefono||'').replace(/"/g,'&quot;')}">`; }, commit(b, td){ b.contactoTelefono = td.querySelector('input').value; } },
+        {key:'agenciaRepNombre', label:'Agencia rep.', render(b){ return `<input type="text" class="grid-input" value="${(b.agenciaRepNombre||'').replace(/"/g,'&quot;')}">`; }, commit(b, td){ b.agenciaRepNombre = td.querySelector('input').value; } },
+        {key:'notas', label:'Notas', render(b){ return `<input type="text" class="grid-input" value="${(b.notas||'').replace(/"/g,'&quot;')}">`; }, commit(b, td){ b.notas = td.querySelector('input').value; } },
+      ],
+      rowActions(b){ return `<button class="icon-btn" data-action="edit-brand" data-id="${b.id}" title="Editar completo">✏️</button><button class="icon-btn" data-action="duplicate-brand" data-id="${b.id}" title="Duplicar">📋</button>`; }
+    });
+  }
 }
 
 function renderCreatorFinance(){
@@ -1300,7 +1414,13 @@ function renderAgencyDashboard(){
 }
 function renderAgencyRoster(){
   const roster = talentForAgency(viewingAgencyId);
-  document.getElementById('view-root').innerHTML = `<div class="roster-grid">
+  const toggleHTML = `<div class="view-toggle" id="rosterViewToggle">
+    <button type="button" class="view-toggle-btn ${rosterView==='tarjetas'?'active':''}" data-view="tarjetas">🪪 Tarjetas</button>
+    <button type="button" class="view-toggle-btn ${rosterView==='tabla'?'active':''}" data-view="tabla">📊 Tabla</button>
+  </div>`;
+  const bodyHTML = rosterView==='tabla'
+    ? `<div class="panel" style="padding:6px 20px 12px 20px;"><div id="agencyRosterGrid"></div></div>`
+    : `<div class="roster-grid">
     ${roster.map(t=>{
       const deals = agencyDealsFor(viewingAgencyId).filter(dl=>dl.talentoId===t.id);
       const activos = deals.filter(dl=>dl.etapa!=='pagado').length;
@@ -1320,7 +1440,26 @@ function renderAgencyRoster(){
     }).join('')}
     <div class="roster-add-card" id="btnAddTalent"><div style="font-size:26px;">＋</div>Nuevo representado</div>
   </div>`;
-  document.getElementById('btnAddTalent').addEventListener('click', ()=>openTalentModal());
+  document.getElementById('view-root').innerHTML = toggleHTML + bodyHTML;
+  document.querySelectorAll('#rosterViewToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ rosterView = btn.dataset.view; renderAgencyRoster(); }));
+  if(rosterView==='tarjetas'){
+    document.getElementById('btnAddTalent').addEventListener('click', ()=>openTalentModal());
+  } else {
+    renderEditableGrid({
+      containerId:'agencyRosterGrid',
+      rows: roster,
+      defsKey: 'agencyTalentColumnDefs',
+      emptyMessage: 'No hay representados todavía.',
+      rerender: renderAgencyRoster,
+      fixed: [
+        {key:'nombre', label:'Nombre', render(t){ return `<input type="text" class="grid-input" value="${(t.nombre||'').replace(/"/g,'&quot;')}" style="font-weight:700;">`; }, commit(t, td){ t.nombre = td.querySelector('input').value.trim() || t.nombre; } },
+        {key:'plataformas', label:'Plataformas', render(t){ return platformsSelectHTML(t.plataformas); }, commit(t, td){ t.plataformas = readPlatformsSelect(td.querySelector('select')); } },
+        {key:'activos', label:'Deals activos', render(t){ const deals = agencyDealsFor(viewingAgencyId).filter(dl=>dl.talentoId===t.id); const activos = deals.filter(dl=>dl.etapa!=='pagado').length; return `<span style="font-size:12.5px; color:var(--muted);">${activos}</span>`; } },
+        {key:'comision', label:'Comisión generada', render(t){ const deals = agencyDealsFor(viewingAgencyId).filter(dl=>dl.talentoId===t.id); const ingreso = deals.reduce((s,dl)=>{ const {montoAgencia}=agencyDealMoney(dl); return s+montoAgencia; },0); return `<span style="font-weight:700;">${fmtMoney(ingreso,'MXN')}</span>`; } },
+      ],
+      rowActions(t){ return `<button class="icon-btn" data-action="view-talent" data-id="${t.id}" title="Ver deals">👁️</button><button class="icon-btn" data-action="duplicate-talent" data-id="${t.id}" title="Duplicar">📋</button>`; }
+    });
+  }
 }
 function renderAgencyPipeline(){
   const deals = agencyDealsFor(viewingAgencyId);
@@ -1335,7 +1474,7 @@ function renderAgencyPipeline(){
 function agencyDealCardHTML(dl){
   const t = getTalent(dl.talentoId); const pb = pagoBadge(dl.estadoPagoMarca);
   return `<div class="card-proj" draggable="true" data-id="${dl.id}" data-action="edit-agency-deal">
-    <div class="card-top">${avatarHTML(t.nombre,'sm')}<div class="names"><div class="marca">${t.nombre}</div><div class="tipo">${dl.marca}</div></div></div>
+    <div class="card-top">${avatarHTML(t.nombre,'sm')}<div class="names"><div class="marca">${t.nombre}</div><div class="tipo">${dl.marca}</div></div><button class="icon-btn" style="width:24px; height:24px; margin-left:auto;" data-action="duplicate-agency-deal" data-id="${dl.id}" title="Duplicar deal">📋</button></div>
     <div class="card-title">${(dl.entregables||[]).length} entregable${(dl.entregables||[]).length===1?'':'s'} · ${platChipsHTML(dl.plataformas)}</div>
     <div class="card-bottom"><span class="price-tag">${fmtMoney(dl.montoTotal,dl.moneda)}</span><span class="pill ${pb.cls}">${pb.text}</span></div>
   </div>`;
@@ -1463,6 +1602,135 @@ document.getElementById('profilePlatChips').addEventListener('click', ev=>{
   renderPlatChips('profilePlatChips', profileSelectedPlats);
   renderProfileUsernameFields();
 });
+
+/* ============================================================ EDITABLE GRID (columnas personalizadas) ============================================================ */
+function platformsSelectHTML(selected){
+  return `<select multiple class="grid-input grid-multiselect" size="3">${PLATAFORMAS.map(p=>`<option value="${p}" ${(selected||[]).includes(p)?'selected':''}>${PLAT_ICON[p]||''} ${p}</option>`).join('')}</select>`;
+}
+function readPlatformsSelect(el){ return Array.from(el.selectedOptions).map(o=>o.value); }
+function customCellHTML(col, value){
+  const v = (value===undefined || value===null) ? '' : value;
+  if(col.tipo==='numero') return `<input type="number" step="0.01" class="grid-input" value="${v===''?'':v}">`;
+  if(col.tipo==='fecha') return `<input type="date" class="grid-input" value="${v}">`;
+  if(col.tipo==='casilla') return `<input type="checkbox" class="grid-check" ${v?'checked':''}>`;
+  if(col.tipo==='selector'){
+    const opts = col.opciones||[];
+    const activeOpt = opts.find(o=>o.valor===v);
+    return `<select class="grid-input grid-select" style="${activeOpt?`background:${activeOpt.color}26; border-color:${activeOpt.color}66;`:''}">
+      <option value="">—</option>
+      ${opts.map(o=>`<option value="${(o.valor+'').replace(/"/g,'&quot;')}" ${o.valor===v?'selected':''}>${o.valor}</option>`).join('')}
+    </select>`;
+  }
+  return `<input type="text" class="grid-input" value="${(v+'').replace(/"/g,'&quot;')}">`;
+}
+function readCustomCellValue(col, el){
+  if(col.tipo==='casilla') return el.checked;
+  if(col.tipo==='numero') return el.value===''?'':Number(el.value);
+  return el.value;
+}
+function duplicateColumnDef(defsKey, colId, rows){
+  const defs = DB[defsKey] || [];
+  const col = defs.find(c=>c.id===colId); if(!col) return;
+  const newCol = {id:uid('col'), nombre:col.nombre+' (copia)', tipo:col.tipo, opciones:(col.opciones||[]).map(o=>({...o}))};
+  defs.push(newCol);
+  rows.forEach(row=>{
+    row.camposPersonalizados = row.camposPersonalizados || {};
+    if(row.camposPersonalizados[colId]!==undefined) row.camposPersonalizados[newCol.id] = row.camposPersonalizados[colId];
+  });
+  saveAll();
+  toast('Columna duplicada 📋');
+}
+function openColumnModal(ctx){
+  columnModalCtx = ctx;
+  const defs = DB[ctx.defsKey] || [];
+  const col = ctx.editingColId ? defs.find(c=>c.id===ctx.editingColId) : null;
+  document.getElementById('columnDefModalTitle').textContent = col ? 'Editar columna' : 'Nueva columna';
+  document.getElementById('cold_nombre').value = col ? col.nombre : '';
+  document.getElementById('cold_tipo').value = col ? col.tipo : 'texto';
+  document.getElementById('cold_opciones').value = col && col.opciones ? col.opciones.map(o=>o.valor).join(', ') : '';
+  document.getElementById('cold_opcionesWrap').classList.toggle('hidden', (col?col.tipo:'texto')!=='selector');
+  document.getElementById('columnDefModalOverlay').classList.remove('hidden');
+}
+function closeColumnModal(){ document.getElementById('columnDefModalOverlay').classList.add('hidden'); columnModalCtx = null; }
+document.getElementById('cold_tipo').addEventListener('change', ()=>{
+  document.getElementById('cold_opcionesWrap').classList.toggle('hidden', document.getElementById('cold_tipo').value!=='selector');
+});
+document.getElementById('closeColumnDefModal').addEventListener('click', closeColumnModal);
+document.getElementById('btnCancelColumnDef').addEventListener('click', closeColumnModal);
+document.getElementById('columnDefModalOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('columnDefModalOverlay')) closeColumnModal(); });
+document.getElementById('columnDefForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  if(!columnModalCtx) return;
+  const { defsKey, editingColId, rerender } = columnModalCtx;
+  DB[defsKey] = DB[defsKey] || [];
+  const nombre = document.getElementById('cold_nombre').value.trim() || 'Columna';
+  const tipo = document.getElementById('cold_tipo').value;
+  const opcionesTxt = document.getElementById('cold_opciones').value.trim();
+  const opciones = tipo==='selector' ? opcionesTxt.split(',').map(s=>s.trim()).filter(Boolean).map((valor,i)=>({id:uid('opt'), valor, color:SELECTOR_COLORS[i%SELECTOR_COLORS.length]})) : [];
+  if(editingColId){
+    const col = DB[defsKey].find(c=>c.id===editingColId);
+    if(col){ col.nombre=nombre; col.tipo=tipo; col.opciones=opciones; }
+  } else {
+    DB[defsKey].push({id:uid('col'), nombre, tipo, opciones});
+  }
+  saveAll(); closeColumnModal(); rerender();
+  toast('Columna guardada ✨');
+});
+function renderEditableGrid(opts){
+  const { containerId, rows, defsKey, fixed, rowActions, emptyMessage, rerender, marcaDatalist } = opts;
+  const defs = defsKey ? (DB[defsKey] || []) : [];
+  const root = document.getElementById(containerId);
+  if(!rows.length){ root.innerHTML = `<div class="empty-state"><div class="big">📭</div>${emptyMessage||'Nada por aquí todavía.'}</div>`; return; }
+
+  const theadFixed = fixed.map(f=>`<th>${f.label}</th>`).join('');
+  const theadCustom = defs.map(c=>`<th><div class="col-head"><span>${c.nombre}</span><span class="col-head-actions"><button type="button" class="col-mini-btn" data-coledit="${c.id}" title="Editar columna">✏️</button><button type="button" class="col-mini-btn" data-coldup="${c.id}" title="Duplicar columna">📋</button><button type="button" class="col-mini-btn" data-coldel="${c.id}" title="Eliminar columna">🗑️</button></span></div></th>`).join('');
+  const theadAdd = defsKey ? `<th><button type="button" class="btn-addcol" data-addcol="1">＋ Columna</button></th>` : `<th></th>`;
+
+  const rowsHTML = rows.map(row=>{
+    row.camposPersonalizados = row.camposPersonalizados || {};
+    const fixedTds = fixed.map(f=>`<td class="grid-cell" data-field="${f.key}" data-rowid="${row.id}">${f.render(row)}</td>`).join('');
+    const customTds = defs.map(c=>`<td class="grid-cell" data-colid="${c.id}" data-rowid="${row.id}">${customCellHTML(c, row.camposPersonalizados[c.id])}</td>`).join('');
+    return `<tr>${fixedTds}${customTds}<td><div class="row-actions">${rowActions(row)}</div></td></tr>`;
+  }).join('');
+
+  root.innerHTML = `<div class="grid-scroll"><table class="editable-grid"><thead><tr>${theadFixed}${theadCustom}${theadAdd}</tr></thead><tbody>${rowsHTML}</tbody></table></div>${marcaDatalist||''}`;
+
+  function afterChange(){ saveAll(); rerender(); }
+
+  root.querySelectorAll('td.grid-cell[data-field]').forEach(td=>{
+    const fdef = fixed.find(f=>f.key===td.dataset.field);
+    const row = rows.find(r=>r.id===td.dataset.rowid);
+    if(!fdef || !row || !fdef.commit) return;
+    td.querySelectorAll('input, select').forEach(el=>{
+      const evName = (el.tagName==='SELECT' || el.type==='checkbox' || el.type==='date') ? 'change' : 'blur';
+      el.addEventListener(evName, ()=>{ fdef.commit(row, td); afterChange(); });
+    });
+  });
+
+  if(defsKey){
+    root.querySelectorAll('td.grid-cell[data-colid]').forEach(td=>{
+      const col = defs.find(c=>c.id===td.dataset.colid);
+      const row = rows.find(r=>r.id===td.dataset.rowid);
+      if(!col || !row) return;
+      const el = td.querySelector('input, select'); if(!el) return;
+      const evName = (el.tagName==='SELECT' || el.type==='checkbox' || el.type==='date') ? 'change' : 'blur';
+      el.addEventListener(evName, ()=>{
+        row.camposPersonalizados = row.camposPersonalizados || {};
+        row.camposPersonalizados[col.id] = readCustomCellValue(col, el);
+        afterChange();
+      });
+    });
+    root.querySelectorAll('[data-coledit]').forEach(btn=> btn.addEventListener('click', ()=> openColumnModal({defsKey, editingColId:btn.dataset.coledit, rerender})));
+    root.querySelectorAll('[data-coldup]').forEach(btn=> btn.addEventListener('click', ()=>{ duplicateColumnDef(defsKey, btn.dataset.coldup, rows); rerender(); }));
+    root.querySelectorAll('[data-coldel]').forEach(btn=> btn.addEventListener('click', ()=>{
+      if(!confirm('¿Eliminar esta columna y sus valores en todas las filas?')) return;
+      DB[defsKey] = (DB[defsKey]||[]).filter(c=>c.id!==btn.dataset.coldel);
+      rows.forEach(row=>{ if(row.camposPersonalizados) delete row.camposPersonalizados[btn.dataset.coldel]; });
+      saveAll(); rerender(); toast('Columna eliminada 🗑️');
+    }));
+    root.querySelectorAll('[data-addcol]').forEach(btn=> btn.addEventListener('click', ()=> openColumnModal({defsKey, editingColId:null, rerender})));
+  }
+}
 
 /* ============================================================ CHECKLIST (shared) ============================================================ */
 function defaultChecklist(){ return DEFAULT_CHECKLIST_STEPS.map(t=>({id:uid('cl'), texto:t, hecho:false})); }
@@ -1865,16 +2133,51 @@ talentDetailOverlay.addEventListener('click', e=>{
   if(btn.dataset.action==='new-deal-for-talent'){ talentDetailOverlay.classList.add('hidden'); openAgencyDealModal(null); setTimeout(()=>{ document.getElementById('ad_talento').value = btn.dataset.id; }, 0); }
 });
 
+/* ============================================================ DUPLICAR (filas) ============================================================ */
+function duplicateCreatorDeal(id){
+  const dl = findCreatorDeal(id); if(!dl) return;
+  const clone = JSON.parse(JSON.stringify(dl));
+  clone.id = uid('cd');
+  clone.fechaDeal = todayISO();
+  clone.entregables = (clone.entregables||[]).map(e=>({...e, id:uid('e'), checklist:(e.checklist||[]).map(c=>({...c, id:uid('cl')}))}));
+  DB.creatorDeals.push(clone);
+  saveAll(); renderCurrent(); toast('Deal duplicado 📋');
+}
+function duplicateAgencyDeal(id){
+  const dl = findAgencyDeal(id); if(!dl) return;
+  const clone = JSON.parse(JSON.stringify(dl));
+  clone.id = uid('ad');
+  clone.entregables = (clone.entregables||[]).map(e=>({...e, id:uid('e')}));
+  DB.agencyDeals.push(clone);
+  saveAll(); renderCurrent(); toast('Deal duplicado 📋');
+}
+function duplicateBrand(id){
+  const b = findBrand(id); if(!b) return;
+  const clone = {...b, id:uid('b'), nombre: b.nombre + ' (copia)', camposPersonalizados: {...(b.camposPersonalizados||{})}};
+  DB.creatorBrands.push(clone);
+  saveAll(); renderCurrent(); toast('Contacto duplicado 📋');
+}
+function duplicateTalent(id){
+  const t = getTalent(id); if(!t) return;
+  const clone = {...t, id:uid('t'), nombre: t.nombre + ' (copia)', camposPersonalizados: {...(t.camposPersonalizados||{})}};
+  DB.talent.push(clone);
+  saveAll(); renderCurrent(); toast('Representado duplicado 📋');
+}
+
 /* ============================================================ DELEGATED ACTIONS (view-root) ============================================================ */
 document.getElementById('view-root').addEventListener('click', e=>{
   const btn = e.target.closest('[data-action]'); if(!btn) return;
   const id = btn.dataset.id; const action = btn.dataset.action;
   if(action==='edit-creator-deal') openCreatorDealModal(findCreatorDeal(id));
   if(action==='delete-creator-deal'){ if(confirm('¿Eliminar este deal?')){ DB.creatorDeals = DB.creatorDeals.filter(dl=>dl.id!==id); saveAll(); renderCurrent(); toast('Deal eliminado 🗑️'); } }
+  if(action==='duplicate-creator-deal') duplicateCreatorDeal(id);
   if(action==='edit-agency-deal') openAgencyDealModal(findAgencyDeal(id));
   if(action==='delete-agency-deal'){ if(confirm('¿Eliminar este deal?')){ DB.agencyDeals = DB.agencyDeals.filter(dl=>dl.id!==id); saveAll(); renderCurrent(); toast('Deal eliminado 🗑️'); } }
+  if(action==='duplicate-agency-deal') duplicateAgencyDeal(id);
   if(action==='edit-brand') openBrandModal(findBrand(id));
+  if(action==='duplicate-brand') duplicateBrand(id);
   if(action==='view-talent') openTalentDetail(id);
+  if(action==='duplicate-talent') duplicateTalent(id);
 });
 
 /* ============================================================ WORKSPACE TOGGLE + MAIN RENDER ============================================================ */
