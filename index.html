@@ -626,7 +626,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { initializeAuth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
 
@@ -640,7 +640,14 @@ const firebaseConfig = {
   measurementId: "G-1JTXDJQRFG"
 };
 const fbApp = initializeApp(firebaseConfig);
-const auth = getAuth(fbApp);
+/* Si el navegador de alguien no puede usar el almacenamiento local normal (IndexedDB roto,
+   políticas de una laptop de trabajo, disco lleno, etc.), Firebase prueba estas opciones en
+   orden y usa automáticamente la primera que funcione — así el login no se cae por completo,
+   solo pierde el "quedar conectado" entre recargas para esa persona en particular. */
+const auth = initializeAuth(fbApp, {
+  persistence: [browserLocalPersistence, browserSessionPersistence, inMemoryPersistence],
+  popupRedirectResolver: browserPopupRedirectResolver,
+});
 const dbFs = getFirestore(fbApp);
 const storage = getStorage(fbApp);
 
@@ -776,6 +783,10 @@ function authErrorMessage(err){
   if(code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return null; // el usuario cerró la ventana, no es un error real
   if(code === 'auth/unauthorized-domain') return 'Este sitio todavía no está autorizado en Firebase (Authentication → Settings → Authorized domains).';
   if(code === 'auth/network-request-failed') return 'Hubo un problema de conexión. Revisa tu internet e inténtalo de nuevo.';
+  const rawMsg = ((err && err.message) || '').toLowerCase();
+  if(rawMsg.includes('indexeddb') || rawMsg.includes('database') || rawMsg.includes('closing')){
+    return 'Tu navegador está bloqueando el almacenamiento local que Google necesita para iniciar sesión (puede ser una laptop de trabajo/escuela con restricciones, poco espacio en disco, o una extensión de privacidad). Prueba recargar la página, usar otro navegador, o revisar el espacio de tu disco.';
+  }
   return 'No se pudo iniciar sesión (' + (code || (err && err.message) || 'error desconocido') + '). Intenta de nuevo o usa otro navegador.';
 }
 document.getElementById('btnGoogleSignIn').addEventListener('click', async ()=>{
