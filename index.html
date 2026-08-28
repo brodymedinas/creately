@@ -257,6 +257,16 @@
   .checklist-add-row input{flex:1; border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:12px; background:#fff;}
   .checklist-add-row button{border:none; background:var(--ig-purple); color:#fff; border-radius:8px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer;}
   .btn-add-row{background:#f3f0fa; border:1px dashed var(--border); color:var(--ig-purple); font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:11px; cursor:pointer; width:100%; margin-top:2px;}
+  .mc-panel.hidden{display:none;}
+  .archivo-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+  .archivo-row a{flex:1; color:var(--ig-purple); font-weight:700; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .archivo-row a:hover{text-decoration:underline;}
+  .archivo-fecha{color:var(--muted); font-size:11.5px; white-space:nowrap;}
+  .arch-remove{border:none; background:#fff0f2; color:var(--red); border-radius:8px; width:26px; height:26px; cursor:pointer; font-size:12px; flex-shrink:0;}
+  .bitacora-item{display:flex; align-items:flex-start; gap:8px; padding:9px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+  .bitacora-fecha{color:var(--muted); font-size:11px; font-weight:700; white-space:nowrap; min-width:88px;}
+  .bitacora-texto{flex:1;}
+  .bn-remove{border:none; background:none; color:var(--red); cursor:pointer; font-size:12px; flex-shrink:0;}
   .rate-row{display:grid; grid-template-columns:1.5fr 1fr auto; gap:6px; margin-bottom:7px; align-items:center;}
   .rate-row select, .rate-row input{border:1px solid var(--border); border-radius:9px; padding:7px 8px; font-size:12px; font-family:'Inter'; background:#fff;}
   .username-field-row{display:flex; align-items:center; gap:8px; margin-bottom:7px;}
@@ -397,6 +407,38 @@
       <div class="section-label">📦 Entregables de este deal</div>
       <div id="creatorEntregablesList"></div>
       <button type="button" class="btn-add-row" id="btnAddCreatorEntregable">＋ Agregar entregable</button>
+
+      <div class="section-label">🎛️ Más control de este deal</div>
+      <div class="subtab-toggle" id="cdMoreControlToggle">
+        <button type="button" class="subtab-btn active" data-mcsub="pagos">📅 Pagos</button>
+        <button type="button" class="subtab-btn" data-mcsub="archivos">📎 Archivos</button>
+        <button type="button" class="subtab-btn" data-mcsub="contrato">✅ Contrato</button>
+        <button type="button" class="subtab-btn" data-mcsub="bitacora">📝 Bitácora</button>
+      </div>
+      <div id="cdMoreControlPanels" style="margin-top:12px;">
+        <div class="mc-panel" data-mcpanel="pagos">
+          <div class="form-grid">
+            <div class="form-field"><label>Fecha de pago acordada</label><input type="date" id="cd_fechaPagoAcordada"></div>
+            <div class="form-field"><label>Fecha en que se recibió el pago</label><input type="date" id="cd_fechaPagoRecibido"></div>
+          </div>
+          <div class="form-field full hidden" id="cd_pagoVencidoAlert" style="background:#fff4e5; border:1px solid #ffb800; border-radius:11px; padding:10px 12px; font-size:12px; color:#8a5a00;">⚠️ La fecha de pago acordada ya pasó y no se ha marcado como recibido.</div>
+        </div>
+        <div class="mc-panel hidden" data-mcpanel="archivos">
+          <div id="cd_archivosNote" class="hidden" style="font-size:12px; color:var(--muted); margin-bottom:10px;">Guarda el deal primero para poder adjuntar archivos (factura, contrato, brief…).</div>
+          <div id="cd_archivosList"></div>
+          <input type="file" id="cd_archivoInput" class="hidden">
+          <button type="button" class="btn-add-row" id="btnAddArchivo">＋ Subir archivo</button>
+        </div>
+        <div class="mc-panel hidden" data-mcpanel="contrato">
+          <div id="cd_contratoChecklistList"></div>
+          <div class="checklist-add-row"><input type="text" id="cd_contratoChecklistInput" placeholder="Nueva condición (ej. Exclusividad 30 días)…"><button type="button" id="btnAddContratoChecklist">＋</button></div>
+        </div>
+        <div class="mc-panel hidden" data-mcpanel="bitacora">
+          <div class="checklist-add-row"><input type="text" id="cd_bitacoraInput" placeholder="Nueva nota (ej. Marca pidió cambiar la fecha de entrega)…"><button type="button" id="btnAddBitacora">＋</button></div>
+          <div id="cd_bitacoraList" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-danger-text" id="btnDeleteCreatorDeal" style="visibility:hidden;">Eliminar deal</button>
         <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelCreatorDeal">Cancelar</button><button type="submit" class="btn-primary">Guardar deal</button></div>
@@ -586,6 +628,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXNroGX2qq3OjOXFZ1x3AVxlxb6maom3g",
@@ -599,6 +642,7 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const dbFs = getFirestore(fbApp);
+const storage = getStorage(fbApp);
 
 /* ============================================================ CONSTANTS ============================================================ */
 const LS_KEY = 'creatly_v4';
@@ -671,6 +715,9 @@ let financeSubTab = 'general';
 let contactsView = 'tarjetas';
 let rosterView = 'tarjetas';
 let columnModalCtx = null;
+let dealMoreControlSubTab = 'pagos';
+let currentContratoChecklist = [];
+let currentBitacora = [];
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function saveAll(){
@@ -861,6 +908,8 @@ function seedIfEmpty(){
 /* ============================================================ HELPERS ============================================================ */
 function fmtMoney(n, cur){ return (MONEY_SYM[cur]||'$') + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:0, maximumFractionDigits:2}); }
 function fmtDate(iso){ if(!iso) return '—'; const dt=new Date(iso+'T00:00:00'); return dt.toLocaleDateString('es-MX',{day:'numeric', month:'short'}); }
+function fmtDateTime(iso){ if(!iso) return '—'; const dt=new Date(iso); return dt.toLocaleDateString('es-MX',{day:'numeric', month:'short'}) + ' · ' + dt.toLocaleTimeString('es-MX',{hour:'2-digit', minute:'2-digit'}); }
+function isPagoVencido(dl){ return !!(dl && dl.fechaPagoAcordada && !dl.fechaPagoRecibido && dl.fechaPagoAcordada < todayISO()); }
 function daysUntil(iso){ if(!iso) return null; const today=new Date(); today.setHours(0,0,0,0); const due=new Date(iso+'T00:00:00'); return Math.round((due-today)/86400000); }
 function dueBadge(iso, entregado){
   if(entregado) return {text:'Entregado', cls:'pill-green'};
@@ -1424,7 +1473,7 @@ function renderCreatorDeals(){
       { key:'marca', label:'Marca', view(dl){ const b=getBrand(dl.marcaId); return `<span style="font-weight:700;">${b?b.nombre:'(sin marca)'}</span>`; } },
       { key:'plataformas', label:'Plataformas', view(dl){ return platChipsHTML(dl.plataformas); } },
       { key:'monto', label:'Monto', view(dl){ const v = dl.tipoPago==='intercambio' ? dl.intercambioValorEstimado : dl.montoTotal; return dl.tipoPago==='intercambio' ? `🎁 ${fmtMoney(v,dl.moneda)}` : fmtMoney(v,dl.moneda); } },
-      { key:'estadoPago', label:'Estado de pago', view(dl){ const pb=pagoBadge(dl.estadoPago); return `<span class="pill ${pb.cls}">${pb.text}</span>`; } },
+      { key:'estadoPago', label:'Estado de pago', view(dl){ const pb=pagoBadge(dl.estadoPago); return `<span class="pill ${pb.cls}">${pb.text}</span>${isPagoVencido(dl)?' <span title="El pago acordado ya venció">⚠️</span>':''}`; } },
       { key:'fechaDeal', label:'Fecha del deal', view(dl){ return fmtDate(dl.fechaDeal); } },
     ],
     rowActions(dl){ return `<button class="icon-btn" data-action="edit-creator-deal" data-id="${dl.id}" title="Editar completo (entregables, checklist, notas…)">✏️</button><button class="icon-btn" data-action="duplicate-creator-deal" data-id="${dl.id}" title="Duplicar deal">📋</button><button class="icon-btn" data-action="delete-creator-deal" data-id="${dl.id}" title="Eliminar">🗑️</button>`; }
@@ -2129,6 +2178,21 @@ function openCreatorDealModal(deal){
     origenNote.classList.add('hidden'); origenNote.textContent = '';
   }
 
+  document.getElementById('cd_fechaPagoAcordada').value = deal ? (deal.fechaPagoAcordada||'') : '';
+  document.getElementById('cd_fechaPagoRecibido').value = deal ? (deal.fechaPagoRecibido||'') : '';
+  document.getElementById('cd_pagoVencidoAlert').classList.toggle('hidden', !isPagoVencido(deal||{}));
+
+  document.getElementById('cd_archivosNote').classList.toggle('hidden', !!deal);
+  document.getElementById('btnAddArchivo').style.display = deal ? '' : 'none';
+  renderArchivosList(deal);
+
+  currentContratoChecklist = deal ? JSON.parse(JSON.stringify(deal.checklistContrato||[])) : [];
+  renderContratoChecklistList();
+
+  currentBitacora = deal ? JSON.parse(JSON.stringify(deal.bitacora||[])) : [];
+  renderBitacoraList();
+
+  setMoreControlSubTab('pagos');
   creatorDealOverlay.classList.remove('hidden');
 }
 function closeCreatorDealModal(){ creatorDealOverlay.classList.add('hidden'); editingCreatorDealId = null; pendingOrigenPropuestaId = null; }
@@ -2175,11 +2239,15 @@ creatorDealForm.addEventListener('submit', e=>{
     contratoVencimiento: document.getElementById('cd_contratoVencimiento').value,
     notas: document.getElementById('cd_notas').value.trim(),
     entregables: rows,
+    fechaPagoAcordada: document.getElementById('cd_fechaPagoAcordada').value || '',
+    fechaPagoRecibido: document.getElementById('cd_fechaPagoRecibido').value || '',
+    checklistContrato: currentContratoChecklist.slice(),
+    bitacora: currentBitacora.slice(),
   };
   if(editingCreatorDealId){
     const dl = findCreatorDeal(editingCreatorDealId); Object.assign(dl, data); toast('Deal actualizado ✨');
   } else {
-    const nuevoDeal = {id:uid('cd'), ...data};
+    const nuevoDeal = {id:uid('cd'), archivos:[], ...data};
     if(pendingOrigenPropuestaId){
       const p = findPropuesta(pendingOrigenPropuestaId);
       if(p){ nuevoDeal.origenPropuestaId = p.id; p.etapa = 'ganado'; p.fechaCierre = todayISO(); p.origenDealId = nuevoDeal.id; }
@@ -2194,6 +2262,125 @@ document.getElementById('btnDeleteCreatorDeal').addEventListener('click', ()=>{
   if(!editingCreatorDealId) return;
   if(confirm('¿Eliminar este deal y todos sus entregables?')){ DB.creatorDeals = DB.creatorDeals.filter(dl=>dl.id!==editingCreatorDealId); saveAll(); closeCreatorDealModal(); renderCurrent(); toast('Deal eliminado 🗑️'); }
 });
+
+/* ============================================================ MÁS CONTROL DEL DEAL (Fase 3): pagos / archivos / contrato / bitácora ============================================================ */
+function setMoreControlSubTab(key){
+  dealMoreControlSubTab = key;
+  document.querySelectorAll('#cdMoreControlToggle .subtab-btn').forEach(b=>b.classList.toggle('active', b.dataset.mcsub===key));
+  document.querySelectorAll('#cdMoreControlPanels .mc-panel').forEach(p=>p.classList.toggle('hidden', p.dataset.mcpanel!==key));
+}
+document.querySelectorAll('#cdMoreControlToggle .subtab-btn').forEach(btn=>btn.addEventListener('click', ()=>setMoreControlSubTab(btn.dataset.mcsub)));
+
+document.getElementById('cd_fechaPagoAcordada').addEventListener('change', updatePagoVencidoAlert);
+document.getElementById('cd_fechaPagoRecibido').addEventListener('change', updatePagoVencidoAlert);
+function updatePagoVencidoAlert(){
+  const acordada = document.getElementById('cd_fechaPagoAcordada').value;
+  const recibido = document.getElementById('cd_fechaPagoRecibido').value;
+  const vencido = acordada && !recibido && acordada < todayISO();
+  document.getElementById('cd_pagoVencidoAlert').classList.toggle('hidden', !vencido);
+}
+
+/* --- Archivos (Firebase Storage) --- */
+function renderArchivosList(deal){
+  const wrap = document.getElementById('cd_archivosList');
+  const archivos = deal ? (deal.archivos||[]) : [];
+  wrap.innerHTML = archivos.length ? archivos.map(a=>`
+    <div class="archivo-row">
+      <a href="${a.url}" target="_blank" rel="noopener">📄 ${a.nombre}</a>
+      <span class="archivo-fecha">${fmtDate(a.fecha)}</span>
+      <button type="button" class="arch-remove" data-archid="${a.id}" title="Eliminar archivo">🗑️</button>
+    </div>`).join('') : `<div style="font-size:12px; color:var(--muted);">Sin archivos adjuntos todavía.</div>`;
+}
+document.getElementById('btnAddArchivo').addEventListener('click', ()=>{
+  if(!editingCreatorDealId){ toast('Guarda el deal primero para poder adjuntar archivos.'); return; }
+  document.getElementById('cd_archivoInput').click();
+});
+document.getElementById('cd_archivoInput').addEventListener('change', async ev=>{
+  const file = ev.target.files[0]; ev.target.value = '';
+  if(!file || !editingCreatorDealId || !currentUser) return;
+  const dl = findCreatorDeal(editingCreatorDealId); if(!dl) return;
+  toast('Subiendo archivo…');
+  try{
+    const path = `uploads/${currentUser.uid}/deals/${dl.id}/${uid('f')}-${file.name}`;
+    const sref = storageRef(storage, path);
+    await uploadBytes(sref, file);
+    const url = await getDownloadURL(sref);
+    dl.archivos = dl.archivos || [];
+    dl.archivos.push({id:uid('af'), nombre:file.name, url, path, fecha: todayISO()});
+    saveAll();
+    renderArchivosList(dl);
+    toast('Archivo subido 📎');
+  } catch(err){
+    console.error(err);
+    toast('⚠️ No se pudo subir el archivo. Revisa las reglas de Firebase Storage.');
+  }
+});
+document.getElementById('cd_archivosList').addEventListener('click', async ev=>{
+  const btn = ev.target.closest('.arch-remove'); if(!btn || !editingCreatorDealId) return;
+  const dl = findCreatorDeal(editingCreatorDealId); if(!dl) return;
+  const archivo = (dl.archivos||[]).find(a=>a.id===btn.dataset.archid); if(!archivo) return;
+  if(!confirm(`¿Eliminar el archivo "${archivo.nombre}"?`)) return;
+  try{ if(archivo.path){ await deleteObject(storageRef(storage, archivo.path)); } }
+  catch(err){ console.error(err); }
+  dl.archivos = (dl.archivos||[]).filter(a=>a.id!==archivo.id);
+  saveAll(); renderArchivosList(dl); toast('Archivo eliminado 🗑️');
+});
+
+/* --- Checklist de condiciones de contrato (buffer local, se guarda junto con el deal) --- */
+function renderContratoChecklistList(){
+  const wrap = document.getElementById('cd_contratoChecklistList');
+  wrap.innerHTML = currentContratoChecklist.length ? currentContratoChecklist.map(it=>`
+    <div class="checklist-item ${it.hecho?'done':''}">
+      <input type="checkbox" data-cclid="${it.id}" ${it.hecho?'checked':''}>
+      <span>${it.texto}</span>
+      <button type="button" class="cc-remove" data-cclid="${it.id}">✕</button>
+    </div>`).join('') : `<div style="font-size:12px; color:var(--muted);">Sin condiciones agregadas todavía.</div>`;
+}
+document.getElementById('cd_contratoChecklistList').addEventListener('click', ev=>{
+  const rm = ev.target.closest('.cc-remove'); if(!rm) return;
+  currentContratoChecklist = currentContratoChecklist.filter(i=>i.id!==rm.dataset.cclid);
+  renderContratoChecklistList();
+});
+document.getElementById('cd_contratoChecklistList').addEventListener('change', ev=>{
+  const cb = ev.target.closest('input[type=checkbox][data-cclid]'); if(!cb) return;
+  const item = currentContratoChecklist.find(i=>i.id===cb.dataset.cclid);
+  if(item) item.hecho = cb.checked;
+});
+function addContratoChecklistItem(){
+  const input = document.getElementById('cd_contratoChecklistInput');
+  const txt = input.value.trim(); if(!txt) return;
+  currentContratoChecklist.push({id:uid('cl'), texto:txt, hecho:false});
+  input.value = '';
+  renderContratoChecklistList();
+}
+document.getElementById('btnAddContratoChecklist').addEventListener('click', addContratoChecklistItem);
+document.getElementById('cd_contratoChecklistInput').addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); addContratoChecklistItem(); } });
+
+/* --- Bitácora de notas (buffer local, se guarda junto con el deal) --- */
+function renderBitacoraList(){
+  const wrap = document.getElementById('cd_bitacoraList');
+  const sorted = currentBitacora.slice().sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''));
+  wrap.innerHTML = sorted.length ? sorted.map(n=>`
+    <div class="bitacora-item">
+      <div class="bitacora-fecha">${fmtDateTime(n.fecha)}</div>
+      <div class="bitacora-texto">${n.texto}</div>
+      <button type="button" class="bn-remove" data-bnid="${n.id}">✕</button>
+    </div>`).join('') : `<div style="font-size:12px; color:var(--muted);">Sin notas todavía.</div>`;
+}
+document.getElementById('cd_bitacoraList').addEventListener('click', ev=>{
+  const rm = ev.target.closest('.bn-remove'); if(!rm) return;
+  currentBitacora = currentBitacora.filter(n=>n.id!==rm.dataset.bnid);
+  renderBitacoraList();
+});
+function addBitacoraNota(){
+  const input = document.getElementById('cd_bitacoraInput');
+  const txt = input.value.trim(); if(!txt) return;
+  currentBitacora.push({id:uid('nt'), texto:txt, fecha: new Date().toISOString()});
+  input.value = '';
+  renderBitacoraList();
+}
+document.getElementById('btnAddBitacora').addEventListener('click', addBitacoraNota);
+document.getElementById('cd_bitacoraInput').addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); addBitacoraNota(); } });
 
 /* ============================================================ AGENCY DEAL MODAL ============================================================ */
 const agencyDealOverlay = document.getElementById('agencyDealOverlay');
@@ -2390,6 +2577,12 @@ function duplicateCreatorDeal(id){
   clone.id = uid('cd');
   clone.fechaDeal = todayISO();
   clone.entregables = (clone.entregables||[]).map(e=>({...e, id:uid('e'), checklist:(e.checklist||[]).map(c=>({...c, id:uid('cl')}))}));
+  clone.archivos = [];
+  clone.bitacora = [];
+  clone.checklistContrato = (clone.checklistContrato||[]).map(c=>({...c, id:uid('cl'), hecho:false}));
+  clone.fechaPagoAcordada = '';
+  clone.fechaPagoRecibido = '';
+  delete clone.origenPropuestaId;
   DB.creatorDeals.push(clone);
   saveAll(); renderCurrent(); toast('Deal duplicado 📋');
 }
