@@ -116,6 +116,7 @@
   .card-proj{background:var(--card); border-radius:16px; padding:12px 13px; margin-bottom:10px; box-shadow:var(--shadow); border:1px solid var(--border); cursor:grab; transition:.12s;}
   .card-proj:active{cursor:grabbing;}
   .card-proj:hover{box-shadow:var(--shadow-lg); transform:translateY(-2px);}
+  .card-proj.stale{border-left:4px solid var(--amber);}
   .card-top{display:flex; align-items:center; gap:9px; margin-bottom:9px;}
   .card-top .names{min-width:0;}
   .card-top .marca{font-weight:800; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -256,6 +257,16 @@
   .checklist-add-row input{flex:1; border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:12px; background:#fff;}
   .checklist-add-row button{border:none; background:var(--ig-purple); color:#fff; border-radius:8px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer;}
   .btn-add-row{background:#f3f0fa; border:1px dashed var(--border); color:var(--ig-purple); font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:11px; cursor:pointer; width:100%; margin-top:2px;}
+  .mc-panel.hidden{display:none;}
+  .archivo-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+  .archivo-row a{flex:1; color:var(--ig-purple); font-weight:700; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .archivo-row a:hover{text-decoration:underline;}
+  .archivo-fecha{color:var(--muted); font-size:11.5px; white-space:nowrap;}
+  .arch-remove{border:none; background:#fff0f2; color:var(--red); border-radius:8px; width:26px; height:26px; cursor:pointer; font-size:12px; flex-shrink:0;}
+  .bitacora-item{display:flex; align-items:flex-start; gap:8px; padding:9px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+  .bitacora-fecha{color:var(--muted); font-size:11px; font-weight:700; white-space:nowrap; min-width:88px;}
+  .bitacora-texto{flex:1;}
+  .bn-remove{border:none; background:none; color:var(--red); cursor:pointer; font-size:12px; flex-shrink:0;}
   .rate-row{display:grid; grid-template-columns:1.5fr 1fr auto; gap:6px; margin-bottom:7px; align-items:center;}
   .rate-row select, .rate-row input{border:1px solid var(--border); border-radius:9px; padding:7px 8px; font-size:12px; font-family:'Inter'; background:#fff;}
   .username-field-row{display:flex; align-items:center; gap:8px; margin-bottom:7px;}
@@ -392,9 +403,42 @@
         <div class="form-field"><label>Vencimiento del contrato</label><input type="date" id="cd_contratoVencimiento"></div>
         <div class="form-field full"><label>Notas</label><textarea id="cd_notas" placeholder="Brief, condiciones, referencias…"></textarea></div>
       </div>
+      <div class="form-field full hidden" id="cd_origenNote" style="background:#f3f0fa; border-radius:11px; padding:10px 12px; font-size:12px; color:var(--muted); margin-bottom:14px;"></div>
       <div class="section-label">📦 Entregables de este deal</div>
       <div id="creatorEntregablesList"></div>
       <button type="button" class="btn-add-row" id="btnAddCreatorEntregable">＋ Agregar entregable</button>
+
+      <div class="section-label">🎛️ Más control de este deal</div>
+      <div class="subtab-toggle" id="cdMoreControlToggle">
+        <button type="button" class="subtab-btn active" data-mcsub="pagos">📅 Pagos</button>
+        <button type="button" class="subtab-btn" data-mcsub="archivos">📎 Archivos</button>
+        <button type="button" class="subtab-btn" data-mcsub="contrato">✅ Contrato</button>
+        <button type="button" class="subtab-btn" data-mcsub="bitacora">📝 Bitácora</button>
+      </div>
+      <div id="cdMoreControlPanels" style="margin-top:12px;">
+        <div class="mc-panel" data-mcpanel="pagos">
+          <div class="form-grid">
+            <div class="form-field"><label>Fecha de pago acordada</label><input type="date" id="cd_fechaPagoAcordada"></div>
+            <div class="form-field"><label>Fecha en que se recibió el pago</label><input type="date" id="cd_fechaPagoRecibido"></div>
+          </div>
+          <div class="form-field full hidden" id="cd_pagoVencidoAlert" style="background:#fff4e5; border:1px solid #ffb800; border-radius:11px; padding:10px 12px; font-size:12px; color:#8a5a00;">⚠️ La fecha de pago acordada ya pasó y no se ha marcado como recibido.</div>
+        </div>
+        <div class="mc-panel hidden" data-mcpanel="archivos">
+          <div id="cd_archivosNote" class="hidden" style="font-size:12px; color:var(--muted); margin-bottom:10px;">Guarda el deal primero para poder adjuntar archivos (factura, contrato, brief…).</div>
+          <div id="cd_archivosList"></div>
+          <input type="file" id="cd_archivoInput" class="hidden">
+          <button type="button" class="btn-add-row" id="btnAddArchivo">＋ Subir archivo</button>
+        </div>
+        <div class="mc-panel hidden" data-mcpanel="contrato">
+          <div id="cd_contratoChecklistList"></div>
+          <div class="checklist-add-row"><input type="text" id="cd_contratoChecklistInput" placeholder="Nueva condición (ej. Exclusividad 30 días)…"><button type="button" id="btnAddContratoChecklist">＋</button></div>
+        </div>
+        <div class="mc-panel hidden" data-mcpanel="bitacora">
+          <div class="checklist-add-row"><input type="text" id="cd_bitacoraInput" placeholder="Nueva nota (ej. Marca pidió cambiar la fecha de entrega)…"><button type="button" id="btnAddBitacora">＋</button></div>
+          <div id="cd_bitacoraList" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-danger-text" id="btnDeleteCreatorDeal" style="visibility:hidden;">Eliminar deal</button>
         <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelCreatorDeal">Cancelar</button><button type="submit" class="btn-primary">Guardar deal</button></div>
@@ -519,6 +563,38 @@
 </div>
 
 <!-- ============ COLUMNA PERSONALIZADA MODAL (compartido por Deals/Contactos/Roster) ============ -->
+<!-- ============ PROPUESTA MODAL (nueva / editar) ============ -->
+<div class="modal-overlay hidden" id="propuestaModalOverlay">
+  <div class="modal narrow">
+    <button class="close-x" id="closePropuestaModal">✕</button>
+    <h2 id="propuestaModalTitle">Nueva propuesta</h2>
+    <div class="modal-sub">Registra una negociación en curso con una marca.</div>
+    <form id="propuestaForm">
+      <div class="form-grid">
+        <div class="form-field full"><label>Marca</label><input type="text" id="pp_marca" list="pp_marcaList" required placeholder="Escribe o elige una marca existente"></div>
+        <datalist id="pp_marcaList"></datalist>
+        <div class="form-field full"><label>Campaña (opcional)</label><input type="text" id="pp_campana" placeholder="Ej. Lanzamiento verano"></div>
+        <div class="form-field full"><label>¿Qué se propuso?</label><textarea id="pp_queSeProp" placeholder="Ej. 3 Reels + 1 story, mencionan producto nuevo"></textarea></div>
+        <div class="form-field"><label>Monto tentativo desde</label><input type="number" id="pp_montoMin" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="form-field"><label>Monto tentativo hasta</label><input type="number" id="pp_montoMax" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="form-field"><label>Última fecha de contacto</label><input type="date" id="pp_fechaContacto"></div>
+        <div class="form-field"><label>Etapa</label>
+          <select id="pp_etapa">
+            <option value="contacto">Contacto inicial</option>
+            <option value="propuesta">Propuesta enviada</option>
+            <option value="negociando">Negociando</option>
+          </select>
+        </div>
+        <div class="form-field full"><label>Próxima acción</label><input type="text" id="pp_proximaAccion" placeholder="Ej. Esperando que respondan"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger-text" id="btnDeletePropuesta" style="visibility:hidden;">Eliminar propuesta</button>
+        <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelPropuesta">Cancelar</button><button type="submit" class="btn-primary" id="btnSubmitPropuesta">Agregar</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay hidden" id="columnDefModalOverlay">
   <div class="modal narrow">
     <button class="close-x" id="closeColumnDefModal">✕</button>
@@ -552,6 +628,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXNroGX2qq3OjOXFZ1x3AVxlxb6maom3g",
@@ -565,6 +642,7 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const dbFs = getFirestore(fbApp);
+const storage = getStorage(fbApp);
 
 /* ============================================================ CONSTANTS ============================================================ */
 const LS_KEY = 'creatly_v4';
@@ -574,6 +652,12 @@ const ESTADOS = [
   {key:'revision', label:'En revisión', color:'#ffb800'},
   {key:'entregado', label:'Entregado', color:'#1fbf75'},
 ];
+const PROPUESTA_ETAPAS = [
+  {key:'contacto', label:'Contacto inicial', color:'#c4b5fd'},
+  {key:'propuesta', label:'Propuesta enviada', color:'#93c5fd'},
+  {key:'negociando', label:'Negociando', color:'#ffb800'},
+];
+const PROPUESTA_STALE_DAYS = 5;
 const PIPELINE = [
   {key:'prospecto', label:'Prospecto', color:'#c4b5fd'},
   {key:'negociacion', label:'Negociación', color:'#93c5fd'},
@@ -613,6 +697,9 @@ let editingCreatorDealId = null;
 let editingAgencyDealId = null;
 let editingBrandId = null;
 let editingTalentId = null;
+let editingPropuestaId = null;
+let propuestasView = 'activas';
+let pendingOrigenPropuestaId = null;
 let editingProfileId = null;
 let calCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let filters = {search:'', sort:'fecha-asc'};
@@ -628,6 +715,9 @@ let financeSubTab = 'general';
 let contactsView = 'tarjetas';
 let rosterView = 'tarjetas';
 let columnModalCtx = null;
+let dealMoreControlSubTab = 'pagos';
+let currentContratoChecklist = [];
+let currentBitacora = [];
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function saveAll(){
@@ -642,6 +732,7 @@ function ensureColumnDefs(){
   DB.creatorDealColumnDefs = DB.creatorDealColumnDefs || [];
   DB.creatorContactColumnDefs = DB.creatorContactColumnDefs || [];
   DB.agencyTalentColumnDefs = DB.agencyTalentColumnDefs || [];
+  DB.creatorPropuestas = DB.creatorPropuestas || [];
 }
 
 /* ============================================================ AUTH (Firebase) ============================================================ */
@@ -653,6 +744,7 @@ async function initUserData(user){
       creatorProfiles: [{id:uid('cp'), nombre: user.displayName || 'Mi perfil', plataformas:[], usernames:{}, nicho:'', email: user.email||'', rateCard:[]}],
       creatorBrands: [],
       creatorDeals: [],
+      creatorPropuestas: [],
       agencies: [{id:uid('ag'), nombre:'Mi Agencia', comisionDefault:20}],
       talent: [],
       agencyDeals: [],
@@ -816,6 +908,8 @@ function seedIfEmpty(){
 /* ============================================================ HELPERS ============================================================ */
 function fmtMoney(n, cur){ return (MONEY_SYM[cur]||'$') + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:0, maximumFractionDigits:2}); }
 function fmtDate(iso){ if(!iso) return '—'; const dt=new Date(iso+'T00:00:00'); return dt.toLocaleDateString('es-MX',{day:'numeric', month:'short'}); }
+function fmtDateTime(iso){ if(!iso) return '—'; const dt=new Date(iso); return dt.toLocaleDateString('es-MX',{day:'numeric', month:'short'}) + ' · ' + dt.toLocaleTimeString('es-MX',{hour:'2-digit', minute:'2-digit'}); }
+function isPagoVencido(dl){ return !!(dl && dl.fechaPagoAcordada && !dl.fechaPagoRecibido && dl.fechaPagoAcordada < todayISO()); }
 function daysUntil(iso){ if(!iso) return null; const today=new Date(); today.setHours(0,0,0,0); const due=new Date(iso+'T00:00:00'); return Math.round((due-today)/86400000); }
 function dueBadge(iso, entregado){
   if(entregado) return {text:'Entregado', cls:'pill-green'};
@@ -850,8 +944,10 @@ function getTalent(id){ return DB.talent.find(t=>t.id===id); }
 function findCreatorDeal(id){ return DB.creatorDeals.find(d=>d.id===id); }
 function findAgencyDeal(id){ return DB.agencyDeals.find(d=>d.id===id); }
 function findBrand(id){ return DB.creatorBrands.find(b=>b.id===id); }
+function findPropuesta(id){ return (DB.creatorPropuestas||[]).find(p=>p.id===id); }
 
 function creatorDealsFor(creadorId){ return DB.creatorDeals.filter(d=>d.creadorId===creadorId); }
+function creatorPropuestasFor(creadorId){ return (DB.creatorPropuestas||[]).filter(p=>p.creadorId===creadorId); }
 function brandsFor(creadorId){ return DB.creatorBrands.filter(b=>b.creadorId===creadorId); }
 function talentForAgency(agenciaId){ return DB.talent.filter(t=>t.agenciaId===agenciaId); }
 function agencyDealsFor(agenciaId){ return DB.agencyDeals.filter(d=>d.agenciaId===agenciaId); }
@@ -1025,6 +1121,7 @@ function importDealsFile(file){
 const CREATOR_TABS = [
   {key:'dashboard', icon:'🏠', label:'Dashboard'},
   {key:'board', icon:'🗂️', label:'Tablero'},
+  {key:'propuestas', icon:'📨', label:'Propuestas'},
   {key:'deals', icon:'🤝', label:'Deals'},
   {key:'contacts', icon:'📇', label:'Contactos'},
   {key:'calendar', icon:'📅', label:'Calendario'},
@@ -1043,6 +1140,7 @@ const AGENCY_TABS = [
 const CREATOR_TAB_META = {
   dashboard:{title:'Dashboard', sub:'Tu resumen de un vistazo.'},
   board:{title:'Tablero', sub:'Arrastra tus entregables entre estados.'},
+  propuestas:{title:'Propuestas', sub:'Tus negociaciones con marcas, de contacto a ganado.'},
   deals:{title:'Deals', sub:'Todos tus acuerdos con marcas.', search:true},
   contacts:{title:'Contactos', sub:'Tu directorio de marcas y personas de contacto.'},
   calendar:{title:'Calendario', sub:'Nunca más se te pasa una fecha de entrega.'},
@@ -1176,6 +1274,173 @@ function attachCreatorEntregableDrag(){
   });
 }
 
+/* ============================================================ PROPUESTAS (pipeline pre-deal) ============================================================ */
+function daysSince(iso){ if(!iso) return null; const today=new Date(); today.setHours(0,0,0,0); const d=new Date(iso+'T00:00:00'); return Math.round((today-d)/86400000); }
+function propuestaEtapaInfo(key){ return PROPUESTA_ETAPAS.find(e=>e.key===key) || PROPUESTA_ETAPAS[0]; }
+function renderCreatorPropuestas(){
+  const todas = creatorPropuestasFor(viewingCreatorId);
+  const activas = todas.filter(p=>['contacto','propuesta','negociando'].includes(p.etapa));
+  const historial = todas.filter(p=>['ganado','perdido'].includes(p.etapa)).slice().sort((a,b)=>(b.fechaCierre||'').localeCompare(a.fechaCierre||''));
+
+  const toggleHTML = `<div class="view-toggle" id="propuestasViewToggle">
+    <button type="button" class="view-toggle-btn ${propuestasView==='activas'?'active':''}" data-view="activas">📨 Activas</button>
+    <button type="button" class="view-toggle-btn ${propuestasView==='historial'?'active':''}" data-view="historial">🗄️ Historial</button>
+  </div>`;
+
+  const totalActivo = activas.reduce((s,p)=> s + (Number(p.montoMax)||Number(p.montoMin)||0), 0);
+  const metricHTML = propuestasView==='activas' ? `<div class="panel" style="padding:14px 20px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+    <span style="font-size:20px;">💰</span><span style="font-size:13.5px;">Tienes <b style="font-family:'Baloo 2'; font-size:15px;">${fmtMoney(totalActivo,'MXN')}</b> en propuestas activas</span>
+  </div>` : '';
+
+  const addBtnHTML = `<button class="btn-plain" id="btnAddPropuesta" style="margin-bottom:14px;">＋ Nueva propuesta</button>`;
+
+  let bodyHTML;
+  if(propuestasView==='activas'){
+    bodyHTML = `<div class="board">
+      ${PROPUESTA_ETAPAS.map(col=>{
+        const items = activas.filter(p=>p.etapa===col.key).slice().sort((a,b)=>(a.fechaContacto||'9999').localeCompare(b.fechaContacto||'9999'));
+        return `<div class="board-col" data-etapa="${col.key}"><div class="board-col-head"><span class="dot" style="background:${col.color}"></span>${col.label}<span class="count-badge">${items.length}</span></div>
+        ${items.length ? items.map(p=>propuestaCardHTML(p)).join('') : `<div class="empty-col">Nada aquí</div>`}</div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    bodyHTML = historial.length ? `<div class="panel"><table><thead><tr><th>Marca</th><th>Campaña</th><th>Resultado</th><th>Fecha</th><th></th></tr></thead><tbody>
+      ${historial.map(p=>{
+        const b = getBrand(p.marcaId);
+        const ganado = p.etapa==='ganado';
+        const dealExiste = ganado && p.origenDealId && findCreatorDeal(p.origenDealId);
+        return `<tr><td style="font-weight:700;">${b?b.nombre:'(sin marca)'}</td><td>${p.campana||'—'}</td>
+          <td><span class="pill ${ganado?'pill-green':'pill-red'}">${ganado?'Ganado ✅':'Perdido ❌'}</span></td>
+          <td>${fmtDate(p.fechaCierre)}</td>
+          <td>${dealExiste ? `<button class="icon-btn" data-action="edit-creator-deal" data-id="${p.origenDealId}" title="Ver deal">👁️</button>` : ''}${!ganado ? `<button class="icon-btn" data-action="reactivar-propuesta" data-id="${p.id}" title="Reactivar">↩️</button>` : ''}<button class="icon-btn" data-action="delete-propuesta" data-id="${p.id}" title="Eliminar">🗑️</button></td></tr>`;
+      }).join('')}
+    </tbody></table></div>` : `<div class="empty-state"><div class="big">🗄️</div>Aún no hay propuestas ganadas o perdidas.</div>`;
+  }
+
+  document.getElementById('view-root').innerHTML = toggleHTML + metricHTML + (propuestasView==='activas' ? addBtnHTML : '') + bodyHTML;
+  document.querySelectorAll('#propuestasViewToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ propuestasView = btn.dataset.view; renderCreatorPropuestas(); }));
+  if(propuestasView==='activas'){
+    document.getElementById('btnAddPropuesta').addEventListener('click', ()=>openPropuestaModal(null));
+    attachPropuestaDrag();
+  }
+}
+function propuestaCardHTML(p){
+  const b = getBrand(p.marcaId);
+  const dias = daysSince(p.fechaContacto);
+  const stale = dias!==null && dias>=PROPUESTA_STALE_DAYS;
+  const dealsPrevios = DB.creatorDeals.filter(dl=>dl.marcaId===p.marcaId).length;
+  const monto = (p.montoMin || p.montoMax) ? `${p.montoMin?fmtMoney(p.montoMin,'MXN'):''}${(p.montoMin && p.montoMax)?' – ':''}${p.montoMax?fmtMoney(p.montoMax,'MXN'):''}` : '';
+  return `<div class="card-proj ${stale?'stale':''}" draggable="true" data-id="${p.id}" data-action="edit-propuesta">
+    <div class="card-top">${avatarHTML(b?b.nombre:'?','sm')}<div class="names"><div class="marca">${b?b.nombre:'(sin marca)'}</div>${p.campana?`<div class="tipo">${p.campana}</div>`:''}</div></div>
+    ${p.queSeProp ? `<div class="card-title">${p.queSeProp}</div>` : ''}
+    <div class="card-bottom" style="flex-wrap:wrap;">
+      ${monto ? `<span class="price-tag">${monto}</span>` : ''}
+      ${dealsPrevios ? `<span class="pill pill-purple">🤝 ${dealsPrevios} deal${dealsPrevios===1?'':'s'}</span>` : ''}
+      ${stale ? `<span class="pill pill-amber">⏰ Estancada ${dias}d</span>` : (dias!==null ? `<span class="pill pill-gray">Hace ${dias}d</span>` : '')}
+    </div>
+    ${p.proximaAccion ? `<div class="mini-progress">➡️ ${p.proximaAccion}</div>` : ''}
+    <div class="row-actions" style="margin-top:9px;">
+      <button class="icon-btn" data-action="edit-propuesta" data-id="${p.id}" title="Editar">✏️</button>
+      <button class="icon-btn" data-action="ganar-propuesta" data-id="${p.id}" title="Marcar como ganada">✅</button>
+      <button class="icon-btn" data-action="perder-propuesta" data-id="${p.id}" title="Marcar como perdida">❌</button>
+      <button class="icon-btn" data-action="delete-propuesta" data-id="${p.id}" title="Eliminar">🗑️</button>
+    </div>
+  </div>`;
+}
+function attachPropuestaDrag(){
+  document.querySelectorAll('#view-root .card-proj[draggable="true"]').forEach(card=>{
+    card.addEventListener('dragstart', ev=>{ ev.stopPropagation(); ev.dataTransfer.setData('text/plain', JSON.stringify({pid:card.dataset.id})); setTimeout(()=>card.style.opacity='0.4',0); });
+    card.addEventListener('dragend', ()=>{ card.style.opacity='1'; });
+  });
+  document.querySelectorAll('#view-root .board-col[data-etapa]').forEach(col=>{
+    col.addEventListener('dragover', ev=>{ ev.preventDefault(); col.classList.add('dragover'); });
+    col.addEventListener('dragleave', ()=>col.classList.remove('dragover'));
+    col.addEventListener('drop', ev=>{
+      ev.preventDefault(); col.classList.remove('dragover');
+      const {pid} = JSON.parse(ev.dataTransfer.getData('text/plain'));
+      const p = findPropuesta(pid);
+      if(p){ p.etapa = col.dataset.etapa; saveAll(); renderCreatorPropuestas(); toast(`Movida a "${propuestaEtapaInfo(col.dataset.etapa).label}"`); }
+    });
+  });
+}
+const propuestaOverlay = document.getElementById('propuestaModalOverlay');
+const propuestaForm = document.getElementById('propuestaForm');
+function refreshPropuestaMarcaDatalist(){
+  document.getElementById('pp_marcaList').innerHTML = brandsFor(viewingCreatorId).map(b=>`<option value="${(b.nombre||'').replace(/"/g,'&quot;')}">`).join('');
+}
+function openPropuestaModal(p){
+  editingPropuestaId = p ? p.id : null;
+  document.getElementById('propuestaModalTitle').textContent = p ? 'Editar propuesta' : 'Nueva propuesta';
+  document.getElementById('btnSubmitPropuesta').textContent = p ? 'Guardar' : 'Agregar';
+  document.getElementById('btnDeletePropuesta').style.visibility = p ? 'visible' : 'hidden';
+  refreshPropuestaMarcaDatalist();
+  const brand = p ? getBrand(p.marcaId) : null;
+  document.getElementById('pp_marca').value = brand ? brand.nombre : '';
+  document.getElementById('pp_campana').value = p ? (p.campana||'') : '';
+  document.getElementById('pp_queSeProp').value = p ? (p.queSeProp||'') : '';
+  document.getElementById('pp_montoMin').value = p ? (p.montoMin||'') : '';
+  document.getElementById('pp_montoMax').value = p ? (p.montoMax||'') : '';
+  document.getElementById('pp_fechaContacto').value = p ? (p.fechaContacto||todayISO()) : todayISO();
+  document.getElementById('pp_etapa').value = p ? p.etapa : 'contacto';
+  document.getElementById('pp_proximaAccion').value = p ? (p.proximaAccion||'') : '';
+  propuestaOverlay.classList.remove('hidden');
+}
+function closePropuestaModal(){ propuestaOverlay.classList.add('hidden'); editingPropuestaId = null; }
+document.getElementById('closePropuestaModal').addEventListener('click', closePropuestaModal);
+document.getElementById('btnCancelPropuesta').addEventListener('click', closePropuestaModal);
+propuestaOverlay.addEventListener('click', e=>{ if(e.target===propuestaOverlay) closePropuestaModal(); });
+propuestaForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const marcaNombre = document.getElementById('pp_marca').value.trim();
+  let brand = brandsFor(viewingCreatorId).find(b=>b.nombre.toLowerCase()===marcaNombre.toLowerCase());
+  if(!brand){ brand = {id:uid('b'), creadorId:viewingCreatorId, nombre:marcaNombre, contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''}; DB.creatorBrands.push(brand); }
+  const data = {
+    creadorId: viewingCreatorId,
+    marcaId: brand.id,
+    campana: document.getElementById('pp_campana').value.trim(),
+    queSeProp: document.getElementById('pp_queSeProp').value.trim(),
+    montoMin: Number(document.getElementById('pp_montoMin').value) || 0,
+    montoMax: Number(document.getElementById('pp_montoMax').value) || 0,
+    fechaContacto: document.getElementById('pp_fechaContacto').value || todayISO(),
+    etapa: document.getElementById('pp_etapa').value,
+    proximaAccion: document.getElementById('pp_proximaAccion').value.trim(),
+  };
+  if(editingPropuestaId){ const p = findPropuesta(editingPropuestaId); Object.assign(p, data); toast('Propuesta actualizada ✨'); }
+  else { DB.creatorPropuestas = DB.creatorPropuestas || []; DB.creatorPropuestas.push({id:uid('pp'), ...data}); toast('Propuesta agregada 📨'); }
+  saveAll(); closePropuestaModal(); renderCurrent();
+});
+document.getElementById('btnDeletePropuesta').addEventListener('click', ()=>{
+  if(!editingPropuestaId) return;
+  if(confirm('¿Eliminar esta propuesta?')){ DB.creatorPropuestas = (DB.creatorPropuestas||[]).filter(p=>p.id!==editingPropuestaId); saveAll(); closePropuestaModal(); renderCurrent(); toast('Propuesta eliminada 🗑️'); }
+});
+function marcarPropuestaPerdida(id){
+  const p = findPropuesta(id); if(!p) return;
+  if(!confirm(`¿Marcar la propuesta con ${(getBrand(p.marcaId)||{}).nombre||'esta marca'} como perdida? No se borra, pasa al Historial.`)) return;
+  p.etapa = 'perdido'; p.fechaCierre = todayISO();
+  saveAll(); renderCurrent(); toast('Propuesta marcada como perdida ❌');
+}
+function marcarPropuestaGanada(id){
+  const p = findPropuesta(id); if(!p) return;
+  pendingOrigenPropuestaId = id;
+  const brand = getBrand(p.marcaId);
+  openCreatorDealModal(null);
+  document.getElementById('cd_marca').value = brand ? brand.nombre : '';
+  document.getElementById('cd_monto').value = p.montoMax || p.montoMin || '';
+  if(p.queSeProp) document.getElementById('cd_notas').value = `Propuesta original: ${p.queSeProp}`;
+  toast('Completa los datos que falten y guarda el deal 👇');
+}
+function deletePropuesta(id){
+  if(!confirm('¿Eliminar esta propuesta?')) return;
+  DB.creatorPropuestas = (DB.creatorPropuestas||[]).filter(p=>p.id!==id);
+  saveAll(); renderCurrent(); toast('Propuesta eliminada 🗑️');
+}
+function reactivarPropuesta(id){
+  const p = findPropuesta(id); if(!p) return;
+  if(!confirm(`¿Reactivar la propuesta con ${(getBrand(p.marcaId)||{}).nombre||'esta marca'}? Vuelve al tablero activo en "Contacto inicial".`)) return;
+  p.etapa = 'contacto'; p.fechaContacto = todayISO(); p.fechaCierre = '';
+  saveAll(); propuestasView = 'activas'; renderCurrent(); toast('Propuesta reactivada ↩️');
+}
+
 function renderCreatorDeals(){
   let deals = creatorDealsFor(viewingCreatorId);
   if(filters.search){ const s=filters.search.toLowerCase(); deals = deals.filter(dl=>{ const b=getBrand(dl.marcaId); return (b&&b.nombre.toLowerCase().includes(s)) || (dl.entregables||[]).some(e=>e.titulo.toLowerCase().includes(s)); }); }
@@ -1208,7 +1473,7 @@ function renderCreatorDeals(){
       { key:'marca', label:'Marca', view(dl){ const b=getBrand(dl.marcaId); return `<span style="font-weight:700;">${b?b.nombre:'(sin marca)'}</span>`; } },
       { key:'plataformas', label:'Plataformas', view(dl){ return platChipsHTML(dl.plataformas); } },
       { key:'monto', label:'Monto', view(dl){ const v = dl.tipoPago==='intercambio' ? dl.intercambioValorEstimado : dl.montoTotal; return dl.tipoPago==='intercambio' ? `🎁 ${fmtMoney(v,dl.moneda)}` : fmtMoney(v,dl.moneda); } },
-      { key:'estadoPago', label:'Estado de pago', view(dl){ const pb=pagoBadge(dl.estadoPago); return `<span class="pill ${pb.cls}">${pb.text}</span>`; } },
+      { key:'estadoPago', label:'Estado de pago', view(dl){ const pb=pagoBadge(dl.estadoPago); return `<span class="pill ${pb.cls}">${pb.text}</span>${isPagoVencido(dl)?' <span title="El pago acordado ya venció">⚠️</span>':''}`; } },
       { key:'fechaDeal', label:'Fecha del deal', view(dl){ return fmtDate(dl.fechaDeal); } },
     ],
     rowActions(dl){ return `<button class="icon-btn" data-action="edit-creator-deal" data-id="${dl.id}" title="Editar completo (entregables, checklist, notas…)">✏️</button><button class="icon-btn" data-action="duplicate-creator-deal" data-id="${dl.id}" title="Duplicar deal">📋</button><button class="icon-btn" data-action="delete-creator-deal" data-id="${dl.id}" title="Eliminar">🗑️</button>`; }
@@ -1902,9 +2167,35 @@ function openCreatorDealModal(deal){
   document.getElementById('creatorEntregablesList').innerHTML = '';
   if(deal && deal.entregables && deal.entregables.length){ deal.entregables.forEach(e=>addEntregableRow('creatorEntregablesList', e, true)); }
   else { addEntregableRow('creatorEntregablesList', null, true); }
+
+  const origenNote = document.getElementById('cd_origenNote');
+  const origenPropuesta = deal && deal.origenPropuestaId ? findPropuesta(deal.origenPropuestaId) : null;
+  if(origenPropuesta){
+    const ob = getBrand(origenPropuesta.marcaId);
+    origenNote.textContent = `🔗 Originado de la propuesta: ${origenPropuesta.campana || (ob?ob.nombre:'')}, creada el ${fmtDate(origenPropuesta.fechaContacto)}`;
+    origenNote.classList.remove('hidden');
+  } else {
+    origenNote.classList.add('hidden'); origenNote.textContent = '';
+  }
+
+  document.getElementById('cd_fechaPagoAcordada').value = deal ? (deal.fechaPagoAcordada||'') : '';
+  document.getElementById('cd_fechaPagoRecibido').value = deal ? (deal.fechaPagoRecibido||'') : '';
+  document.getElementById('cd_pagoVencidoAlert').classList.toggle('hidden', !isPagoVencido(deal||{}));
+
+  document.getElementById('cd_archivosNote').classList.toggle('hidden', !!deal);
+  document.getElementById('btnAddArchivo').style.display = deal ? '' : 'none';
+  renderArchivosList(deal);
+
+  currentContratoChecklist = deal ? JSON.parse(JSON.stringify(deal.checklistContrato||[])) : [];
+  renderContratoChecklistList();
+
+  currentBitacora = deal ? JSON.parse(JSON.stringify(deal.bitacora||[])) : [];
+  renderBitacoraList();
+
+  setMoreControlSubTab('pagos');
   creatorDealOverlay.classList.remove('hidden');
 }
-function closeCreatorDealModal(){ creatorDealOverlay.classList.add('hidden'); editingCreatorDealId = null; }
+function closeCreatorDealModal(){ creatorDealOverlay.classList.add('hidden'); editingCreatorDealId = null; pendingOrigenPropuestaId = null; }
 document.getElementById('btnNewDeal').addEventListener('click', ()=>{ if(workspace==='creador') openCreatorDealModal(null); else openAgencyDealModal(null); });
 document.getElementById('closeCreatorDeal').addEventListener('click', closeCreatorDealModal);
 document.getElementById('btnCancelCreatorDeal').addEventListener('click', closeCreatorDealModal);
@@ -1948,15 +2239,148 @@ creatorDealForm.addEventListener('submit', e=>{
     contratoVencimiento: document.getElementById('cd_contratoVencimiento').value,
     notas: document.getElementById('cd_notas').value.trim(),
     entregables: rows,
+    fechaPagoAcordada: document.getElementById('cd_fechaPagoAcordada').value || '',
+    fechaPagoRecibido: document.getElementById('cd_fechaPagoRecibido').value || '',
+    checklistContrato: currentContratoChecklist.slice(),
+    bitacora: currentBitacora.slice(),
   };
-  if(editingCreatorDealId){ const dl = findCreatorDeal(editingCreatorDealId); Object.assign(dl, data); toast('Deal actualizado ✨'); }
-  else { DB.creatorDeals.push({id:uid('cd'), ...data}); toast('Deal creado 🎉'); }
+  if(editingCreatorDealId){
+    const dl = findCreatorDeal(editingCreatorDealId); Object.assign(dl, data); toast('Deal actualizado ✨');
+  } else {
+    const nuevoDeal = {id:uid('cd'), archivos:[], ...data};
+    if(pendingOrigenPropuestaId){
+      const p = findPropuesta(pendingOrigenPropuestaId);
+      if(p){ nuevoDeal.origenPropuestaId = p.id; p.etapa = 'ganado'; p.fechaCierre = todayISO(); p.origenDealId = nuevoDeal.id; }
+    }
+    DB.creatorDeals.push(nuevoDeal);
+    toast(pendingOrigenPropuestaId ? 'Deal creado desde la propuesta 🎉' : 'Deal creado 🎉');
+  }
+  pendingOrigenPropuestaId = null;
   saveAll(); closeCreatorDealModal(); renderCurrent();
 });
 document.getElementById('btnDeleteCreatorDeal').addEventListener('click', ()=>{
   if(!editingCreatorDealId) return;
   if(confirm('¿Eliminar este deal y todos sus entregables?')){ DB.creatorDeals = DB.creatorDeals.filter(dl=>dl.id!==editingCreatorDealId); saveAll(); closeCreatorDealModal(); renderCurrent(); toast('Deal eliminado 🗑️'); }
 });
+
+/* ============================================================ MÁS CONTROL DEL DEAL (Fase 3): pagos / archivos / contrato / bitácora ============================================================ */
+function setMoreControlSubTab(key){
+  dealMoreControlSubTab = key;
+  document.querySelectorAll('#cdMoreControlToggle .subtab-btn').forEach(b=>b.classList.toggle('active', b.dataset.mcsub===key));
+  document.querySelectorAll('#cdMoreControlPanels .mc-panel').forEach(p=>p.classList.toggle('hidden', p.dataset.mcpanel!==key));
+}
+document.querySelectorAll('#cdMoreControlToggle .subtab-btn').forEach(btn=>btn.addEventListener('click', ()=>setMoreControlSubTab(btn.dataset.mcsub)));
+
+document.getElementById('cd_fechaPagoAcordada').addEventListener('change', updatePagoVencidoAlert);
+document.getElementById('cd_fechaPagoRecibido').addEventListener('change', updatePagoVencidoAlert);
+function updatePagoVencidoAlert(){
+  const acordada = document.getElementById('cd_fechaPagoAcordada').value;
+  const recibido = document.getElementById('cd_fechaPagoRecibido').value;
+  const vencido = acordada && !recibido && acordada < todayISO();
+  document.getElementById('cd_pagoVencidoAlert').classList.toggle('hidden', !vencido);
+}
+
+/* --- Archivos (Firebase Storage) --- */
+function renderArchivosList(deal){
+  const wrap = document.getElementById('cd_archivosList');
+  const archivos = deal ? (deal.archivos||[]) : [];
+  wrap.innerHTML = archivos.length ? archivos.map(a=>`
+    <div class="archivo-row">
+      <a href="${a.url}" target="_blank" rel="noopener">📄 ${a.nombre}</a>
+      <span class="archivo-fecha">${fmtDate(a.fecha)}</span>
+      <button type="button" class="arch-remove" data-archid="${a.id}" title="Eliminar archivo">🗑️</button>
+    </div>`).join('') : `<div style="font-size:12px; color:var(--muted);">Sin archivos adjuntos todavía.</div>`;
+}
+document.getElementById('btnAddArchivo').addEventListener('click', ()=>{
+  if(!editingCreatorDealId){ toast('Guarda el deal primero para poder adjuntar archivos.'); return; }
+  document.getElementById('cd_archivoInput').click();
+});
+document.getElementById('cd_archivoInput').addEventListener('change', async ev=>{
+  const file = ev.target.files[0]; ev.target.value = '';
+  if(!file || !editingCreatorDealId || !currentUser) return;
+  const dl = findCreatorDeal(editingCreatorDealId); if(!dl) return;
+  toast('Subiendo archivo…');
+  try{
+    const path = `uploads/${currentUser.uid}/deals/${dl.id}/${uid('f')}-${file.name}`;
+    const sref = storageRef(storage, path);
+    await uploadBytes(sref, file);
+    const url = await getDownloadURL(sref);
+    dl.archivos = dl.archivos || [];
+    dl.archivos.push({id:uid('af'), nombre:file.name, url, path, fecha: todayISO()});
+    saveAll();
+    renderArchivosList(dl);
+    toast('Archivo subido 📎');
+  } catch(err){
+    console.error(err);
+    toast('⚠️ No se pudo subir el archivo. Revisa las reglas de Firebase Storage.');
+  }
+});
+document.getElementById('cd_archivosList').addEventListener('click', async ev=>{
+  const btn = ev.target.closest('.arch-remove'); if(!btn || !editingCreatorDealId) return;
+  const dl = findCreatorDeal(editingCreatorDealId); if(!dl) return;
+  const archivo = (dl.archivos||[]).find(a=>a.id===btn.dataset.archid); if(!archivo) return;
+  if(!confirm(`¿Eliminar el archivo "${archivo.nombre}"?`)) return;
+  try{ if(archivo.path){ await deleteObject(storageRef(storage, archivo.path)); } }
+  catch(err){ console.error(err); }
+  dl.archivos = (dl.archivos||[]).filter(a=>a.id!==archivo.id);
+  saveAll(); renderArchivosList(dl); toast('Archivo eliminado 🗑️');
+});
+
+/* --- Checklist de condiciones de contrato (buffer local, se guarda junto con el deal) --- */
+function renderContratoChecklistList(){
+  const wrap = document.getElementById('cd_contratoChecklistList');
+  wrap.innerHTML = currentContratoChecklist.length ? currentContratoChecklist.map(it=>`
+    <div class="checklist-item ${it.hecho?'done':''}">
+      <input type="checkbox" data-cclid="${it.id}" ${it.hecho?'checked':''}>
+      <span>${it.texto}</span>
+      <button type="button" class="cc-remove" data-cclid="${it.id}">✕</button>
+    </div>`).join('') : `<div style="font-size:12px; color:var(--muted);">Sin condiciones agregadas todavía.</div>`;
+}
+document.getElementById('cd_contratoChecklistList').addEventListener('click', ev=>{
+  const rm = ev.target.closest('.cc-remove'); if(!rm) return;
+  currentContratoChecklist = currentContratoChecklist.filter(i=>i.id!==rm.dataset.cclid);
+  renderContratoChecklistList();
+});
+document.getElementById('cd_contratoChecklistList').addEventListener('change', ev=>{
+  const cb = ev.target.closest('input[type=checkbox][data-cclid]'); if(!cb) return;
+  const item = currentContratoChecklist.find(i=>i.id===cb.dataset.cclid);
+  if(item) item.hecho = cb.checked;
+});
+function addContratoChecklistItem(){
+  const input = document.getElementById('cd_contratoChecklistInput');
+  const txt = input.value.trim(); if(!txt) return;
+  currentContratoChecklist.push({id:uid('cl'), texto:txt, hecho:false});
+  input.value = '';
+  renderContratoChecklistList();
+}
+document.getElementById('btnAddContratoChecklist').addEventListener('click', addContratoChecklistItem);
+document.getElementById('cd_contratoChecklistInput').addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); addContratoChecklistItem(); } });
+
+/* --- Bitácora de notas (buffer local, se guarda junto con el deal) --- */
+function renderBitacoraList(){
+  const wrap = document.getElementById('cd_bitacoraList');
+  const sorted = currentBitacora.slice().sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''));
+  wrap.innerHTML = sorted.length ? sorted.map(n=>`
+    <div class="bitacora-item">
+      <div class="bitacora-fecha">${fmtDateTime(n.fecha)}</div>
+      <div class="bitacora-texto">${n.texto}</div>
+      <button type="button" class="bn-remove" data-bnid="${n.id}">✕</button>
+    </div>`).join('') : `<div style="font-size:12px; color:var(--muted);">Sin notas todavía.</div>`;
+}
+document.getElementById('cd_bitacoraList').addEventListener('click', ev=>{
+  const rm = ev.target.closest('.bn-remove'); if(!rm) return;
+  currentBitacora = currentBitacora.filter(n=>n.id!==rm.dataset.bnid);
+  renderBitacoraList();
+});
+function addBitacoraNota(){
+  const input = document.getElementById('cd_bitacoraInput');
+  const txt = input.value.trim(); if(!txt) return;
+  currentBitacora.push({id:uid('nt'), texto:txt, fecha: new Date().toISOString()});
+  input.value = '';
+  renderBitacoraList();
+}
+document.getElementById('btnAddBitacora').addEventListener('click', addBitacoraNota);
+document.getElementById('cd_bitacoraInput').addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); addBitacoraNota(); } });
 
 /* ============================================================ AGENCY DEAL MODAL ============================================================ */
 const agencyDealOverlay = document.getElementById('agencyDealOverlay');
@@ -2153,6 +2577,12 @@ function duplicateCreatorDeal(id){
   clone.id = uid('cd');
   clone.fechaDeal = todayISO();
   clone.entregables = (clone.entregables||[]).map(e=>({...e, id:uid('e'), checklist:(e.checklist||[]).map(c=>({...c, id:uid('cl')}))}));
+  clone.archivos = [];
+  clone.bitacora = [];
+  clone.checklistContrato = (clone.checklistContrato||[]).map(c=>({...c, id:uid('cl'), hecho:false}));
+  clone.fechaPagoAcordada = '';
+  clone.fechaPagoRecibido = '';
+  delete clone.origenPropuestaId;
   DB.creatorDeals.push(clone);
   saveAll(); renderCurrent(); toast('Deal duplicado 📋');
 }
@@ -2192,6 +2622,11 @@ document.getElementById('view-root').addEventListener('click', e=>{
   if(action==='edit-talent') openTalentModal(getTalent(id));
   if(action==='view-talent') openTalentDetail(id);
   if(action==='duplicate-talent') duplicateTalent(id);
+  if(action==='edit-propuesta') openPropuestaModal(findPropuesta(id));
+  if(action==='ganar-propuesta') marcarPropuestaGanada(id);
+  if(action==='perder-propuesta') marcarPropuestaPerdida(id);
+  if(action==='delete-propuesta') deletePropuesta(id);
+  if(action==='reactivar-propuesta') reactivarPropuesta(id);
 });
 
 /* ============================================================ WORKSPACE TOGGLE + MAIN RENDER ============================================================ */
@@ -2214,6 +2649,7 @@ function renderCurrent(){
   if(workspace==='creador'){
     if(currentTab==='dashboard') renderCreatorDashboard();
     else if(currentTab==='board') renderCreatorBoard();
+    else if(currentTab==='propuestas') renderCreatorPropuestas();
     else if(currentTab==='deals') renderCreatorDeals();
     else if(currentTab==='contacts') renderCreatorContacts();
     else if(currentTab==='calendar') renderCalendar();
