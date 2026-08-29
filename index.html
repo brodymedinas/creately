@@ -158,6 +158,9 @@
   td.grid-cell-view{padding:11px 10px; font-size:12.5px; color:var(--ink); vertical-align:middle; white-space:nowrap;}
   .chip-tag{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:100px; display:inline-block; white-space:nowrap;}
   .col-actions-head, .col-actions-cell{position:sticky; right:0; background:var(--card); box-shadow:-8px 0 10px -8px rgba(36,20,54,.12);}
+  tr.grid-row-clickable{cursor:pointer;}
+  tr.grid-row-clickable:hover td.grid-cell-view{background:#faf8fd;}
+  .col-bulk-head, .col-bulk-cell{width:32px; padding:8px 6px; text-align:center;}
   .view-toggle{display:inline-flex; background:#f3f0fa; border-radius:12px; padding:3px; gap:3px; margin-bottom:14px;}
   .view-toggle-btn{border:none; background:transparent; padding:8px 14px; border-radius:9px; font-family:'Baloo 2'; font-weight:700; font-size:12.5px; color:var(--muted); cursor:pointer;}
   .view-toggle-btn.active{background:#fff; color:var(--ink); box-shadow:var(--shadow);}
@@ -327,6 +330,11 @@
 </style>
 </head>
 <body>
+<datalist id="tiposEntregableList">
+  <option value="Reel"></option><option value="Post"></option><option value="Story"></option>
+  <option value="Carrusel"></option><option value="Video largo"></option><option value="TikTok"></option>
+  <option value="Blog"></option><option value="UGC"></option><option value="Otro"></option>
+</datalist>
 <div id="authLoading" class="auth-screen"><div class="auth-spinner">Cargando…</div></div>
 <div id="authGate" class="auth-screen hidden">
   <div class="auth-card">
@@ -388,8 +396,20 @@
           <input type="text" id="cd_marca" list="cd_marcaList" required placeholder="Escribe o elige una marca existente">
           <datalist id="cd_marcaList"></datalist>
         </div>
+        <div class="form-field full" id="cd_contactoWrap">
+          <label>Contacto (quién te consiguió este deal)</label>
+          <select id="cd_contactoPersona">
+            <option value="">Sin contacto asignado</option>
+            <option value="__new__">➕ Crear contacto nuevo…</option>
+          </select>
+          <div class="hidden" id="cd_contactoNuevoBox" style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <input type="text" id="cd_contactoNuevoNombre" placeholder="Nombre del contacto">
+            <input type="text" id="cd_contactoNuevoRol" placeholder="Rol (ej. Ejecutivo de cuenta, PR)">
+            <input type="text" id="cd_contactoNuevoEmail" placeholder="Email (opcional)">
+            <input type="text" id="cd_contactoNuevoTelefono" placeholder="Teléfono (opcional)">
+          </div>
+        </div>
         <div class="form-field"><label>Fecha del deal</label><input type="date" id="cd_fechaDeal"></div>
-        <div class="form-field"><label>Moneda</label><select id="cd_moneda"><option>MXN</option><option>USD</option><option>EUR</option></select></div>
         <div class="form-field full"><label>Plataformas de este deal</label><div class="chip-select" id="creatorPlatChips"></div></div>
         <div class="form-field full">
           <label>Tipo de pago</label>
@@ -405,6 +425,7 @@
           <div class="form-field full"><label>¿Qué te dan a cambio?</label><textarea id="cd_intercambioDescripcion" placeholder="Ej. Productos de la marca, viaje con todo pagado, servicio…"></textarea></div>
           <div class="form-field"><label>Valor estimado (opcional)</label><input type="number" id="cd_intercambioValorEstimado" min="0" step="0.01" placeholder="0.00"></div>
         </div>
+        <div class="form-field"><label>Moneda</label><select id="cd_moneda"><option>MXN</option><option>USD</option><option>EUR</option></select></div>
         <div class="form-field"><label id="cd_estadoPagoLabel">Estado de pago</label>
           <select id="cd_estadoPago"><option value="pendiente">Pendiente</option><option value="parcial">Anticipo pagado</option><option value="pagado">Pagado por completo</option></select>
         </div>
@@ -414,9 +435,9 @@
           <div class="recur-fields hidden" id="cd_recurFields">
             <div class="form-field"><label>Frecuencia</label><select id="cd_frecuencia"><option value="semanal">Semanal</option><option value="quincenal">Quincenal</option><option value="mensual" selected>Mensual</option></select></div>
             <div class="form-field"><label>Próximo cobro</label><input type="date" id="cd_proximoCobro"></div>
+            <div class="form-field full"><label>Vencimiento del contrato</label><input type="date" id="cd_contratoVencimiento"></div>
           </div>
         </div>
-        <div class="form-field"><label>Vencimiento del contrato</label><input type="date" id="cd_contratoVencimiento"></div>
         <div class="form-field full"><label>Notas</label><textarea id="cd_notas" placeholder="Brief, condiciones, referencias…"></textarea></div>
       </div>
       <div class="form-field full hidden" id="cd_origenNote" style="background:#f3f0fa; border-radius:11px; padding:10px 12px; font-size:12px; color:var(--muted); margin-bottom:14px;"></div>
@@ -425,12 +446,13 @@
       <button type="button" class="btn-add-row" id="btnAddCreatorEntregable">＋ Agregar entregable</button>
 
       <div id="creatorDealCustomFieldsWrap"></div>
+      <button type="button" class="btn-add-row" id="btnAddDealCustomColumn">＋ Agregar columna personalizada</button>
 
       <div class="section-label">🎛️ Más control de este deal</div>
       <div class="subtab-toggle" id="cdMoreControlToggle">
         <button type="button" class="subtab-btn active" data-mcsub="pagos">📅 Pagos</button>
         <button type="button" class="subtab-btn" data-mcsub="archivos">📎 Archivos</button>
-        <button type="button" class="subtab-btn" data-mcsub="contrato">✅ Contrato</button>
+        <button type="button" class="subtab-btn" data-mcsub="contrato">✅ Condiciones / Acuerdos</button>
         <button type="button" class="subtab-btn" data-mcsub="bitacora">📝 Bitácora</button>
       </div>
       <div id="cdMoreControlPanels" style="margin-top:12px;">
@@ -849,6 +871,7 @@ let aiImportDrafts = [];
 let tableImportRawRows = [];
 let tableImportMapping = [];
 let tableImportDrafts = [];
+let dealsSelectedForBulk = new Set();
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function saveAll(){
@@ -864,6 +887,7 @@ function ensureColumnDefs(){
   DB.creatorContactColumnDefs = DB.creatorContactColumnDefs || [];
   DB.agencyTalentColumnDefs = DB.agencyTalentColumnDefs || [];
   DB.creatorPropuestas = DB.creatorPropuestas || [];
+  DB.creatorContactPersonas = DB.creatorContactPersonas || [];
 }
 
 /* ============================================================ AUTH (Firebase) ============================================================ */
@@ -882,6 +906,7 @@ async function initUserData(user){
       creatorDealColumnDefs: [],
       creatorContactColumnDefs: [],
       agencyTalentColumnDefs: [],
+      creatorContactPersonas: [],
     };
     await setDoc(ref, starter);
   }
@@ -1084,6 +1109,8 @@ function findPropuesta(id){ return (DB.creatorPropuestas||[]).find(p=>p.id===id)
 function creatorDealsFor(creadorId){ return DB.creatorDeals.filter(d=>d.creadorId===creadorId); }
 function creatorPropuestasFor(creadorId){ return (DB.creatorPropuestas||[]).filter(p=>p.creadorId===creadorId); }
 function brandsFor(creadorId){ return DB.creatorBrands.filter(b=>b.creadorId===creadorId); }
+function contactPersonasFor(creadorId){ return (DB.creatorContactPersonas||[]).filter(p=>p.creadorId===creadorId); }
+function findContactPersona(id){ return (DB.creatorContactPersonas||[]).find(p=>p.id===id); }
 function talentForAgency(agenciaId){ return DB.talent.filter(t=>t.agenciaId===agenciaId); }
 function agencyDealsFor(agenciaId){ return DB.agencyDeals.filter(d=>d.agenciaId===agenciaId); }
 
@@ -1979,6 +2006,8 @@ function renderCreatorDeals(){
   if(filters.search){ const s=filters.search.toLowerCase(); deals = deals.filter(dl=>{ const b=getBrand(dl.marcaId); return (b&&b.nombre.toLowerCase().includes(s)) || (dl.entregables||[]).some(e=>e.titulo.toLowerCase().includes(s)); }); }
   deals = deals.slice().sort((a,b)=>{ const fa=(a.entregables[0]||{}).fecha||'9999'; const fb=(b.entregables[0]||{}).fecha||'9999'; return fa.localeCompare(fb); });
 
+  dealsSelectedForBulk = new Set([...dealsSelectedForBulk].filter(id=> deals.some(dl=>dl.id===id)));
+
   const toolbarHTML = `<div class="toolbar-row">
     <button class="btn-primary" id="btnAiImport">🪄 Importar con IA</button>
     <button class="btn-primary" id="btnTableImport">📊 Importar tabla (Excel/CSV)</button>
@@ -1986,6 +2015,7 @@ function renderCreatorDeals(){
     <button class="btn-plain" id="btnDealsImport">⬆️ Importar CSV</button>
     <input type="file" id="dealsFileInput" accept=".csv" class="hidden">
     <button class="btn-plain" id="btnDealsExport">⬇️ Exportar mis deals</button>
+    ${dealsSelectedForBulk.size>0 ? `<button class="btn-plain" id="btnBulkDeleteDeals" style="color:#c0392b;">🗑️ Eliminar seleccionados (${dealsSelectedForBulk.size})</button>` : ''}
   </div>`;
 
   const nudgeHTML = deals.length===0 && !filters.search ? `<div class="import-nudge">
@@ -2006,6 +2036,13 @@ function renderCreatorDeals(){
   document.getElementById('btnAiImport').addEventListener('click', openAiImportModal);
   document.getElementById('btnTableImport').addEventListener('click', openTableImportModal);
   const nudgeBtn = document.getElementById('btnAiImportNudge'); if(nudgeBtn) nudgeBtn.addEventListener('click', openAiImportModal);
+  const bulkDelBtn = document.getElementById('btnBulkDeleteDeals');
+  if(bulkDelBtn) bulkDelBtn.addEventListener('click', ()=>{
+    if(!confirm(`¿Eliminar ${dealsSelectedForBulk.size} deal(s) seleccionados? Esta acción no se puede deshacer.`)) return;
+    DB.creatorDeals = DB.creatorDeals.filter(dl=> !dealsSelectedForBulk.has(dl.id));
+    dealsSelectedForBulk.clear();
+    saveAll(); renderCurrent(); toast('Deals eliminados 🗑️');
+  });
 
   renderEditableGrid({
     containerId: 'creatorDealsGrid',
@@ -2013,6 +2050,12 @@ function renderCreatorDeals(){
     defsKey: 'creatorDealColumnDefs',
     emptyMessage: 'No hay deals que coincidan.',
     rerender: renderCreatorDeals,
+    onRowClick(dl){ openCreatorDealModal(dl); },
+    bulkSelect: {
+      isChecked(id){ return dealsSelectedForBulk.has(id); },
+      onToggle(id, checked){ if(checked) dealsSelectedForBulk.add(id); else dealsSelectedForBulk.delete(id); renderCreatorDeals(); },
+      onToggleAll(rowsList, checked){ rowsList.forEach(r=>{ if(checked) dealsSelectedForBulk.add(r.id); else dealsSelectedForBulk.delete(r.id); }); },
+    },
     fixed: [
       { key:'marca', label:'Marca', view(dl){ const b=getBrand(dl.marcaId); return `<span style="font-weight:700;">${b?b.nombre:'(sin marca)'}</span>`; } },
       { key:'plataformas', label:'Plataformas', view(dl){ return platChipsHTML(dl.plataformas); } },
@@ -2499,23 +2542,49 @@ document.getElementById('columnDefForm').addEventListener('submit', e=>{
   toast('Columna guardada ✨');
 });
 function renderEditableGrid(opts){
-  const { containerId, rows, defsKey, fixed, rowActions, emptyMessage, rerender } = opts;
+  const { containerId, rows, defsKey, fixed, rowActions, emptyMessage, rerender, onRowClick, bulkSelect } = opts;
   const defs = defsKey ? (DB[defsKey] || []) : [];
   const root = document.getElementById(containerId);
   if(!rows.length){ root.innerHTML = `<div class="empty-state"><div class="big">📭</div>${emptyMessage||'Nada por aquí todavía.'}</div>`; return; }
 
+  const theadBulk = bulkSelect ? `<th class="col-bulk-head"><input type="checkbox" id="${containerId}_selAll"></th>` : '';
   const theadFixed = fixed.map(f=>`<th>${f.label}</th>`).join('');
   const theadCustom = defs.map(c=>`<th><div class="col-head"><span>${c.nombre}</span><span class="col-head-actions"><button type="button" class="col-mini-btn" data-coledit="${c.id}" title="Editar columna">✏️</button><button type="button" class="col-mini-btn" data-coldup="${c.id}" title="Duplicar columna">📋</button><button type="button" class="col-mini-btn" data-coldel="${c.id}" title="Eliminar columna">🗑️</button></span></div></th>`).join('');
   const theadAdd = defsKey ? `<th class="col-actions-head"><button type="button" class="btn-addcol" data-addcol="1">＋ Columna</button></th>` : `<th class="col-actions-head"></th>`;
 
   const rowsHTML = rows.map(row=>{
     row.camposPersonalizados = row.camposPersonalizados || {};
+    const bulkTd = bulkSelect ? `<td class="col-bulk-cell"><input type="checkbox" class="row-bulk-check" data-bulkid="${row.id}" ${bulkSelect.isChecked(row.id)?'checked':''}></td>` : '';
     const fixedTds = fixed.map(f=>`<td class="grid-cell-view">${f.view(row)}</td>`).join('');
     const customTds = defs.map(c=>`<td class="grid-cell-view">${customCellDisplay(c, row.camposPersonalizados[c.id])}</td>`).join('');
-    return `<tr>${fixedTds}${customTds}<td class="col-actions-cell"><div class="row-actions">${rowActions(row)}</div></td></tr>`;
+    return `<tr data-rowid="${row.id}">${bulkTd}${fixedTds}${customTds}<td class="col-actions-cell"><div class="row-actions">${rowActions(row)}</div></td></tr>`;
   }).join('');
 
-  root.innerHTML = `<div class="grid-scroll"><table class="editable-grid"><thead><tr>${theadFixed}${theadCustom}${theadAdd}</tr></thead><tbody>${rowsHTML}</tbody></table></div>`;
+  root.innerHTML = `<div class="grid-scroll"><table class="editable-grid"><thead><tr>${theadBulk}${theadFixed}${theadCustom}${theadAdd}</tr></thead><tbody>${rowsHTML}</tbody></table></div>`;
+
+  if(onRowClick){
+    root.querySelectorAll('tbody tr[data-rowid]').forEach(tr=>{
+      tr.classList.add('grid-row-clickable');
+      tr.addEventListener('click', ev=>{
+        if(ev.target.closest('.row-actions') || ev.target.closest('.col-bulk-cell')) return;
+        const row = rows.find(r=> String(r.id)===tr.dataset.rowid);
+        if(row) onRowClick(row);
+      });
+    });
+  }
+
+  if(bulkSelect){
+    const selAll = document.getElementById(`${containerId}_selAll`);
+    if(selAll){
+      selAll.checked = rows.length>0 && rows.every(r=>bulkSelect.isChecked(r.id));
+      selAll.addEventListener('click', ev=> ev.stopPropagation());
+      selAll.addEventListener('change', ()=>{ bulkSelect.onToggleAll(rows, selAll.checked); rerender(); });
+    }
+    root.querySelectorAll('.row-bulk-check').forEach(cb=>{
+      cb.addEventListener('click', ev=> ev.stopPropagation());
+      cb.addEventListener('change', ()=> bulkSelect.onToggle(cb.dataset.bulkid, cb.checked));
+    });
+  }
 
   if(defsKey){
     root.querySelectorAll('[data-coledit]').forEach(btn=> btn.addEventListener('click', ()=> openColumnModal({defsKey, editingColId:btn.dataset.coledit, rerender})));
@@ -2574,7 +2643,7 @@ function entregableRowHTML(rid, e){
   return `<div class="entregable-row-wrap" data-rid="${rid}">
     <div class="entregable-row">
       <input type="text" class="er-titulo" placeholder="Título (ej. 2 Reels)" value="${e.titulo||''}">
-      <select class="er-tipo">${TIPOS.map(t=>`<option ${e.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+      <input type="text" class="er-tipo" list="tiposEntregableList" placeholder="Tipo (ej. Reel, UGC…)" value="${e.tipo||''}">
       <input type="date" class="er-fecha" value="${e.fecha||''}">
       <select class="er-estado">${ESTADOS.map(s=>`<option value="${s.key}" ${e.estado===s.key?'selected':''}>${s.label}</option>`).join('')}</select>
       <button type="button" class="checklist-toggle" data-rid="${rid}">☑ 0/0</button>
@@ -2677,11 +2746,31 @@ function setCreatorTipoPago(tipo){
 }
 document.getElementById('cd_tipoPresupuesto').addEventListener('click', ()=>setCreatorTipoPago('presupuesto'));
 document.getElementById('cd_tipoIntercambio').addEventListener('click', ()=>setCreatorTipoPago('intercambio'));
+document.getElementById('btnAddDealCustomColumn').addEventListener('click', ()=>{
+  openColumnModal({
+    defsKey: 'creatorDealColumnDefs',
+    editingColId: null,
+    rerender: ()=> renderCustomFieldsSection('creatorDealCustomFieldsWrap', 'creatorDealColumnDefs', editingCreatorDealId ? findCreatorDeal(editingCreatorDealId) : null),
+  });
+});
 
 function refreshMarcaDatalist(){
   const dl = document.getElementById('cd_marcaList');
   dl.innerHTML = brandsFor(viewingCreatorId).map(b=>`<option value="${b.nombre}">`).join('');
 }
+function refreshContactoPersonaSelect(selectedId){
+  const sel = document.getElementById('cd_contactoPersona');
+  const personas = contactPersonasFor(viewingCreatorId);
+  sel.innerHTML = `<option value="">Sin contacto asignado</option>` +
+    personas.map(p=>`<option value="${p.id}">${p.nombre}${p.rol?' — '+p.rol:''}</option>`).join('') +
+    `<option value="__new__">➕ Crear contacto nuevo…</option>`;
+  sel.value = selectedId || '';
+  document.getElementById('cd_contactoNuevoBox').classList.add('hidden');
+  ['cd_contactoNuevoNombre','cd_contactoNuevoRol','cd_contactoNuevoEmail','cd_contactoNuevoTelefono'].forEach(id=> document.getElementById(id).value='');
+}
+document.getElementById('cd_contactoPersona').addEventListener('change', ev=>{
+  document.getElementById('cd_contactoNuevoBox').classList.toggle('hidden', ev.target.value!=='__new__');
+});
 function openCreatorDealModal(deal){
   editingCreatorDealId = deal ? deal.id : null;
   document.getElementById('creatorDealTitle').textContent = deal ? 'Editar deal' : 'Nuevo deal';
@@ -2691,6 +2780,7 @@ function openCreatorDealModal(deal){
   document.getElementById('cd_marca').value = brand ? brand.nombre : '';
   document.getElementById('cd_fechaDeal').value = deal ? (deal.fechaDeal||todayISO()) : todayISO();
   document.getElementById('cd_moneda').value = deal ? deal.moneda : 'MXN';
+  refreshContactoPersonaSelect(deal ? (deal.contactoPersonaId||'') : '');
   setCreatorTipoPago(deal ? (deal.tipoPago||'presupuesto') : 'presupuesto');
   document.getElementById('cd_monto').value = deal ? deal.montoTotal : '';
   document.getElementById('cd_intercambioDescripcion').value = deal ? (deal.intercambioDescripcion||'') : '';
@@ -2753,6 +2843,26 @@ creatorDealForm.addEventListener('submit', e=>{
   let brand = brandsFor(viewingCreatorId).find(b=>b.nombre.toLowerCase()===marcaNombre.toLowerCase());
   if(!brand){ brand = {id:uid('b'), creadorId:viewingCreatorId, nombre:marcaNombre, contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''}; DB.creatorBrands.push(brand); }
 
+  let contactoPersonaId = document.getElementById('cd_contactoPersona').value || '';
+  if(contactoPersonaId==='__new__'){
+    const nombreNuevo = document.getElementById('cd_contactoNuevoNombre').value.trim();
+    if(nombreNuevo){
+      const nuevaPersona = {
+        id: uid('per'),
+        creadorId: viewingCreatorId,
+        nombre: nombreNuevo,
+        rol: document.getElementById('cd_contactoNuevoRol').value.trim(),
+        email: document.getElementById('cd_contactoNuevoEmail').value.trim(),
+        telefono: document.getElementById('cd_contactoNuevoTelefono').value.trim(),
+      };
+      DB.creatorContactPersonas = DB.creatorContactPersonas || [];
+      DB.creatorContactPersonas.push(nuevaPersona);
+      contactoPersonaId = nuevaPersona.id;
+    } else {
+      contactoPersonaId = '';
+    }
+  }
+
   const rows = Array.from(document.querySelectorAll('#creatorEntregablesList .entregable-row-wrap')).map(wrap=>{
     const rid = wrap.dataset.rid;
     return {
@@ -2770,6 +2880,7 @@ creatorDealForm.addEventListener('submit', e=>{
   const data = {
     creadorId: viewingCreatorId,
     marcaId: brand.id,
+    contactoPersonaId: contactoPersonaId || '',
     plataformas: creatorSelectedPlats.slice(),
     fechaDeal: document.getElementById('cd_fechaDeal').value || todayISO(),
     tipoPago,
