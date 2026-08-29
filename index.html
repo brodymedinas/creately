@@ -424,6 +424,8 @@
       <div id="creatorEntregablesList"></div>
       <button type="button" class="btn-add-row" id="btnAddCreatorEntregable">＋ Agregar entregable</button>
 
+      <div id="creatorDealCustomFieldsWrap"></div>
+
       <div class="section-label">🎛️ Más control de este deal</div>
       <div class="subtab-toggle" id="cdMoreControlToggle">
         <button type="button" class="subtab-btn active" data-mcsub="pagos">📅 Pagos</button>
@@ -681,8 +683,67 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="tableImportModalOverlay">
+  <div class="modal wide">
+    <button class="close-x" id="closeTableImportModal">✕</button>
+    <h2>📊 Importar tabla (Excel/CSV)</h2>
+    <div class="modal-sub">Sube tu archivo tal como lo tengas — no hace falta que tus columnas se llamen igual que en Creately. La IA te va a proponer cómo acomodarlas.</div>
+
+    <div id="tableImportStepUpload">
+      <div style="border:2px dashed var(--border); border-radius:16px; padding:34px 20px; text-align:center;">
+        <div style="font-size:30px; margin-bottom:8px;">📄</div>
+        <div style="font-weight:700; margin-bottom:6px;">Elige tu archivo Excel o CSV</div>
+        <div class="hint" style="margin-bottom:14px;">Acepta .xlsx, .xls y .csv</div>
+        <input type="file" id="tableImportFileInput" accept=".xlsx,.xls,.csv">
+      </div>
+      <div class="modal-actions">
+        <div></div>
+        <button type="button" class="btn-secondary" id="btnTableImportCancel1">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="tableImportStepLoading" class="hidden">
+      <div class="ai-import-loading">🪄 Revisando tus columnas…</div>
+    </div>
+
+    <div id="tableImportStepMapping" class="hidden">
+      <div class="hint" style="margin-bottom:10px;">Revisa a qué campo corresponde cada columna de tu archivo. Marca al menos una como "Marca". Lo que no encaje en nada puedes convertirlo en un campo personalizado nuevo.</div>
+      <div class="ai-import-table-wrap">
+        <table class="ai-import-table">
+          <thead><tr><th>Tu columna</th><th>Ejemplo</th><th>Se guarda como</th><th></th></tr></thead>
+          <tbody id="tableImportMappingBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="btnTableImportBackToUpload">← Elegir otro archivo</button>
+        <button type="button" class="btn-primary" id="btnTableImportMapContinue">Continuar →</button>
+      </div>
+    </div>
+
+    <div id="tableImportStepReview" class="hidden">
+      <div id="tableImportCustomNote" class="hint hidden" style="margin-bottom:8px;"></div>
+      <div class="ai-import-table-wrap">
+        <table class="ai-import-table">
+          <thead>
+            <tr><th style="width:24px;"></th><th>Marca</th><th>Monto</th><th>Moneda</th><th>Fecha</th><th>Estado de pago</th></tr>
+          </thead>
+          <tbody id="tableImportPreviewBody"></tbody>
+        </table>
+      </div>
+      <div class="ai-import-summary">
+        <span id="tableImportSummaryText"></span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="btnTableImportBackToMapping">← Volver al mapeo</button>
+        <button type="button" class="btn-primary" id="btnTableImportConfirm">✅ Confirmar importación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { initializeAuth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
@@ -785,6 +846,9 @@ let dealMoreControlSubTab = 'pagos';
 let currentContratoChecklist = [];
 let currentBitacora = [];
 let aiImportDrafts = [];
+let tableImportRawRows = [];
+let tableImportMapping = [];
+let tableImportDrafts = [];
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function saveAll(){
@@ -1327,6 +1391,265 @@ document.getElementById('btnAiImportConfirm').addEventListener('click', ()=>{
   toast(`${count} deal(s) importado(s) con IA 🎉`);
 });
 
+/* ============================================================ IMPORTAR TABLA (Excel/CSV) con mapeo asistido por IA ============================================================ */
+const tableImportOverlay = document.getElementById('tableImportModalOverlay');
+function tableImportShowStep(step){
+  document.getElementById('tableImportStepUpload').classList.toggle('hidden', step!=='upload');
+  document.getElementById('tableImportStepLoading').classList.toggle('hidden', step!=='loading');
+  document.getElementById('tableImportStepMapping').classList.toggle('hidden', step!=='mapping');
+  document.getElementById('tableImportStepReview').classList.toggle('hidden', step!=='review');
+}
+function openTableImportModal(){
+  document.getElementById('tableImportFileInput').value = '';
+  tableImportRawRows = []; tableImportMapping = []; tableImportDrafts = [];
+  tableImportShowStep('upload');
+  tableImportOverlay.classList.remove('hidden');
+}
+function closeTableImportModal(){ tableImportOverlay.classList.add('hidden'); }
+document.getElementById('closeTableImportModal').addEventListener('click', closeTableImportModal);
+document.getElementById('btnTableImportCancel1').addEventListener('click', closeTableImportModal);
+document.getElementById('btnTableImportBackToUpload').addEventListener('click', ()=>tableImportShowStep('upload'));
+document.getElementById('btnTableImportBackToMapping').addEventListener('click', ()=>tableImportShowStep('mapping'));
+tableImportOverlay.addEventListener('click', e=>{ if(e.target===tableImportOverlay) closeTableImportModal(); });
+
+function guessTargetFromHeader(h){
+  const s = (h||'').toString().trim().toLowerCase();
+  if(/marca|cliente|empresa|brand/.test(s)) return 'marca';
+  if(/monto|pago|precio|total|cobro|price|amount/.test(s)) return 'monto';
+  if(/moneda|currency/.test(s)) return 'moneda';
+  if(/fecha|date/.test(s)) return 'fecha';
+  if(/estado|status|pagado/.test(s)) return 'estadoPago';
+  if(/plataforma|red social|platform/.test(s)) return 'plataformas';
+  return 'new_custom';
+}
+function normalizeDateGuess(val){
+  if(!val) return '';
+  const s = String(val).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  const d = new Date(s);
+  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return '';
+}
+function parseUploadedTableFile(file){
+  return new Promise((resolve, reject)=>{
+    const name = (file.name||'').toLowerCase();
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error('No se pudo leer el archivo'));
+    if(name.endsWith('.csv')){
+      reader.onload = ()=>{ const text = reader.result; resolve(parseCSV(text, detectDelimiter(text))); };
+      reader.readAsText(file, 'UTF-8');
+    } else {
+      reader.onload = ()=>{
+        try{
+          const wb = XLSX.read(reader.result, {type:'array'});
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          resolve(XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''}));
+        }catch(err){ reject(err); }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  });
+}
+function renderTableImportMapping(){
+  const headers = tableImportRawRows[0]||[];
+  const sample = tableImportRawRows[1]||[];
+  const existingCols = DB.creatorDealColumnDefs||[];
+  const body = document.getElementById('tableImportMappingBody');
+  body.innerHTML = headers.map((h,i)=>{
+    const m = tableImportMapping[i];
+    const isNew = m.target==='new_custom';
+    return `<tr data-idx="${i}">
+      <td style="font-weight:700;">${(h||'(sin nombre)').toString().replace(/</g,'&lt;')}</td>
+      <td style="color:var(--muted); font-size:11.5px;">${(sample[i]!==undefined?String(sample[i]):'').replace(/</g,'&lt;').slice(0,40)}</td>
+      <td>
+        <select data-map-target>
+          <option value="marca" ${m.target==='marca'?'selected':''}>Marca</option>
+          <option value="monto" ${m.target==='monto'?'selected':''}>Monto</option>
+          <option value="moneda" ${m.target==='moneda'?'selected':''}>Moneda</option>
+          <option value="fecha" ${m.target==='fecha'?'selected':''}>Fecha del deal</option>
+          <option value="estadoPago" ${m.target==='estadoPago'?'selected':''}>Estado de pago</option>
+          <option value="plataformas" ${m.target==='plataformas'?'selected':''}>Plataformas</option>
+          ${existingCols.map(c=>`<option value="existing:${c.id}" ${m.target==='existing:'+c.id?'selected':''}>${c.nombre} (campo existente)</option>`).join('')}
+          <option value="new_custom" ${isNew?'selected':''}>+ Nuevo campo personalizado</option>
+          <option value="ignorar" ${m.target==='ignorar'?'selected':''}>Ignorar esta columna</option>
+        </select>
+      </td>
+      <td class="${isNew?'':'hidden'}" data-cust-cell>
+        <input type="text" data-cust-nombre placeholder="Nombre del campo" value="${(m.customNombre||'').toString().replace(/"/g,'&quot;')}" style="margin-bottom:4px;">
+        <select data-cust-tipo><option value="texto" ${m.customTipo==='texto'?'selected':''}>Texto</option><option value="numero" ${m.customTipo==='numero'?'selected':''}>Número</option></select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+document.getElementById('tableImportMappingBody').addEventListener('change', ev=>{
+  const tr = ev.target.closest('tr'); if(!tr) return;
+  const idx = Number(tr.dataset.idx);
+  if(ev.target.matches('[data-map-target]')){
+    tableImportMapping[idx].target = ev.target.value;
+    const custCell = tr.querySelector('[data-cust-cell]');
+    if(custCell) custCell.classList.toggle('hidden', ev.target.value!=='new_custom');
+  } else if(ev.target.matches('[data-cust-tipo]')){
+    tableImportMapping[idx].customTipo = ev.target.value;
+  }
+});
+document.getElementById('tableImportMappingBody').addEventListener('input', ev=>{
+  const tr = ev.target.closest('tr'); if(!tr) return;
+  const idx = Number(tr.dataset.idx);
+  if(ev.target.matches('[data-cust-nombre]')) tableImportMapping[idx].customNombre = ev.target.value;
+});
+document.getElementById('tableImportFileInput').addEventListener('change', async ev=>{
+  const file = ev.target.files[0]; if(!file) return;
+  tableImportShowStep('loading');
+  try{
+    const rows = await parseUploadedTableFile(file);
+    const cleanRows = (rows||[]).filter(r=>Array.isArray(r) && r.some(c=>String(c||'').trim()!==''));
+    if(cleanRows.length<2){ toast('No encontramos filas de datos en ese archivo'); tableImportShowStep('upload'); return; }
+    tableImportRawRows = cleanRows;
+    const headers = cleanRows[0];
+    const sampleRows = cleanRows.slice(1,6);
+    let suggestions = null;
+    try{
+      const resp = await fetch('/api/map-columns', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({headers, sampleRows}) });
+      const data = await resp.json();
+      if(resp.ok && Array.isArray(data.columnas)) suggestions = data.columnas;
+    }catch(err){ console.error(err); }
+    tableImportMapping = headers.map((h,i)=>{
+      const sug = suggestions ? suggestions[i] : null;
+      let target = sug ? sug.target : guessTargetFromHeader(h);
+      if(target==='custom') target = 'new_custom';
+      return { header:h, target, customNombre: (sug&&sug.customNombre)||h, customTipo: (sug&&sug.customTipo)||'texto' };
+    });
+    renderTableImportMapping();
+    tableImportShowStep('mapping');
+  }catch(err){
+    console.error(err);
+    toast('No se pudo leer ese archivo. ¿Es un Excel o CSV válido?');
+    tableImportShowStep('upload');
+  }
+});
+function renderTableImportPreview(){
+  const body = document.getElementById('tableImportPreviewBody');
+  body.innerHTML = tableImportDrafts.map(dft=>`
+    <tr class="${dft.flagged?'ai-row-flagged':''} ${dft.incluir?'':'ai-row-off'}" data-rid="${dft._id}">
+      <td><input type="checkbox" data-f="incluir" ${dft.incluir?'checked':''}></td>
+      <td><input type="text" data-f="marca" value="${(dft.marca||'').replace(/"/g,'&quot;')}"></td>
+      <td><input type="number" data-f="monto" value="${dft.monto===''?'':dft.monto}" placeholder="?"></td>
+      <td><select data-f="moneda"><option ${dft.moneda==='MXN'?'selected':''}>MXN</option><option ${dft.moneda==='USD'?'selected':''}>USD</option><option ${dft.moneda==='EUR'?'selected':''}>EUR</option></select></td>
+      <td><input type="date" data-f="fecha" value="${dft.fecha||''}"></td>
+      <td><select data-f="estadoPago">
+        <option value="pendiente" ${dft.estadoPago==='pendiente'?'selected':''}>Pendiente</option>
+        <option value="parcial" ${dft.estadoPago==='parcial'?'selected':''}>Anticipo pagado</option>
+        <option value="pagado" ${dft.estadoPago==='pagado'?'selected':''}>Pagado por completo</option>
+      </select></td>
+    </tr>
+  `).join('');
+  const seleccionados = tableImportDrafts.filter(d=>d.incluir).length;
+  const flagged = tableImportDrafts.filter(d=>d.flagged).length;
+  document.getElementById('tableImportSummaryText').innerHTML = `<b>${tableImportDrafts.length}</b> fila(s) detectada(s) · <b>${seleccionados}</b> seleccionada(s) para importar${flagged?` · <span style="color:#a15c00;">🟡 ${flagged} sin marca detectada</span>`:''}`;
+}
+document.getElementById('tableImportPreviewBody').addEventListener('input', ev=>{
+  const tr = ev.target.closest('tr'); if(!tr) return;
+  const dft = tableImportDrafts.find(d=>d._id===tr.dataset.rid); if(!dft) return;
+  const f = ev.target.dataset.f;
+  if(f==='monto') dft.monto = ev.target.value===''?'':Number(ev.target.value);
+  else if(f==='marca') dft.marca = ev.target.value;
+  else if(f==='fecha') dft.fecha = ev.target.value;
+});
+document.getElementById('tableImportPreviewBody').addEventListener('change', ev=>{
+  const tr = ev.target.closest('tr'); if(!tr) return;
+  const dft = tableImportDrafts.find(d=>d._id===tr.dataset.rid); if(!dft) return;
+  const f = ev.target.dataset.f;
+  if(f==='incluir'){ dft.incluir = ev.target.checked; renderTableImportPreview(); }
+  else if(f==='moneda') dft.moneda = ev.target.value;
+  else if(f==='estadoPago') dft.estadoPago = ev.target.value;
+});
+document.getElementById('btnTableImportMapContinue').addEventListener('click', ()=>{
+  if(!tableImportMapping.some(m=>m.target==='marca')){ toast('Marca al menos una columna como "Marca"'); return; }
+  tableImportMapping.forEach(m=>{ if(m.target==='new_custom' && !m._newColId) m._newColId = uid('col'); });
+
+  const dataRows = tableImportRawRows.slice(1);
+  const marcaIdx = tableImportMapping.findIndex(m=>m.target==='marca');
+  const montoIdx = tableImportMapping.findIndex(m=>m.target==='monto');
+  const monedaIdx = tableImportMapping.findIndex(m=>m.target==='moneda');
+  const fechaIdx = tableImportMapping.findIndex(m=>m.target==='fecha');
+  const estadoIdx = tableImportMapping.findIndex(m=>m.target==='estadoPago');
+  const platIdx = tableImportMapping.findIndex(m=>m.target==='plataformas');
+  const customCols = tableImportMapping.map((m,i)=>({...m, idx:i})).filter(m=>m.target==='new_custom' || (m.target||'').startsWith('existing:'));
+
+  tableImportDrafts = dataRows.map(row=>{
+    const rawMonto = montoIdx>-1 ? String(row[montoIdx]||'').replace(/[^0-9.,-]/g,'').replace(/,/g,'') : '';
+    const monedaRaw = monedaIdx>-1 ? String(row[monedaIdx]||'').trim().toUpperCase() : '';
+    const estadoRaw = estadoIdx>-1 ? String(row[estadoIdx]||'').trim().toLowerCase() : '';
+    let estadoPago = 'pendiente';
+    if(/pagad|complet|paid/.test(estadoRaw)) estadoPago = 'pagado';
+    else if(/parcial|anticipo|partial/.test(estadoRaw)) estadoPago = 'parcial';
+    const platRaw = platIdx>-1 ? String(row[platIdx]||'') : '';
+    const plataformas = platRaw ? platRaw.split(/[;,\/]/).map(s=>normalizePlatformName(s.trim())).filter(Boolean) : [];
+    const camposPersonalizados = {};
+    customCols.forEach(cc=>{
+      const val = row[cc.idx];
+      if(val===undefined || val===null || String(val).trim()==='') return;
+      const colId = cc.target==='new_custom' ? cc._newColId : cc.target.split(':')[1];
+      if(colId) camposPersonalizados[colId] = cc.customTipo==='numero' ? (Number(String(val).replace(/[^0-9.-]/g,''))||0) : String(val);
+    });
+    const marcaVal = marcaIdx>-1 ? String(row[marcaIdx]||'').trim() : '';
+    return {
+      _id: uid('tid'), incluir:true,
+      marca: marcaVal,
+      monto: rawMonto ? (Number(rawMonto)||0) : '',
+      moneda: ['MXN','USD','EUR'].includes(monedaRaw) ? monedaRaw : 'MXN',
+      fecha: fechaIdx>-1 ? normalizeDateGuess(row[fechaIdx]) : '',
+      estadoPago, plataformas, camposPersonalizados,
+      flagged: !marcaVal,
+    };
+  }).filter(d=>d.marca || d.monto || Object.keys(d.camposPersonalizados).length);
+
+  renderTableImportPreview();
+  const note = document.getElementById('tableImportCustomNote');
+  const customNames = customCols.map(cc=>cc.target==='new_custom' ? cc.customNombre : ((DB.creatorDealColumnDefs.find(x=>x.id===cc.target.split(':')[1])||{}).nombre)).filter(Boolean);
+  if(customNames.length){ note.textContent = `+ Se importarán también estos campos personalizados por deal: ${customNames.join(', ')}`; note.classList.remove('hidden'); }
+  else { note.classList.add('hidden'); note.textContent=''; }
+  tableImportShowStep('review');
+});
+document.getElementById('btnTableImportConfirm').addEventListener('click', ()=>{
+  const seleccionados = tableImportDrafts.filter(d=>d.incluir);
+  if(!seleccionados.length){ toast('Selecciona al menos una fila para importar'); return; }
+  tableImportMapping.forEach(m=>{
+    if(m.target==='new_custom' && m._newColId && !(DB.creatorDealColumnDefs||[]).find(c=>c.id===m._newColId)){
+      DB.creatorDealColumnDefs = DB.creatorDealColumnDefs || [];
+      DB.creatorDealColumnDefs.push({id:m._newColId, nombre:(m.customNombre||'Campo').toString().trim()||'Campo', tipo: m.customTipo==='numero'?'numero':'texto', opciones:[]});
+    }
+  });
+  let count = 0;
+  seleccionados.forEach(dft=>{
+    const marcaNombre = (dft.marca||'').trim() || 'Marca sin identificar';
+    let brand = brandsFor(viewingCreatorId).find(b=>b.nombre.toLowerCase()===marcaNombre.toLowerCase());
+    if(!brand){ brand = {id:uid('b'), creadorId:viewingCreatorId, nombre:marcaNombre, contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''}; DB.creatorBrands.push(brand); }
+    DB.creatorDeals.push({
+      id: uid('cd'), creadorId: viewingCreatorId, marcaId: brand.id,
+      plataformas: dft.plataformas.slice(),
+      fechaDeal: dft.fecha || todayISO(),
+      tipoPago: 'presupuesto',
+      montoTotal: Number(dft.monto) || 0,
+      moneda: dft.moneda || 'MXN',
+      estadoPago: dft.estadoPago || 'pendiente',
+      intercambioDescripcion: '', intercambioValorEstimado: 0,
+      esRecurrente: false, frecuencia: '', proximoCobro: '',
+      contratoNombre: '', contratoVencimiento: '',
+      notas: '', entregables: [],
+      fechaPagoAcordada: '', fechaPagoRecibido: '',
+      checklistContrato: [], bitacora: [],
+      archivos: [],
+      camposPersonalizados: {...dft.camposPersonalizados},
+    });
+    count++;
+  });
+  saveAll();
+  closeTableImportModal();
+  renderCurrent();
+  toast(`${count} deal(s) importado(s) desde tu tabla 🎉`);
+});
+
 /* ============================================================ NAV CONFIG ============================================================ */
 const CREATOR_TABS = [
   {key:'dashboard', icon:'🏠', label:'Dashboard'},
@@ -1658,6 +1981,7 @@ function renderCreatorDeals(){
 
   const toolbarHTML = `<div class="toolbar-row">
     <button class="btn-primary" id="btnAiImport">🪄 Importar con IA</button>
+    <button class="btn-primary" id="btnTableImport">📊 Importar tabla (Excel/CSV)</button>
     <button class="btn-plain" id="btnDealsTemplate">⬇️ Plantilla</button>
     <button class="btn-plain" id="btnDealsImport">⬆️ Importar CSV</button>
     <input type="file" id="dealsFileInput" accept=".csv" class="hidden">
@@ -1680,12 +2004,13 @@ function renderCreatorDeals(){
   document.getElementById('btnDealsImport').addEventListener('click', ()=>document.getElementById('dealsFileInput').click());
   document.getElementById('dealsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importDealsFile(f); ev.target.value=''; });
   document.getElementById('btnAiImport').addEventListener('click', openAiImportModal);
+  document.getElementById('btnTableImport').addEventListener('click', openTableImportModal);
   const nudgeBtn = document.getElementById('btnAiImportNudge'); if(nudgeBtn) nudgeBtn.addEventListener('click', openAiImportModal);
 
   renderEditableGrid({
     containerId: 'creatorDealsGrid',
     rows: deals,
-    defsKey: null,
+    defsKey: 'creatorDealColumnDefs',
     emptyMessage: 'No hay deals que coincidan.',
     rerender: renderCreatorDeals,
     fixed: [
@@ -2383,6 +2708,8 @@ function openCreatorDealModal(deal){
   creatorSelectedPlats = deal ? [...(deal.plataformas||[])] : [];
   renderPlatChips('creatorPlatChips', creatorSelectedPlats);
 
+  renderCustomFieldsSection('creatorDealCustomFieldsWrap', 'creatorDealColumnDefs', deal);
+
   document.getElementById('creatorEntregablesList').innerHTML = '';
   if(deal && deal.entregables && deal.entregables.length){ deal.entregables.forEach(e=>addEntregableRow('creatorEntregablesList', e, true)); }
   else { addEntregableRow('creatorEntregablesList', null, true); }
@@ -2463,10 +2790,11 @@ creatorDealForm.addEventListener('submit', e=>{
     checklistContrato: currentContratoChecklist.slice(),
     bitacora: currentBitacora.slice(),
   };
+  const camposPersonalizados = readCustomFieldsSection('creatorDealCustomFieldsWrap', 'creatorDealColumnDefs');
   if(editingCreatorDealId){
-    const dl = findCreatorDeal(editingCreatorDealId); Object.assign(dl, data); toast('Deal actualizado ✨');
+    const dl = findCreatorDeal(editingCreatorDealId); Object.assign(dl, data); dl.camposPersonalizados = {...(dl.camposPersonalizados||{}), ...camposPersonalizados}; toast('Deal actualizado ✨');
   } else {
-    const nuevoDeal = {id:uid('cd'), archivos:[], ...data};
+    const nuevoDeal = {id:uid('cd'), archivos:[], camposPersonalizados, ...data};
     if(pendingOrigenPropuestaId){
       const p = findPropuesta(pendingOrigenPropuestaId);
       if(p){ nuevoDeal.origenPropuestaId = p.id; p.etapa = 'ganado'; p.fechaCierre = todayISO(); p.origenDealId = nuevoDeal.id; }
