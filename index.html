@@ -221,6 +221,22 @@
   .modal-overlay.hidden{display:none;}
   .modal{background:#fff; border-radius:24px; width:640px; max-width:94vw; max-height:90vh; overflow-y:auto; padding:26px 28px 24px 28px; box-shadow:var(--shadow-lg); position:relative;}
   .modal.narrow{width:460px;}
+  .modal.wide{width:920px;}
+  .ai-import-table-wrap{overflow:auto; max-height:48vh; border:1px solid var(--border); border-radius:12px;}
+  table.ai-import-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.ai-import-table th{text-align:left; padding:8px 10px; color:var(--muted); font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; border-bottom:1.5px solid var(--border); position:sticky; top:0; background:#fff; z-index:1;}
+  table.ai-import-table td{padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  table.ai-import-table input[type=text], table.ai-import-table input[type=number], table.ai-import-table input[type=date]{width:100%; border:1px solid var(--border); border-radius:7px; padding:5px 7px; font-size:12px; font-family:inherit; color:var(--ink);}
+  table.ai-import-table select{width:100%; border:1px solid var(--border); border-radius:7px; padding:5px 7px; font-size:12px; font-family:inherit;}
+  tr.ai-row-flagged{background:#fff9ec;}
+  tr.ai-row-off{opacity:.4;}
+  .ai-import-loading{text-align:center; padding:44px 10px; color:var(--muted); font-size:13.5px;}
+  .ai-import-summary{display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:12.5px; color:var(--muted);}
+  .import-nudge{background:var(--grad-soft); border-radius:16px; padding:18px 20px; display:flex; gap:14px; align-items:center; margin-bottom:14px;}
+  .import-nudge .emoji{font-size:28px;}
+  .import-nudge .txt{flex:1;}
+  .import-nudge .txt b{display:block; font-size:14px; margin-bottom:2px;}
+  .import-nudge .txt span{font-size:12px; color:#5c4d78;}
   .modal h2{font-size:20px; margin-bottom:4px;}
   .modal .modal-sub{color:var(--muted); font-size:12.5px; margin-bottom:18px;}
   .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px 14px;}
@@ -622,6 +638,49 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="aiImportModalOverlay">
+  <div class="modal wide">
+    <button class="close-x" id="closeAiImportModal">✕</button>
+    <h2>🪄 Importar deals con IA</h2>
+    <div class="modal-sub">Pega tus deals tal como los tengas anotados — en notas, WhatsApp o de memoria. No se guarda nada hasta que confirmes al final.</div>
+
+    <div id="aiImportStepPaste">
+      <textarea id="aiImportText" rows="8" style="width:100%; border:1.5px solid var(--border); border-radius:12px; padding:12px; font-family:inherit; font-size:13px; color:var(--ink); resize:vertical;" placeholder="Ej: Trabajé con Glow Cosmetics en septiembre por 500 pesos, ya me pagaron. Con Nike ando cerrando algo como de 12 mil pero todavía no cae. También hice un canje de producto con Bella Beauty..."></textarea>
+      <div class="hint">💡 Escribe como te salga natural, no hace falta ningún formato. Entre más detalles des (marca, monto, fecha, si ya te pagaron), mejor lo detectamos — lo que falte lo completas en el siguiente paso.</div>
+      <div class="modal-actions">
+        <div></div>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn-secondary" id="btnAiImportCancel1">Cancelar</button>
+          <button type="button" class="btn-primary" id="btnAiImportAnalyze">Analizar con IA →</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="aiImportStepLoading" class="hidden">
+      <div class="ai-import-loading">🪄 Analizando tu texto, un momento…</div>
+    </div>
+
+    <div id="aiImportStepReview" class="hidden">
+      <div class="ai-import-table-wrap">
+        <table class="ai-import-table">
+          <thead>
+            <tr><th style="width:24px;"></th><th>Marca</th><th>Monto</th><th>Moneda</th><th>Fecha</th><th>Estado de pago</th><th style="width:24px;"></th></tr>
+          </thead>
+          <tbody id="aiImportPreviewBody"></tbody>
+        </table>
+      </div>
+      <div class="ai-import-summary">
+        <span id="aiImportSummaryText"></span>
+        <button type="button" class="btn-plain" id="btnAiImportAddRow">+ Agregar fila manual</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="btnAiImportBack">← Volver a pegar</button>
+        <button type="button" class="btn-primary" id="btnAiImportConfirm">✅ Confirmar importación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
 <script type="module">
@@ -725,6 +784,7 @@ let columnModalCtx = null;
 let dealMoreControlSubTab = 'pagos';
 let currentContratoChecklist = [];
 let currentBitacora = [];
+let aiImportDrafts = [];
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function saveAll(){
@@ -1128,6 +1188,145 @@ function importDealsFile(file){
   reader.readAsText(file, 'UTF-8');
 }
 
+/* ============================================================ IMPORTAR DEALS CON IA (texto libre) ============================================================ */
+const aiImportOverlay = document.getElementById('aiImportModalOverlay');
+function aiImportShowStep(step){
+  document.getElementById('aiImportStepPaste').classList.toggle('hidden', step!=='paste');
+  document.getElementById('aiImportStepLoading').classList.toggle('hidden', step!=='loading');
+  document.getElementById('aiImportStepReview').classList.toggle('hidden', step!=='review');
+}
+function openAiImportModal(){
+  document.getElementById('aiImportText').value = '';
+  aiImportDrafts = [];
+  aiImportShowStep('paste');
+  aiImportOverlay.classList.remove('hidden');
+}
+function closeAiImportModal(){ aiImportOverlay.classList.add('hidden'); }
+document.getElementById('closeAiImportModal').addEventListener('click', closeAiImportModal);
+document.getElementById('btnAiImportCancel1').addEventListener('click', closeAiImportModal);
+document.getElementById('btnAiImportBack').addEventListener('click', ()=>aiImportShowStep('paste'));
+aiImportOverlay.addEventListener('click', e=>{ if(e.target===aiImportOverlay) closeAiImportModal(); });
+
+function normalizePlatformName(raw){
+  const s = (raw||'').toString().trim().toLowerCase();
+  const known = {instagram:'Instagram', ig:'Instagram', tiktok:'TikTok', tt:'TikTok', youtube:'YouTube', yt:'YouTube', blog:'Blog', facebook:'Facebook', fb:'Facebook'};
+  return known[s] || null;
+}
+function draftFromApiDeal(d){
+  const plataformas = (d.plataformas||[]).map(normalizePlatformName).filter(Boolean);
+  const moneda = ['MXN','USD','EUR'].includes((d.moneda||'').toUpperCase()) ? d.moneda.toUpperCase() : 'MXN';
+  const estadoPago = ['pagado','parcial','pendiente'].includes(d.estadoPago) ? d.estadoPago : 'pendiente';
+  return {
+    _id: uid('aid'),
+    incluir: true,
+    marca: d.marca || 'Marca sin identificar',
+    monto: (typeof d.monto === 'number' && d.monto>=0) ? d.monto : '',
+    moneda,
+    fecha: d.fecha || '',
+    estadoPago,
+    plataformas,
+    notas: d.notas || '',
+    flagged: d.confianza==='baja' || !d.marca || d.marca==='Marca sin identificar' || d.monto===null || d.monto===undefined,
+  };
+}
+document.getElementById('btnAiImportAnalyze').addEventListener('click', async ()=>{
+  const text = document.getElementById('aiImportText').value.trim();
+  if(!text){ toast('Escribe o pega algo primero'); return; }
+  aiImportShowStep('loading');
+  try{
+    const resp = await fetch('/api/parse-deals', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({text}) });
+    const data = await resp.json();
+    if(!resp.ok){ toast(data.error || 'No se pudo analizar el texto'); aiImportShowStep('paste'); return; }
+    aiImportDrafts = (data.deals||[]).map(draftFromApiDeal);
+    if(!aiImportDrafts.length){ toast('No detectamos ningún deal en ese texto — intenta dar más detalles'); aiImportShowStep('paste'); return; }
+    renderAiImportPreview();
+    aiImportShowStep('review');
+  }catch(err){
+    console.error(err);
+    toast('No se pudo conectar con la IA. Revisa tu conexión e intenta de nuevo.');
+    aiImportShowStep('paste');
+  }
+});
+function renderAiImportPreview(){
+  const body = document.getElementById('aiImportPreviewBody');
+  body.innerHTML = aiImportDrafts.map(dft=>`
+    <tr class="${dft.flagged?'ai-row-flagged':''} ${dft.incluir?'':'ai-row-off'}" data-rid="${dft._id}">
+      <td><input type="checkbox" data-f="incluir" ${dft.incluir?'checked':''}></td>
+      <td><input type="text" data-f="marca" value="${(dft.marca||'').replace(/"/g,'&quot;')}"></td>
+      <td><input type="number" data-f="monto" value="${dft.monto===''?'':dft.monto}" placeholder="?"></td>
+      <td><select data-f="moneda"><option ${dft.moneda==='MXN'?'selected':''}>MXN</option><option ${dft.moneda==='USD'?'selected':''}>USD</option><option ${dft.moneda==='EUR'?'selected':''}>EUR</option></select></td>
+      <td><input type="date" data-f="fecha" value="${dft.fecha||''}"></td>
+      <td><select data-f="estadoPago">
+        <option value="pendiente" ${dft.estadoPago==='pendiente'?'selected':''}>Pendiente</option>
+        <option value="parcial" ${dft.estadoPago==='parcial'?'selected':''}>Anticipo pagado</option>
+        <option value="pagado" ${dft.estadoPago==='pagado'?'selected':''}>Pagado por completo</option>
+      </select></td>
+      <td><button type="button" class="icon-btn" data-action="ai-del-row" title="Quitar de la importación">🗑️</button></td>
+    </tr>
+  `).join('');
+  const seleccionados = aiImportDrafts.filter(d=>d.incluir).length;
+  const flagged = aiImportDrafts.filter(d=>d.flagged).length;
+  document.getElementById('aiImportSummaryText').innerHTML = `<b>${aiImportDrafts.length}</b> deal(s) detectado(s) · <b>${seleccionados}</b> seleccionado(s) para importar${flagged?` · <span style="color:#a15c00;">🟡 ${flagged} con datos que quizá quieras revisar</span>`:''}`;
+}
+document.getElementById('aiImportPreviewBody').addEventListener('input', ev=>{
+  const tr = ev.target.closest('tr'); if(!tr) return;
+  const dft = aiImportDrafts.find(d=>d._id===tr.dataset.rid); if(!dft) return;
+  const f = ev.target.dataset.f;
+  if(f==='monto') dft.monto = ev.target.value===''?'':Number(ev.target.value);
+  else if(f==='marca') dft.marca = ev.target.value;
+  else if(f==='fecha') dft.fecha = ev.target.value;
+});
+document.getElementById('aiImportPreviewBody').addEventListener('change', ev=>{
+  const tr = ev.target.closest('tr'); if(!tr) return;
+  const dft = aiImportDrafts.find(d=>d._id===tr.dataset.rid); if(!dft) return;
+  const f = ev.target.dataset.f;
+  if(f==='incluir'){ dft.incluir = ev.target.checked; renderAiImportPreview(); }
+  else if(f==='moneda') dft.moneda = ev.target.value;
+  else if(f==='estadoPago') dft.estadoPago = ev.target.value;
+});
+document.getElementById('aiImportPreviewBody').addEventListener('click', ev=>{
+  const btn = ev.target.closest('[data-action="ai-del-row"]'); if(!btn) return;
+  const tr = btn.closest('tr');
+  aiImportDrafts = aiImportDrafts.filter(d=>d._id!==tr.dataset.rid);
+  renderAiImportPreview();
+});
+document.getElementById('btnAiImportAddRow').addEventListener('click', ()=>{
+  aiImportDrafts.push({_id:uid('aid'), incluir:true, marca:'', monto:'', moneda:'MXN', fecha:'', estadoPago:'pendiente', plataformas:[], notas:'', flagged:false});
+  renderAiImportPreview();
+});
+document.getElementById('btnAiImportConfirm').addEventListener('click', ()=>{
+  const seleccionados = aiImportDrafts.filter(d=>d.incluir);
+  if(!seleccionados.length){ toast('Selecciona al menos un deal para importar'); return; }
+  let count = 0;
+  seleccionados.forEach(dft=>{
+    const marcaNombre = (dft.marca||'').trim() || 'Marca sin identificar';
+    let brand = brandsFor(viewingCreatorId).find(b=>b.nombre.toLowerCase()===marcaNombre.toLowerCase());
+    if(!brand){ brand = {id:uid('b'), creadorId:viewingCreatorId, nombre:marcaNombre, contactoNombre:'', contactoEmail:'', instagram:'', contactoTelefono:'', agenciaRepNombre:'', agenciaRepUsername:'', notas:''}; DB.creatorBrands.push(brand); }
+    DB.creatorDeals.push({
+      id: uid('cd'), creadorId: viewingCreatorId, marcaId: brand.id,
+      plataformas: dft.plataformas.slice(),
+      fechaDeal: dft.fecha || todayISO(),
+      tipoPago: 'presupuesto',
+      montoTotal: Number(dft.monto) || 0,
+      moneda: dft.moneda || 'MXN',
+      estadoPago: dft.estadoPago || 'pendiente',
+      intercambioDescripcion: '', intercambioValorEstimado: 0,
+      esRecurrente: false, frecuencia: '', proximoCobro: '',
+      contratoNombre: '', contratoVencimiento: '',
+      notas: dft.notas || '',
+      entregables: [],
+      fechaPagoAcordada: '', fechaPagoRecibido: '',
+      checklistContrato: [], bitacora: [],
+      archivos: [],
+    });
+    count++;
+  });
+  saveAll();
+  closeAiImportModal();
+  renderCurrent();
+  toast(`${count} deal(s) importado(s) con IA 🎉`);
+});
+
 /* ============================================================ NAV CONFIG ============================================================ */
 const CREATOR_TABS = [
   {key:'dashboard', icon:'🏠', label:'Dashboard'},
@@ -1458,13 +1657,20 @@ function renderCreatorDeals(){
   deals = deals.slice().sort((a,b)=>{ const fa=(a.entregables[0]||{}).fecha||'9999'; const fb=(b.entregables[0]||{}).fecha||'9999'; return fa.localeCompare(fb); });
 
   const toolbarHTML = `<div class="toolbar-row">
+    <button class="btn-primary" id="btnAiImport">🪄 Importar con IA</button>
     <button class="btn-plain" id="btnDealsTemplate">⬇️ Plantilla</button>
     <button class="btn-plain" id="btnDealsImport">⬆️ Importar CSV</button>
     <input type="file" id="dealsFileInput" accept=".csv" class="hidden">
     <button class="btn-plain" id="btnDealsExport">⬇️ Exportar mis deals</button>
   </div>`;
 
-  document.getElementById('view-root').innerHTML = toolbarHTML + `
+  const nudgeHTML = deals.length===0 && !filters.search ? `<div class="import-nudge">
+    <div class="emoji">👋</div>
+    <div class="txt"><b>¿Ya tienes deals anotados en otro lado?</b><span>Notas, WhatsApp, un Excel viejo — pégalos y te ayudamos a estructurarlos en un momento.</span></div>
+    <button class="btn-primary" id="btnAiImportNudge">🪄 Importar mis deals</button>
+  </div>` : '';
+
+  document.getElementById('view-root').innerHTML = toolbarHTML + nudgeHTML + `
     <div class="panel" style="padding:6px 20px 12px 20px;">
       <div id="creatorDealsGrid"></div>
     </div>
@@ -1473,6 +1679,8 @@ function renderCreatorDeals(){
   document.getElementById('btnDealsExport').addEventListener('click', exportDeals);
   document.getElementById('btnDealsImport').addEventListener('click', ()=>document.getElementById('dealsFileInput').click());
   document.getElementById('dealsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importDealsFile(f); ev.target.value=''; });
+  document.getElementById('btnAiImport').addEventListener('click', openAiImportModal);
+  const nudgeBtn = document.getElementById('btnAiImportNudge'); if(nudgeBtn) nudgeBtn.addEventListener('click', openAiImportModal);
 
   renderEditableGrid({
     containerId: 'creatorDealsGrid',
