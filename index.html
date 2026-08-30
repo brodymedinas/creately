@@ -887,6 +887,7 @@ let financeDateTo = '';
 let financeSubTab = 'general';
 let contactsView = 'tarjetas';
 let contactsSearchQuery = '';
+let contactsSection = 'personas';
 let rosterView = 'tarjetas';
 let columnModalCtx = null;
 let dealMoreControlSubTab = 'pagos';
@@ -1136,6 +1137,7 @@ function creatorPropuestasFor(creadorId){ return (DB.creatorPropuestas||[]).filt
 function brandsFor(creadorId){ return DB.creatorBrands.filter(b=>b.creadorId===creadorId); }
 function contactPersonasFor(creadorId){ return (DB.creatorContactPersonas||[]).filter(p=>p.creadorId===creadorId); }
 function findContactPersona(id){ return (DB.creatorContactPersonas||[]).find(p=>p.id===id); }
+function personasForBrand(marcaId){ return (DB.creatorContactPersonas||[]).filter(p=>p.marcaId===marcaId); }
 function talentForAgency(agenciaId){ return DB.talent.filter(t=>t.agenciaId===agenciaId); }
 function agencyDealsFor(agenciaId){ return DB.agencyDeals.filter(d=>d.agenciaId===agenciaId); }
 
@@ -2111,85 +2113,100 @@ function renderCreatorContacts(){
     <button class="btn-plain" id="btnContactsExport">⬇️ Exportar mis marcas</button>
   </div>`;
 
+  const sectionToggleHTML = `<div class="view-toggle" id="contactsSectionToggle">
+    <button type="button" class="view-toggle-btn ${contactsSection==='personas'?'active':''}" data-csec="personas">👤 Personas</button>
+    <button type="button" class="view-toggle-btn ${contactsSection==='marcas'?'active':''}" data-csec="marcas">🏷️ Marcas</button>
+  </div>`;
+
   const personasSectionHTML = `
-    <div class="section-label">👤 Personas de contacto</div>
-    <div class="modal-sub" style="margin:-6px 0 12px 0;">Quién te consigue cada deal — independiente de la marca. Selecciónalas al crear un deal, o agrégalas aquí.</div>
-    <div class="panel" style="padding:6px 20px 12px 20px; margin-bottom:22px;">
+    <div class="modal-sub" style="margin:0 0 12px 0;">Quién te consigue cada deal — independiente de la marca. Selecciónalas al crear un deal, o agrégalas aquí.</div>
+    <div class="panel" style="padding:6px 20px 12px 20px;">
       <div id="creatorContactPersonasGrid"></div>
     </div>
   `;
 
-  const toggleHTML = `<div class="section-label">🏷️ Tus marcas</div>
-  <div class="view-toggle" id="contactsViewToggle">
+  const marcasToggleHTML = `<div class="view-toggle" id="contactsViewToggle" style="margin-top:4px;">
     <button type="button" class="view-toggle-btn ${contactsView==='tarjetas'?'active':''}" data-view="tarjetas">🪪 Tarjetas</button>
     <button type="button" class="view-toggle-btn ${contactsView==='tabla'?'active':''}" data-view="tabla">📊 Tabla</button>
   </div>`;
-  const bodyHTML = contactsView==='tabla'
+  const marcasBodyHTML = contactsView==='tabla'
     ? `<div class="panel" style="padding:6px 20px 12px 20px;"><div id="creatorContactsGrid"></div></div>`
     : `<div class="roster-grid">
     ${brands.map(b=>{
       const deals = DB.creatorDeals.filter(dl=>dl.marcaId===b.id);
       const total = deals.filter(dl=>dl.tipoPago!=='intercambio').reduce((s,dl)=>s+dl.montoTotal,0);
+      const linked = personasForBrand(b.id);
       return `<div class="roster-card" data-action="edit-brand" data-id="${b.id}">
-        <div class="roster-top">${avatarHTML(b.nombre,'lg')}<div><div class="roster-name">${b.nombre}</div><div class="roster-plats">${b.contactoNombre || 'Sin contacto guardado'}</div></div></div>
+        <div class="roster-top">${avatarHTML(b.nombre,'lg')}<div><div class="roster-name">${b.nombre}</div></div></div>
         <div class="roster-stats">
           <span class="pill pill-purple">${deals.length} deal${deals.length===1?'':'s'}</span>
           <span class="pill pill-green">${fmtMoney(total,'MXN')} facturado</span>
         </div>
-        ${b.contactoEmail ? `<div class="contact-meta">✉️ ${b.contactoEmail}</div>` : ''}
+        ${linked.length
+          ? `<div class="contact-meta">👤 ${linked.map(p=>p.nombre).join(', ')}</div>`
+          : (b.contactoNombre
+            ? `<div class="contact-meta" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">📇 ${b.contactoNombre} <span style="color:var(--muted); font-size:10.5px;">(dato antiguo)</span><button type="button" class="btn-plain" data-action="migrate-brand-contact" data-id="${b.id}" style="font-size:10.5px; padding:2px 7px;">Convertir a persona</button></div>`
+            : `<button type="button" class="btn-plain" data-action="add-persona-for-brand" data-id="${b.id}" style="margin-top:6px; font-size:11.5px;">＋ Agregar persona de contacto</button>`)}
         ${b.instagram ? `<div class="contact-meta">📸 ${b.instagram}</div>` : ''}
-        ${b.contactoTelefono ? `<div class="contact-meta">📞 ${b.contactoTelefono}</div>` : ''}
         ${b.agenciaRepNombre ? `<div class="contact-agency-tag">🏢 ${b.agenciaRepNombre}${b.agenciaRepUsername?' · '+b.agenciaRepUsername:''}</div>` : ''}
       </div>`;
     }).join('')}
     <div class="roster-add-card" id="btnAddBrand"><div style="font-size:26px;">＋</div>Nueva marca</div>
   </div>`;
-  document.getElementById('view-root').innerHTML = toolbarHTML + personasSectionHTML + toggleHTML + bodyHTML;
 
-  document.querySelectorAll('#contactsViewToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ contactsView = btn.dataset.view; renderCreatorContacts(); }));
-  if(contactsView==='tarjetas') document.getElementById('btnAddBrand').addEventListener('click', ()=>openBrandModal(null));
+  const sectionBodyHTML = contactsSection==='marcas' ? (marcasToggleHTML + marcasBodyHTML) : personasSectionHTML;
+
+  document.getElementById('view-root').innerHTML = toolbarHTML + sectionToggleHTML + sectionBodyHTML;
+
+  document.querySelectorAll('#contactsSectionToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ contactsSection = btn.dataset.csec; renderCreatorContacts(); }));
   document.getElementById('btnContactsTemplate').addEventListener('click', downloadContactsTemplate);
   document.getElementById('btnContactsExport').addEventListener('click', exportContacts);
   document.getElementById('btnContactsImport').addEventListener('click', ()=>document.getElementById('contactsFileInput').click());
   document.getElementById('contactsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importContactsFile(f); ev.target.value=''; });
 
-  renderEditableGrid({
-    containerId: 'creatorContactPersonasGrid',
-    rows: personas,
-    defsKey: null,
-    emptyMessage: 'No hay personas de contacto todavía. Agrégalas aquí o desde un deal nuevo.',
-    rerender: renderCreatorContacts,
-    fixed: [
-      {key:'nombre', label:'Nombre', view(p){ return `<span style="font-weight:700;">${p.nombre||''}</span>`; } },
-      {key:'rol', label:'Rol', view(p){ return p.rol || '<span style="color:var(--muted)">—</span>'; } },
-      {key:'marca', label:'Marca', view(p){ const b = p.marcaId ? getBrand(p.marcaId) : null; return b ? b.nombre : '<span style="color:var(--muted)">Sin marca asignada</span>'; } },
-      {key:'email', label:'Email', view(p){ return p.email || '<span style="color:var(--muted)">—</span>'; } },
-      {key:'telefono', label:'Teléfono', view(p){ return p.telefono || '<span style="color:var(--muted)">—</span>'; } },
-    ],
-    rowActions(p){ return `<button class="icon-btn" data-action="edit-contact-persona" data-id="${p.id}" title="Editar">✏️</button>`; }
-  });
-  const addPersonaBtnHTML = `<button type="button" class="btn-add-row" id="btnAddContactPersona" style="margin-top:8px;">＋ Nuevo contacto</button>`;
-  document.getElementById('creatorContactPersonasGrid').insertAdjacentHTML('afterend', addPersonaBtnHTML);
-  document.getElementById('btnAddContactPersona').addEventListener('click', ()=>openContactPersonaModal(null));
-
-  if(contactsView==='tabla'){
+  if(contactsSection==='personas'){
     renderEditableGrid({
-      containerId:'creatorContactsGrid',
-      rows: brands,
-      defsKey: 'creatorContactColumnDefs',
-      emptyMessage: 'No hay marcas todavía.',
+      containerId: 'creatorContactPersonasGrid',
+      rows: personas,
+      defsKey: null,
+      emptyMessage: 'No hay personas de contacto todavía. Agrégalas aquí o desde un deal nuevo.',
       rerender: renderCreatorContacts,
       fixed: [
-        {key:'nombre', label:'Marca', view(b){ return `<span style="font-weight:700;">${b.nombre||''}</span>`; } },
-        {key:'contactoNombre', label:'Contacto', view(b){ return b.contactoNombre || '<span style="color:var(--muted)">—</span>'; } },
-        {key:'contactoEmail', label:'Email', view(b){ return b.contactoEmail || '<span style="color:var(--muted)">—</span>'; } },
-        {key:'instagram', label:'Instagram', view(b){ return b.instagram || '<span style="color:var(--muted)">—</span>'; } },
-        {key:'contactoTelefono', label:'Teléfono', view(b){ return b.contactoTelefono || '<span style="color:var(--muted)">—</span>'; } },
-        {key:'agenciaRepNombre', label:'Agencia rep.', view(b){ return b.agenciaRepNombre || '<span style="color:var(--muted)">—</span>'; } },
-        {key:'notas', label:'Notas', view(b){ return b.notas || '<span style="color:var(--muted)">—</span>'; } },
+        {key:'nombre', label:'Nombre', view(p){ return `<span style="font-weight:700;">${p.nombre||''}</span>`; } },
+        {key:'rol', label:'Rol', view(p){ return p.rol || '<span style="color:var(--muted)">—</span>'; } },
+        {key:'marca', label:'Marca', view(p){ const b = p.marcaId ? getBrand(p.marcaId) : null; return b ? `<button type="button" class="pill pill-purple" data-action="jump-to-marca" data-id="${b.id}" style="border:none; cursor:pointer;">${b.nombre}</button>` : '<span style="color:var(--muted)">Sin marca asignada</span>'; } },
+        {key:'email', label:'Email', view(p){ return p.email || '<span style="color:var(--muted)">—</span>'; } },
+        {key:'telefono', label:'Teléfono', view(p){ return p.telefono || '<span style="color:var(--muted)">—</span>'; } },
       ],
-      rowActions(b){ return `<button class="icon-btn" data-action="edit-brand" data-id="${b.id}" title="Editar completo">✏️</button><button class="icon-btn" data-action="duplicate-brand" data-id="${b.id}" title="Duplicar">📋</button>`; }
+      rowActions(p){ return `<button class="icon-btn" data-action="edit-contact-persona" data-id="${p.id}" title="Editar">✏️</button>`; }
     });
+    const addPersonaBtnHTML = `<button type="button" class="btn-add-row" id="btnAddContactPersona" style="margin-top:8px;">＋ Nuevo contacto</button>`;
+    document.getElementById('creatorContactPersonasGrid').insertAdjacentHTML('afterend', addPersonaBtnHTML);
+    document.getElementById('btnAddContactPersona').addEventListener('click', ()=>openContactPersonaModal(null));
+  }
+
+  if(contactsSection==='marcas'){
+    document.querySelectorAll('#contactsViewToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ contactsView = btn.dataset.view; renderCreatorContacts(); }));
+    if(contactsView==='tarjetas') document.getElementById('btnAddBrand').addEventListener('click', ()=>openBrandModal(null));
+    if(contactsView==='tabla'){
+      renderEditableGrid({
+        containerId:'creatorContactsGrid',
+        rows: brands,
+        defsKey: 'creatorContactColumnDefs',
+        emptyMessage: 'No hay marcas todavía.',
+        rerender: renderCreatorContacts,
+        fixed: [
+          {key:'nombre', label:'Marca', view(b){ return `<span style="font-weight:700;">${b.nombre||''}</span>`; } },
+          {key:'contacto', label:'Contacto(s)', view(b){ const linked = personasForBrand(b.id); return linked.length ? linked.map(p=>p.nombre).join(', ') : '<span style="color:var(--muted)">—</span>'; } },
+          {key:'deals', label:'Deals', view(b){ return String(DB.creatorDeals.filter(dl=>dl.marcaId===b.id).length); } },
+          {key:'facturado', label:'Facturado', view(b){ const total = DB.creatorDeals.filter(dl=>dl.marcaId===b.id && dl.tipoPago!=='intercambio').reduce((s,dl)=>s+dl.montoTotal,0); return fmtMoney(total,'MXN'); } },
+          {key:'instagram', label:'Instagram', view(b){ return b.instagram || '<span style="color:var(--muted)">—</span>'; } },
+          {key:'agenciaRepNombre', label:'Agencia rep.', view(b){ return b.agenciaRepNombre || '<span style="color:var(--muted)">—</span>'; } },
+          {key:'notas', label:'Notas', view(b){ return b.notas || '<span style="color:var(--muted)">—</span>'; } },
+        ],
+        rowActions(b){ return `<button class="icon-btn" data-action="edit-brand" data-id="${b.id}" title="Editar completo">✏️</button><button class="icon-btn" data-action="duplicate-brand" data-id="${b.id}" title="Duplicar">📋</button>`; }
+      });
+    }
   }
 }
 
@@ -3229,7 +3246,7 @@ document.getElementById('btnDeleteBrand').addEventListener('click', ()=>{
 let editingContactPersonaId = null;
 const contactPersonaOverlay = document.getElementById('contactPersonaModalOverlay');
 const contactPersonaForm = document.getElementById('contactPersonaForm');
-function openContactPersonaModal(persona){
+function openContactPersonaModal(persona, presetMarcaId){
   editingContactPersonaId = persona ? persona.id : null;
   document.getElementById('contactPersonaModalTitle').textContent = persona ? 'Editar contacto' : 'Nuevo contacto';
   document.getElementById('btnDeleteContactPersona').style.visibility = persona ? 'visible' : 'hidden';
@@ -3237,7 +3254,7 @@ function openContactPersonaModal(persona){
   document.getElementById('per_rol').value = persona ? (persona.rol||'') : '';
   const marcaSel = document.getElementById('per_marcaId');
   marcaSel.innerHTML = `<option value="">Sin marca asignada</option>` + brandsFor(viewingCreatorId).map(b=>`<option value="${b.id}">${b.nombre}</option>`).join('');
-  marcaSel.value = persona ? (persona.marcaId||'') : '';
+  marcaSel.value = persona ? (persona.marcaId||'') : (presetMarcaId||'');
   document.getElementById('per_email').value = persona ? (persona.email||'') : '';
   document.getElementById('per_telefono').value = persona ? (persona.telefono||'') : '';
   contactPersonaOverlay.classList.remove('hidden');
@@ -3389,6 +3406,22 @@ document.getElementById('view-root').addEventListener('click', e=>{
   if(action==='edit-brand') openBrandModal(findBrand(id));
   if(action==='duplicate-brand') duplicateBrand(id);
   if(action==='edit-contact-persona') openContactPersonaModal(findContactPersona(id));
+  if(action==='add-persona-for-brand') openContactPersonaModal(null, id);
+  if(action==='jump-to-marca'){
+    contactsSection = 'marcas';
+    const b = findBrand(id);
+    contactsSearchQuery = b ? b.nombre : '';
+    const si = document.getElementById('searchInput'); if(si) si.value = contactsSearchQuery;
+    renderCreatorContacts();
+  }
+  if(action==='migrate-brand-contact'){
+    const b = findBrand(id);
+    if(b){
+      DB.creatorContactPersonas = DB.creatorContactPersonas || [];
+      DB.creatorContactPersonas.push({id:uid('per'), creadorId:viewingCreatorId, nombre:b.contactoNombre, rol:'', marcaId:b.id, email:b.contactoEmail||'', telefono:b.contactoTelefono||''});
+      saveAll(); renderCreatorContacts(); toast('Contacto convertido en persona 🎉');
+    }
+  }
   if(action==='edit-talent') openTalentModal(getTalent(id));
   if(action==='view-talent') openTalentDetail(id);
   if(action==='duplicate-talent') duplicateTalent(id);
