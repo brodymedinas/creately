@@ -523,8 +523,8 @@
 <div class="modal-overlay hidden" id="brandModalOverlay">
   <div class="modal narrow">
     <button class="close-x" id="closeBrandModal">✕</button>
-    <h2 id="brandModalTitle">Nuevo contacto</h2>
-    <div class="modal-sub">Guarda quién es tu contacto en cada marca.</div>
+    <h2 id="brandModalTitle">Nueva marca</h2>
+    <div class="modal-sub">Información de esta marca. Para guardar a la persona que te consigue deals, usa "Personas de contacto".</div>
     <form id="brandForm">
       <div class="form-grid">
         <div class="form-field full"><label>Nombre de la marca</label><input type="text" id="b_nombre" required placeholder="Ej. Glow Cosmetics"></div>
@@ -541,8 +541,32 @@
       </div>
       <div id="brandCustomFieldsWrap"></div>
       <div class="modal-actions">
-        <button type="button" class="btn-danger-text" id="btnDeleteBrand" style="visibility:hidden;">Eliminar contacto</button>
+        <button type="button" class="btn-danger-text" id="btnDeleteBrand" style="visibility:hidden;">Eliminar marca</button>
         <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelBrand">Cancelar</button><button type="submit" class="btn-primary">Guardar</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ PERSONA DE CONTACTO MODAL (nuevo / editar) ============ -->
+<div class="modal-overlay hidden" id="contactPersonaModalOverlay">
+  <div class="modal narrow">
+    <button class="close-x" id="closeContactPersonaModal">✕</button>
+    <h2 id="contactPersonaModalTitle">Nuevo contacto</h2>
+    <div class="modal-sub">La persona que te consigue deals — independiente de la marca, la puedes usar en cualquier deal.</div>
+    <form id="contactPersonaForm">
+      <div class="form-grid">
+        <div class="form-field full"><label>Nombre</label><input type="text" id="per_nombre" required placeholder="Ej. Ana Pérez"></div>
+        <div class="form-field full"><label>Rol</label><input type="text" id="per_rol" placeholder="Ej. Ejecutiva de cuenta, PR de la marca…"></div>
+        <div class="form-field full"><label>Marca con la que la asocias (opcional)</label>
+          <select id="per_marcaId"><option value="">Sin marca asignada</option></select>
+        </div>
+        <div class="form-field"><label>Email</label><input type="email" id="per_email" placeholder="ana@agencia.com"></div>
+        <div class="form-field"><label>Teléfono</label><input type="text" id="per_telefono" placeholder="55 1234 5678"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger-text" id="btnDeleteContactPersona" style="visibility:hidden;">Eliminar contacto</button>
+        <div style="display:flex; gap:10px;"><button type="button" class="btn-secondary" id="btnCancelContactPersona">Cancelar</button><button type="submit" class="btn-primary">Guardar</button></div>
       </div>
     </form>
   </div>
@@ -862,6 +886,7 @@ let financeDateFrom = '';
 let financeDateTo = '';
 let financeSubTab = 'general';
 let contactsView = 'tarjetas';
+let contactsSearchQuery = '';
 let rosterView = 'tarjetas';
 let columnModalCtx = null;
 let dealMoreControlSubTab = 'pagos';
@@ -1702,7 +1727,7 @@ const CREATOR_TAB_META = {
   board:{title:'Tablero', sub:'Arrastra tus entregables entre estados.'},
   propuestas:{title:'Propuestas', sub:'Tus negociaciones con marcas, de contacto a ganado.'},
   deals:{title:'Deals', sub:'Todos tus acuerdos con marcas.', search:true},
-  contacts:{title:'Contactos', sub:'Tu directorio de marcas y personas de contacto.'},
+  contacts:{title:'Contactos', sub:'Tu directorio de marcas y personas de contacto.', search:true, searchPlaceholder:'🔎 Buscar marca o nombre del contacto…'},
   calendar:{title:'Calendario', sub:'Nunca más se te pasa una fecha de entrega.'},
   finance:{title:'Finanzas', sub:'Cuánto has cobrado y cuánto te deben.'},
   plan:{title:'Mi plan', sub:'Tu suscripción en Creatly.'},
@@ -2068,14 +2093,34 @@ function renderCreatorDeals(){
 }
 
 function renderCreatorContacts(){
-  const brands = brandsFor(viewingCreatorId);
+  let brands = brandsFor(viewingCreatorId);
+  let personas = contactPersonasFor(viewingCreatorId);
+  const q = (contactsSearchQuery||'').trim().toLowerCase();
+  if(q){
+    brands = brands.filter(b => (b.nombre||'').toLowerCase().includes(q) || (b.contactoNombre||'').toLowerCase().includes(q));
+    personas = personas.filter(p => {
+      const marca = p.marcaId ? getBrand(p.marcaId) : null;
+      return (p.nombre||'').toLowerCase().includes(q) || (marca && marca.nombre.toLowerCase().includes(q));
+    });
+  }
+
   const toolbarHTML = `<div class="toolbar-row">
     <button class="btn-plain" id="btnContactsTemplate">⬇️ Plantilla</button>
     <button class="btn-plain" id="btnContactsImport">⬆️ Importar CSV</button>
     <input type="file" id="contactsFileInput" accept=".csv" class="hidden">
-    <button class="btn-plain" id="btnContactsExport">⬇️ Exportar mis contactos</button>
+    <button class="btn-plain" id="btnContactsExport">⬇️ Exportar mis marcas</button>
   </div>`;
-  const toggleHTML = `<div class="view-toggle" id="contactsViewToggle">
+
+  const personasSectionHTML = `
+    <div class="section-label">👤 Personas de contacto</div>
+    <div class="modal-sub" style="margin:-6px 0 12px 0;">Quién te consigue cada deal — independiente de la marca. Selecciónalas al crear un deal, o agrégalas aquí.</div>
+    <div class="panel" style="padding:6px 20px 12px 20px; margin-bottom:22px;">
+      <div id="creatorContactPersonasGrid"></div>
+    </div>
+  `;
+
+  const toggleHTML = `<div class="section-label">🏷️ Tus marcas</div>
+  <div class="view-toggle" id="contactsViewToggle">
     <button type="button" class="view-toggle-btn ${contactsView==='tarjetas'?'active':''}" data-view="tarjetas">🪪 Tarjetas</button>
     <button type="button" class="view-toggle-btn ${contactsView==='tabla'?'active':''}" data-view="tabla">📊 Tabla</button>
   </div>`;
@@ -2097,21 +2142,42 @@ function renderCreatorContacts(){
         ${b.agenciaRepNombre ? `<div class="contact-agency-tag">🏢 ${b.agenciaRepNombre}${b.agenciaRepUsername?' · '+b.agenciaRepUsername:''}</div>` : ''}
       </div>`;
     }).join('')}
-    <div class="roster-add-card" id="btnAddBrand"><div style="font-size:26px;">＋</div>Nuevo contacto</div>
+    <div class="roster-add-card" id="btnAddBrand"><div style="font-size:26px;">＋</div>Nueva marca</div>
   </div>`;
-  document.getElementById('view-root').innerHTML = toolbarHTML + toggleHTML + bodyHTML;
+  document.getElementById('view-root').innerHTML = toolbarHTML + personasSectionHTML + toggleHTML + bodyHTML;
+
   document.querySelectorAll('#contactsViewToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ contactsView = btn.dataset.view; renderCreatorContacts(); }));
   if(contactsView==='tarjetas') document.getElementById('btnAddBrand').addEventListener('click', ()=>openBrandModal(null));
   document.getElementById('btnContactsTemplate').addEventListener('click', downloadContactsTemplate);
   document.getElementById('btnContactsExport').addEventListener('click', exportContacts);
   document.getElementById('btnContactsImport').addEventListener('click', ()=>document.getElementById('contactsFileInput').click());
   document.getElementById('contactsFileInput').addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) importContactsFile(f); ev.target.value=''; });
+
+  renderEditableGrid({
+    containerId: 'creatorContactPersonasGrid',
+    rows: personas,
+    defsKey: null,
+    emptyMessage: 'No hay personas de contacto todavía. Agrégalas aquí o desde un deal nuevo.',
+    rerender: renderCreatorContacts,
+    fixed: [
+      {key:'nombre', label:'Nombre', view(p){ return `<span style="font-weight:700;">${p.nombre||''}</span>`; } },
+      {key:'rol', label:'Rol', view(p){ return p.rol || '<span style="color:var(--muted)">—</span>'; } },
+      {key:'marca', label:'Marca', view(p){ const b = p.marcaId ? getBrand(p.marcaId) : null; return b ? b.nombre : '<span style="color:var(--muted)">Sin marca asignada</span>'; } },
+      {key:'email', label:'Email', view(p){ return p.email || '<span style="color:var(--muted)">—</span>'; } },
+      {key:'telefono', label:'Teléfono', view(p){ return p.telefono || '<span style="color:var(--muted)">—</span>'; } },
+    ],
+    rowActions(p){ return `<button class="icon-btn" data-action="edit-contact-persona" data-id="${p.id}" title="Editar">✏️</button>`; }
+  });
+  const addPersonaBtnHTML = `<button type="button" class="btn-add-row" id="btnAddContactPersona" style="margin-top:8px;">＋ Nuevo contacto</button>`;
+  document.getElementById('creatorContactPersonasGrid').insertAdjacentHTML('afterend', addPersonaBtnHTML);
+  document.getElementById('btnAddContactPersona').addEventListener('click', ()=>openContactPersonaModal(null));
+
   if(contactsView==='tabla'){
     renderEditableGrid({
       containerId:'creatorContactsGrid',
       rows: brands,
       defsKey: 'creatorContactColumnDefs',
-      emptyMessage: 'No hay contactos todavía.',
+      emptyMessage: 'No hay marcas todavía.',
       rerender: renderCreatorContacts,
       fixed: [
         {key:'nombre', label:'Marca', view(b){ return `<span style="font-weight:700;">${b.nombre||''}</span>`; } },
@@ -2760,9 +2826,9 @@ function refreshMarcaDatalist(){
 }
 function refreshContactoPersonaSelect(selectedId){
   const sel = document.getElementById('cd_contactoPersona');
-  const personas = contactPersonasFor(viewingCreatorId);
+  const personas = contactPersonasFor(viewingCreatorId).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre));
   sel.innerHTML = `<option value="">Sin contacto asignado</option>` +
-    personas.map(p=>`<option value="${p.id}">${p.nombre}${p.rol?' — '+p.rol:''}</option>`).join('') +
+    personas.map(p=>{ const b = p.marcaId ? getBrand(p.marcaId) : null; const tag = [p.rol, b?b.nombre:''].filter(Boolean).join(' — '); return `<option value="${p.id}">${p.nombre}${tag?' ('+tag+')':''}</option>`; }).join('') +
     `<option value="__new__">➕ Crear contacto nuevo…</option>`;
   sel.value = selectedId || '';
   document.getElementById('cd_contactoNuevoBox').classList.add('hidden');
@@ -2852,6 +2918,7 @@ creatorDealForm.addEventListener('submit', e=>{
         creadorId: viewingCreatorId,
         nombre: nombreNuevo,
         rol: document.getElementById('cd_contactoNuevoRol').value.trim(),
+        marcaId: brand.id,
         email: document.getElementById('cd_contactoNuevoEmail').value.trim(),
         telefono: document.getElementById('cd_contactoNuevoTelefono').value.trim(),
       };
@@ -3119,7 +3186,7 @@ const brandOverlay = document.getElementById('brandModalOverlay');
 const brandForm = document.getElementById('brandForm');
 function openBrandModal(brand){
   editingBrandId = brand ? brand.id : null;
-  document.getElementById('brandModalTitle').textContent = brand ? 'Editar contacto' : 'Nuevo contacto';
+  document.getElementById('brandModalTitle').textContent = brand ? 'Editar marca' : 'Nueva marca';
   document.getElementById('btnDeleteBrand').style.visibility = brand ? 'visible' : 'hidden';
   document.getElementById('b_nombre').value = brand ? brand.nombre : '';
   document.getElementById('b_contactoNombre').value = brand ? brand.contactoNombre : '';
@@ -3149,13 +3216,57 @@ brandForm.addEventListener('submit', e=>{
     notas: document.getElementById('b_notas').value.trim(),
   };
   const camposPersonalizados = readCustomFieldsSection('brandCustomFieldsWrap', 'creatorContactColumnDefs');
-  if(editingBrandId){ const b = findBrand(editingBrandId); Object.assign(b, data); b.camposPersonalizados = {...(b.camposPersonalizados||{}), ...camposPersonalizados}; toast('Contacto actualizado ✨'); }
-  else { DB.creatorBrands.push({id:uid('b'), creadorId:viewingCreatorId, ...data, camposPersonalizados}); toast('Contacto agregado 🎉'); }
+  if(editingBrandId){ const b = findBrand(editingBrandId); Object.assign(b, data); b.camposPersonalizados = {...(b.camposPersonalizados||{}), ...camposPersonalizados}; toast('Marca actualizada ✨'); }
+  else { DB.creatorBrands.push({id:uid('b'), creadorId:viewingCreatorId, ...data, camposPersonalizados}); toast('Marca agregada 🎉'); }
   saveAll(); closeBrandModal(); renderCurrent();
 });
 document.getElementById('btnDeleteBrand').addEventListener('click', ()=>{
   if(!editingBrandId) return;
-  if(confirm('¿Eliminar este contacto? Los deals ligados a esta marca no se borrarán.')){ DB.creatorBrands = DB.creatorBrands.filter(b=>b.id!==editingBrandId); saveAll(); closeBrandModal(); renderCurrent(); toast('Contacto eliminado 🗑️'); }
+  if(confirm('¿Eliminar esta marca? Los deals ligados no se borrarán.')){ DB.creatorBrands = DB.creatorBrands.filter(b=>b.id!==editingBrandId); saveAll(); closeBrandModal(); renderCurrent(); toast('Marca eliminada 🗑️'); }
+});
+
+/* ============================================================ PERSONA DE CONTACTO MODAL (nuevo / editar) ============================================================ */
+let editingContactPersonaId = null;
+const contactPersonaOverlay = document.getElementById('contactPersonaModalOverlay');
+const contactPersonaForm = document.getElementById('contactPersonaForm');
+function openContactPersonaModal(persona){
+  editingContactPersonaId = persona ? persona.id : null;
+  document.getElementById('contactPersonaModalTitle').textContent = persona ? 'Editar contacto' : 'Nuevo contacto';
+  document.getElementById('btnDeleteContactPersona').style.visibility = persona ? 'visible' : 'hidden';
+  document.getElementById('per_nombre').value = persona ? persona.nombre : '';
+  document.getElementById('per_rol').value = persona ? (persona.rol||'') : '';
+  const marcaSel = document.getElementById('per_marcaId');
+  marcaSel.innerHTML = `<option value="">Sin marca asignada</option>` + brandsFor(viewingCreatorId).map(b=>`<option value="${b.id}">${b.nombre}</option>`).join('');
+  marcaSel.value = persona ? (persona.marcaId||'') : '';
+  document.getElementById('per_email').value = persona ? (persona.email||'') : '';
+  document.getElementById('per_telefono').value = persona ? (persona.telefono||'') : '';
+  contactPersonaOverlay.classList.remove('hidden');
+}
+function closeContactPersonaModal(){ contactPersonaOverlay.classList.add('hidden'); editingContactPersonaId = null; }
+document.getElementById('closeContactPersonaModal').addEventListener('click', closeContactPersonaModal);
+document.getElementById('btnCancelContactPersona').addEventListener('click', closeContactPersonaModal);
+contactPersonaOverlay.addEventListener('click', e=>{ if(e.target===contactPersonaOverlay) closeContactPersonaModal(); });
+contactPersonaForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const data = {
+    nombre: document.getElementById('per_nombre').value.trim(),
+    rol: document.getElementById('per_rol').value.trim(),
+    marcaId: document.getElementById('per_marcaId').value || '',
+    email: document.getElementById('per_email').value.trim(),
+    telefono: document.getElementById('per_telefono').value.trim(),
+  };
+  DB.creatorContactPersonas = DB.creatorContactPersonas || [];
+  if(editingContactPersonaId){ const p = findContactPersona(editingContactPersonaId); Object.assign(p, data); toast('Contacto actualizado ✨'); }
+  else { DB.creatorContactPersonas.push({id:uid('per'), creadorId:viewingCreatorId, ...data}); toast('Contacto agregado 🎉'); }
+  saveAll(); closeContactPersonaModal(); renderCurrent();
+});
+document.getElementById('btnDeleteContactPersona').addEventListener('click', ()=>{
+  if(!editingContactPersonaId) return;
+  if(confirm('¿Eliminar este contacto? Los deals que lo tenían asignado se quedarán sin contacto.')){
+    DB.creatorContactPersonas = (DB.creatorContactPersonas||[]).filter(p=>p.id!==editingContactPersonaId);
+    DB.creatorDeals.forEach(dl=>{ if(dl.contactoPersonaId===editingContactPersonaId) dl.contactoPersonaId = ''; });
+    saveAll(); closeContactPersonaModal(); renderCurrent(); toast('Contacto eliminado 🗑️');
+  }
 });
 
 /* ============================================================ TALENT MODAL (nuevo / editar representado) ============================================================ */
@@ -3277,6 +3388,7 @@ document.getElementById('view-root').addEventListener('click', e=>{
   if(action==='duplicate-agency-deal') duplicateAgencyDeal(id);
   if(action==='edit-brand') openBrandModal(findBrand(id));
   if(action==='duplicate-brand') duplicateBrand(id);
+  if(action==='edit-contact-persona') openContactPersonaModal(findContactPersona(id));
   if(action==='edit-talent') openTalentModal(getTalent(id));
   if(action==='view-talent') openTalentDetail(id);
   if(action==='duplicate-talent') duplicateTalent(id);
@@ -3303,6 +3415,11 @@ function renderCurrent(){
   document.getElementById('viewTitle').textContent = meta.title;
   document.getElementById('viewSub').textContent = meta.sub;
   document.getElementById('searchBoxWrap').style.display = meta.search ? 'flex' : 'none';
+  if(meta.search){
+    const searchInputEl = document.getElementById('searchInput');
+    searchInputEl.placeholder = meta.searchPlaceholder || 'Buscar marca o entregable…';
+    searchInputEl.value = currentTab==='contacts' ? contactsSearchQuery : filters.search;
+  }
   renderNav();
   if(workspace==='creador'){
     if(currentTab==='dashboard') renderCreatorDashboard();
@@ -3323,7 +3440,10 @@ function renderCurrent(){
     else if(currentTab==='plan') renderAgencyPlan();
   }
 }
-document.getElementById('searchInput').addEventListener('input', e=>{ filters.search = e.target.value; renderCreatorDeals(); });
+document.getElementById('searchInput').addEventListener('input', e=>{
+  if(currentTab==='contacts'){ contactsSearchQuery = e.target.value; renderCreatorContacts(); }
+  else { filters.search = e.target.value; renderCreatorDeals(); }
+});
 
 /* ============================================================ INIT ============================================================ */
 /* La app ya no arranca sola: espera a onAuthStateChanged (arriba) para saber
