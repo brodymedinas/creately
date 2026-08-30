@@ -71,6 +71,10 @@
 
   .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:26px;}
   .stat-card{background:var(--card); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); border:1px solid var(--border); position:relative; overflow:hidden;}
+  .stat-card[data-action]{cursor:pointer; transition:transform .12s, box-shadow .12s;}
+  .stat-card[data-action]:hover{transform:translateY(-2px); box-shadow:0 8px 20px -8px rgba(36,20,54,.22);}
+  .up-row[data-action], .brand-row[data-action]{cursor:pointer; border-radius:10px; transition:background .12s;}
+  .up-row[data-action]:hover, .brand-row[data-action]:hover{background:#faf8fd;}
   .stat-card .icon{font-size:21px; margin-bottom:9px; display:inline-block;}
   .stat-card .value{font-family:'Baloo 2'; font-size:21px; font-weight:700;}
   .stat-card .label{font-size:12px; color:var(--muted); font-weight:600; margin-top:2px;}
@@ -875,7 +879,15 @@ let propuestasView = 'activas';
 let pendingOrigenPropuestaId = null;
 let editingProfileId = null;
 let calCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-let filters = {search:'', sort:'fecha-asc'};
+let filters = {search:'', sort:'fecha-asc', quick:null};
+const DEAL_QUICK_FILTERS = {
+  activos: { label:'🤝 Deals activos', test(dl){ return (dl.entregables||[]).some(e=>e.estado!=='entregado') || dl.esRecurrente; } },
+  porCobrar: { label:'💸 Por cobrar', test(dl){ return dl.tipoPago!=='intercambio' && dl.estadoPago!=='pagado'; } },
+  entregas7: { label:'⏰ Entregas en 7 días', test(dl){ return (dl.entregables||[]).some(e=> e.estado!=='entregado' && daysUntil(e.fecha)!==null && daysUntil(e.fecha)>=0 && daysUntil(e.fecha)<=7); } },
+  cobrado: { label:'✅ Cobrado', test(dl){ return dl.tipoPago!=='intercambio' && dl.estadoPago==='pagado'; } },
+  recurrente: { label:'🔁 Recurrentes', test(dl){ return !!dl.esRecurrente; } },
+  intercambio: { label:'🎁 Intercambios', test(dl){ return dl.tipoPago==='intercambio'; } },
+};
 let creatorSelectedPlats = [];
 let agencySelectedPlats = [];
 let profileSelectedPlats = [];
@@ -1796,28 +1808,30 @@ function renderCreatorDashboard(){
   const prox7 = entregables.filter(e=>e.estado!=='entregado' && daysUntil(e.fecha)!==null && daysUntil(e.fecha)<=7 && daysUntil(e.fecha)>=0).length;
   const upcoming = entregables.filter(e=>e.estado!=='entregado').sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).slice(0,6);
 
-  const byBrand = {};
-  cash.forEach(dl=>{ const b = getBrand(dl.marcaId); const name = b?b.nombre:'(sin marca)'; byBrand[name]=(byBrand[name]||0)+dl.montoTotal; });
-  const maxBrand = Math.max(1, ...Object.values(byBrand));
-  const brandRows = Object.entries(byBrand).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const byBrandId = {};
+  cash.forEach(dl=>{ byBrandId[dl.marcaId] = (byBrandId[dl.marcaId]||0)+dl.montoTotal; });
+  const maxBrand = Math.max(1, ...Object.values(byBrandId));
+  const brandRows = Object.entries(byBrandId).sort((a,b)=>b[1]-a[1]).slice(0,6);
 
   document.getElementById('view-root').innerHTML = `
     <div class="stat-grid">
-      <div class="stat-card c1"><div class="icon">🤝</div><div class="value">${activos.length}</div><div class="label">Deals activos</div></div>
-      <div class="stat-card c2"><div class="icon">💸</div><div class="value">${fmtMoney(porCobrar,'MXN')}</div><div class="label">Por cobrar (aprox.)</div></div>
-      <div class="stat-card c3"><div class="icon">⏰</div><div class="value">${prox7}</div><div class="label">Entregas en 7 días</div></div>
-      <div class="stat-card c4"><div class="icon">✅</div><div class="value">${fmtMoney(ganado,'MXN')}</div><div class="label">Cobrado a la fecha</div></div>
-      <div class="stat-card c5"><div class="icon">🔁</div><div class="value">${fmtMoney(mrr,'MXN')}</div><div class="label">Ingreso recurrente / mes</div></div>
-      <div class="stat-card c6"><div class="icon">🎁</div><div class="value">${fmtMoney(valorIntercambios,'MXN')}</div><div class="label">Valor en intercambios</div></div>
+      <div class="stat-card c1" data-action="dash-quick-filter" data-quick="activos"><div class="icon">🤝</div><div class="value">${activos.length}</div><div class="label">Deals activos</div></div>
+      <div class="stat-card c2" data-action="dash-quick-filter" data-quick="porCobrar"><div class="icon">💸</div><div class="value">${fmtMoney(porCobrar,'MXN')}</div><div class="label">Por cobrar (aprox.)</div></div>
+      <div class="stat-card c3" data-action="dash-quick-filter" data-quick="entregas7"><div class="icon">⏰</div><div class="value">${prox7}</div><div class="label">Entregas en 7 días</div></div>
+      <div class="stat-card c4" data-action="dash-quick-filter" data-quick="cobrado"><div class="icon">✅</div><div class="value">${fmtMoney(ganado,'MXN')}</div><div class="label">Cobrado a la fecha</div></div>
+      <div class="stat-card c5" data-action="dash-quick-filter" data-quick="recurrente"><div class="icon">🔁</div><div class="value">${fmtMoney(mrr,'MXN')}</div><div class="label">Ingreso recurrente / mes</div></div>
+      <div class="stat-card c6" data-action="dash-quick-filter" data-quick="intercambio"><div class="icon">🎁</div><div class="value">${fmtMoney(valorIntercambios,'MXN')}</div><div class="label">Valor en intercambios</div></div>
     </div>
     <div class="dash-grid">
       <div class="panel"><h3>📅 Próximas entregas</h3>
         ${upcoming.length ? upcoming.map(e=>{ const b=dueBadge(e.fecha,e.estado==='entregado'); const cp=checklistProgress(e);
-          return `<div class="up-row">${avatarHTML(e.marca,'sm')}<div class="up-info"><div class="up-title">${e.titulo}${e.tipoPago==='intercambio'?' 🎁':''}</div><div class="up-sub">${e.marca} · ${fmtDate(e.fecha)}${cp.total?` · ☑ ${cp.done}/${cp.total}`:''}</div></div><span class="pill ${b.cls}">${b.text}</span></div>`;
+          return `<div class="up-row" data-action="edit-creator-deal" data-id="${e.dealId}">${avatarHTML(e.marca,'sm')}<div class="up-info"><div class="up-title">${e.titulo}${e.tipoPago==='intercambio'?' 🎁':''}</div><div class="up-sub">${e.marca} · ${fmtDate(e.fecha)}${cp.total?` · ☑ ${cp.done}/${cp.total}`:''}</div></div><span class="pill ${b.cls}">${b.text}</span></div>`;
         }).join('') : `<div class="empty-state"><div class="big">🎉</div>Sin entregas pendientes.</div>`}
       </div>
       <div class="panel"><h3>💰 Ingresos por marca (efectivo)</h3>
-        ${brandRows.length ? brandRows.map(([marca,total])=>`<div class="brand-row"><div class="name">${marca}</div><div class="brand-bar-bg"><div class="brand-bar-fill" style="width:${(total/maxBrand*100).toFixed(0)}%"></div></div><div class="amt">${fmtMoney(total,'MXN')}</div></div>`).join('') : `<div class="empty-state">Aún no hay datos.</div>`}
+        ${brandRows.length ? brandRows.map(([marcaId,total])=>{ const b=getBrand(marcaId); const nombre = b?b.nombre:'(sin marca)';
+          return `<div class="brand-row" data-action="dash-jump-marca" data-id="${marcaId}"><div class="name">${nombre}</div><div class="brand-bar-bg"><div class="brand-bar-fill" style="width:${(total/maxBrand*100).toFixed(0)}%"></div></div><div class="amt">${fmtMoney(total,'MXN')}</div></div>`;
+        }).join('') : `<div class="empty-state">Aún no hay datos.</div>`}
       </div>
     </div>
   `;
@@ -2031,6 +2045,8 @@ function reactivarPropuesta(id){
 function renderCreatorDeals(){
   let deals = creatorDealsFor(viewingCreatorId);
   if(filters.search){ const s=filters.search.toLowerCase(); deals = deals.filter(dl=>{ const b=getBrand(dl.marcaId); return (b&&b.nombre.toLowerCase().includes(s)) || (dl.entregables||[]).some(e=>e.titulo.toLowerCase().includes(s)); }); }
+  const activeQuick = filters.quick ? DEAL_QUICK_FILTERS[filters.quick] : null;
+  if(activeQuick) deals = deals.filter(dl=>activeQuick.test(dl));
   deals = deals.slice().sort((a,b)=>{ const fa=(a.entregables[0]||{}).fecha||'9999'; const fb=(b.entregables[0]||{}).fecha||'9999'; return fa.localeCompare(fb); });
 
   dealsSelectedForBulk = new Set([...dealsSelectedForBulk].filter(id=> deals.some(dl=>dl.id===id)));
@@ -2045,17 +2061,22 @@ function renderCreatorDeals(){
     ${dealsSelectedForBulk.size>0 ? `<button class="btn-plain" id="btnBulkDeleteDeals" style="color:#c0392b;">🗑️ Eliminar seleccionados (${dealsSelectedForBulk.size})</button>` : ''}
   </div>`;
 
-  const nudgeHTML = deals.length===0 && !filters.search ? `<div class="import-nudge">
+  const quickChipHTML = activeQuick ? `<div class="toolbar-row" style="margin-top:-6px;">
+    <span class="pill pill-purple" style="display:inline-flex; align-items:center; gap:8px;">Mostrando: ${activeQuick.label}<button type="button" id="btnClearQuickFilter" style="border:none; background:none; cursor:pointer; font-weight:700; color:inherit;">✕</button></span>
+  </div>` : '';
+
+  const nudgeHTML = deals.length===0 && !filters.search && !activeQuick ? `<div class="import-nudge">
     <div class="emoji">👋</div>
     <div class="txt"><b>¿Ya tienes deals anotados en otro lado?</b><span>Notas, WhatsApp, un Excel viejo — pégalos y te ayudamos a estructurarlos en un momento.</span></div>
     <button class="btn-primary" id="btnAiImportNudge">🪄 Importar mis deals</button>
   </div>` : '';
 
-  document.getElementById('view-root').innerHTML = toolbarHTML + nudgeHTML + `
+  document.getElementById('view-root').innerHTML = toolbarHTML + quickChipHTML + nudgeHTML + `
     <div class="panel" style="padding:6px 20px 12px 20px;">
       <div id="creatorDealsGrid"></div>
     </div>
   `;
+  if(activeQuick) document.getElementById('btnClearQuickFilter').addEventListener('click', ()=>{ filters.quick = null; renderCreatorDeals(); });
   document.getElementById('btnDealsTemplate').addEventListener('click', downloadDealsTemplate);
   document.getElementById('btnDealsExport').addEventListener('click', exportDeals);
   document.getElementById('btnDealsImport').addEventListener('click', ()=>document.getElementById('dealsFileInput').click());
@@ -3430,6 +3451,19 @@ document.getElementById('view-root').addEventListener('click', e=>{
   if(action==='perder-propuesta') marcarPropuestaPerdida(id);
   if(action==='delete-propuesta') deletePropuesta(id);
   if(action==='reactivar-propuesta') reactivarPropuesta(id);
+  if(action==='dash-quick-filter'){
+    filters.search = '';
+    filters.quick = btn.dataset.quick;
+    currentTab = 'deals';
+    renderCurrent();
+  }
+  if(action==='dash-jump-marca'){
+    const b = findBrand(id);
+    filters.quick = null;
+    filters.search = b ? b.nombre : '';
+    currentTab = 'deals';
+    renderCurrent();
+  }
 });
 
 /* ============================================================ WORKSPACE TOGGLE + MAIN RENDER ============================================================ */
