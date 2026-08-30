@@ -119,6 +119,23 @@
   .video-embed-wrap{position:relative; width:100%; padding-top:56.25%; background:#000; border-radius:10px; overflow:hidden;}
   .video-embed-wrap iframe{position:absolute; inset:0; width:100%; height:100%; border:none;}
 
+  .tutorial-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px;}
+  .aprende-teaser{margin-top:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; font-weight:600; font-size:13.5px; transition:box-shadow .12s, transform .12s;}
+  .aprende-teaser:hover{box-shadow:0 8px 20px -8px rgba(36,20,54,.22); transform:translateY(-1px);}
+  .aprende-teaser-arrow{color:var(--ig-purple); font-size:12.5px; flex-shrink:0;}
+  .help-article-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px; margin-bottom:6px;}
+  .help-article-card{cursor:pointer; border:1px solid var(--border); border-radius:12px; padding:14px 16px; background:#fff; transition:box-shadow .12s, transform .12s;}
+  .help-article-card:hover{box-shadow:0 8px 20px -8px rgba(36,20,54,.22); transform:translateY(-2px);}
+  .help-article-title{font-weight:700; font-size:13.5px; margin-bottom:4px;}
+  .help-article-resumen{font-size:12px; color:var(--muted);}
+  .btn-back{border:none; background:transparent; color:var(--ig-purple); font-weight:700; font-size:12.5px; cursor:pointer; padding:0 0 14px 0;}
+  .help-article-eyebrow{font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px;}
+  .help-article-view h2{margin:0 0 14px 0;}
+  .help-article-body p{margin:0 0 12px 0; line-height:1.55; font-size:13.5px;}
+  .help-article-body h4{margin:18px 0 6px 0; font-family:'Baloo 2'; font-size:14px;}
+  .help-article-body ul{margin:0 0 12px 0; padding-left:20px; font-size:13.5px; line-height:1.55;}
+  .help-article-body li{margin-bottom:4px;}
+
   .avatar-ring{width:44px; height:44px; border-radius:50%; padding:2.5px; flex-shrink:0; background:conic-gradient(from 210deg, var(--ig-purple), var(--ig-pink), var(--ig-orange), var(--ig-yellow), var(--ig-purple));}
   .avatar-ring.sm{width:34px; height:34px;} .avatar-ring.lg{width:58px; height:58px;}
   .avatar{width:100%; height:100%; border-radius:50%; background:#fff; padding:2.5px;}
@@ -880,6 +897,105 @@ const CONTACT_HEADERS = ['Marca','Contacto','Email','Instagram','Telefono','Agen
 // Lista de tutoriales — se agregan/editan aquí a mano por ahora (sin panel de administración todavía).
 // Cada entrada: {id, titulo, descripcion, url} — url acepta links de YouTube o Loom.
 const TUTORIAL_VIDEOS = [];
+// Artículos del centro de ayuda — mismo criterio que los videos: se agregan/editan aquí a mano por ahora.
+// Cada entrada: {id, categoria, titulo, resumen, cuerpoHTML}. cuerpoHTML es contenido de confianza (lo escribimos nosotros), se pinta directo.
+const HELP_ARTICLES = [
+  {
+    id:'ha-primeros-pasos',
+    categoria:'Primeros pasos',
+    titulo:'Bienvenido a Creatly: los primeros pasos',
+    resumen:'Cómo está organizada la plataforma y por dónde empezar.',
+    cuerpoHTML:
+      "<p>Creatly te ayuda a llevar el control de todos tus deals con marcas en un solo lugar, sin depender de notas sueltas o mensajes perdidos en el chat.</p>" +
+      "<h4>Creador o Agencia</h4>" +
+      "<p>Arriba, en la barra lateral, eliges entre el workspace de <b>Creador</b> (para llevar tus propios deals) y el de <b>Agencia</b> (para gestionar el roster de talento que representas). Cada uno tiene su propio menú y su propia información — no se mezclan entre sí.</p>" +
+      "<h4>Tus datos están seguros</h4>" +
+      "<p>Todo lo que guardas en Creatly se sincroniza automáticamente a la nube (Firebase) ligado a tu cuenta de Google. No necesitas guardar manualmente: cada cambio se refleja solo, y puedes entrar desde cualquier dispositivo con la misma sesión.</p>" +
+      "<h4>Por dónde empezar</h4>" +
+      "<ul><li>Crea tu primer <b>Deal</b> (o impórtalos si ya los tenías en otro lado — ver el artículo de importación).</li>" +
+      "<li>Revisa tu <b>Dashboard</b>: ahí ves de un vistazo cómo va tu mes y qué necesita tu atención hoy.</li>" +
+      "<li>Guarda a las personas con las que trabajas en <b>Contactos</b>, para no perder el hilo de quién te consiguió cada deal.</li></ul>"
+  },
+  {
+    id:'ha-deals',
+    categoria:'Deals',
+    titulo:'Cómo crear y editar un deal',
+    resumen:'Marca, monto, entregables, contacto y todo lo que puedes registrar en un deal.',
+    cuerpoHTML:
+      "<p>Un <b>deal</b> es cualquier acuerdo que tengas con una marca: un post pagado, una campaña recurrente, un intercambio de producto, etc. Para crear uno, entra a <b>Deals</b> y da clic en «+ Nuevo deal».</p>" +
+      "<h4>Lo esencial</h4>" +
+      "<ul><li><b>Marca:</b> escribe el nombre; si ya trabajaste con ella antes, se autocompleta, y si es nueva, se crea sola al guardar el deal.</li>" +
+      "<li><b>Contacto:</b> selecciona quién te consiguió el deal de tu lista de Contactos, o crea uno nuevo ahí mismo sin salir del deal (ver el artículo de Contactos).</li>" +
+      "<li><b>Monto, moneda y estado de pago:</b> cuánto vale el deal, en qué moneda, y si ya te pagaron, está pendiente, o es un intercambio.</li>" +
+      "<li><b>Entregables:</b> cada pieza de contenido que debes entregar (reel, post, story…), con su propia fecha y checklist de avance.</li></ul>" +
+      "<h4>Deals recurrentes</h4>" +
+      "<p>Si marcas la casilla de «Este deal es un retainer / ingreso recurrente», aparecen campos extra de frecuencia, próximo cobro y vencimiento del contrato — así no se te pasa una renovación.</p>" +
+      "<h4>Editar más rápido</h4>" +
+      "<p>Puedes dar clic en cualquier parte de la fila del deal (no solo en el lápiz) para abrir el modal de edición completo. Y si necesitas un dato que Creatly no trae por default, agrega una <b>columna personalizada</b> directo desde el modal del deal o desde el encabezado de la tabla.</p>" +
+      "<h4>Trabajar varios a la vez</h4>" +
+      "<p>En la tabla de Deals puedes seleccionar varias filas con las casillas de la izquierda y eliminarlas juntas con el botón «🗑️ Eliminar seleccionados», en vez de una por una.</p>"
+  },
+  {
+    id:'ha-contactos',
+    categoria:'Contactos',
+    titulo:'Contactos: Personas vs. Marcas',
+    resumen:'Por qué separamos "quién te contactó" de "con qué marca trabajas".',
+    cuerpoHTML:
+      "<p>La sección de <b>Contactos</b> tiene dos partes, pensadas para responder dos preguntas distintas.</p>" +
+      "<h4>👤 Personas</h4>" +
+      "<p>Aquí guardas a las personas reales con las que hablas — su nombre, rol, email, teléfono y, si aplica, la marca a la que pertenecen. Esta es la lista que usas todos los días para saber «¿a quién le escribo?», y la misma que se te ofrece al elegir el contacto de un deal nuevo.</p>" +
+      "<h4>🏷️ Marcas</h4>" +
+      "<p>Aquí ves tus marcas como entidades: cuántos deals llevas con cada una y cuánto te ha facturado. Estos números se calculan solos a partir de tus deals, así que no los editas a mano — la marca se crea automáticamente la primera vez que la escribes en un deal nuevo.</p>" +
+      "<h4>Cómo se conectan</h4>" +
+      "<p>Cada tarjeta de marca muestra la persona (o personas) de contacto ligada a ella, con un botón para agregar una si aún no tiene. Y en la lista de Personas, la marca de cada contacto es un botón que te lleva directo a esa tarjeta.</p>" +
+      "<h4>¿Tenías contactos guardados de antes?</h4>" +
+      "<p>Si una marca ya tenía un contacto guardado a la antigua (antes de que existiera esta lista de Personas), lo vas a ver marcado como «(dato antiguo)» con un botón «Convertir a persona» — con un clic pasa a la lista de Personas sin que pierdas nada.</p>"
+  },
+  {
+    id:'ha-importar',
+    categoria:'Importar',
+    titulo:'Importar tus deals automáticamente',
+    resumen:'Dos formas de subir varios deals a la vez, sin capturarlos uno por uno.',
+    cuerpoHTML:
+      "<p>Si ya llevas tus deals en otro lado (una nota, un chat, un Excel), no tienes que volver a capturarlos a mano. Desde <b>Deals</b>, en el botón «Importar», tienes dos caminos.</p>" +
+      "<h4>📋 Pegar texto (con IA)</h4>" +
+      "<p>Copia y pega el texto donde sea que tengas la info — un mensaje de WhatsApp, una nota, un correo — y Creatly interpreta automáticamente marca, monto, fechas y entregables. Antes de guardar nada, ves una vista previa editable de cada deal detectado, para corregir cualquier cosa que la IA haya interpretado distinto a lo que querías.</p>" +
+      "<h4>📊 Importar desde Excel o CSV</h4>" +
+      "<p>Sube tu archivo tal cual lo tengas — no necesita venir en un formato específico. Creatly detecta con IA qué columna de tu archivo corresponde a qué campo de Creatly (marca, monto, fecha, etc.), te deja confirmar o corregir ese mapeo, y te muestra la misma vista previa editable antes de importar.</p>" +
+      "<h4>En ambos casos</h4>" +
+      "<p>Nada se guarda hasta que tú confirmas la vista previa — así que puedes revisar con calma antes de que los deals aparezcan en tu tabla.</p>"
+  },
+  {
+    id:'ha-dashboard',
+    categoria:'Dashboard',
+    titulo:'Sácale provecho al Dashboard',
+    resumen:'Todo en el Dashboard es clickeable — úsalo como tu punto de partida del día.',
+    cuerpoHTML:
+      "<p>El Dashboard no es solo para ver números: cada tarjeta y cada fila te lleva directo a donde necesitas actuar.</p>" +
+      "<h4>Las 6 tarjetas de arriba</h4>" +
+      "<p>Deals activos, por cobrar, entregas en 7 días, cobrado, recurrente y valor en intercambios — dale clic a cualquiera y te manda a Deals ya filtrado con ese criterio (aparece un chip para quitar el filtro cuando quieras ver todo de nuevo).</p>" +
+      "<h4>Próximas entregas</h4>" +
+      "<p>Cada fila es un entregable con fecha próxima — dale clic y se abre directo el deal correspondiente, sin tener que buscarlo en la tabla.</p>" +
+      "<h4>Ingresos por marca</h4>" +
+      "<p>Dale clic a cualquier marca de esta lista y llegas a Deals ya filtrado solo con los deals de esa marca.</p>" +
+      "<h4>Aprende</h4>" +
+      "<p>Cuando haya un video o artículo nuevo, vas a ver un aviso chiquito aquí mismo invitándote a revisarlo en la sección <b>📚 Aprende</b> del menú lateral — que es justo donde estás leyendo esto ahora.</p>"
+  },
+  {
+    id:'ha-agencia',
+    categoria:'Agencias',
+    titulo:'Roster y Pipeline para agencias',
+    resumen:'Cómo gestionar a tu talento representado si trabajas del lado de Agencia.',
+    cuerpoHTML:
+      "<p>Si representas talento, el workspace de <b>Agencia</b> tiene su propia lógica, separada de tus deals personales como Creador.</p>" +
+      "<h4>Roster</h4>" +
+      "<p>Aquí llevas a cada persona que representas, con sus plataformas, deals activos y comisión generada — puedes verlo en tarjetas o en tabla, y agregar columnas personalizadas igual que en Deals.</p>" +
+      "<h4>Pipeline</h4>" +
+      "<p>Un tablero tipo kanban para llevar tus negociaciones de prospecto a pagado, arrastrando cada deal entre columnas conforme avanza.</p>" +
+      "<h4>Contratos</h4>" +
+      "<p>Un lugar centralizado para ver qué deals tienen contrato adjunto y cuáles no, para no perder de vista ninguno.</p>"
+  },
+];
 const DEAL_HEADERS = ['Marca','Plataformas','TipoPago','Monto','Moneda','DescripcionIntercambio','ValorEstimadoIntercambio','EstadoPago','FechaDelDeal','EsRecurrente','Frecuencia','ProximoCobro','Notas'];
 const COLUMN_TYPES = [
   {key:'texto', label:'Texto'},
@@ -937,6 +1053,8 @@ let aiImportDrafts = [];
 let tableImportRawRows = [];
 let tableImportMapping = [];
 let tableImportDrafts = [];
+let aprendeSection = 'articulos';
+let aprendeArticleOpenId = null;
 let dealsSelectedForBulk = new Set();
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
@@ -1174,29 +1292,77 @@ function parseVideoEmbed(url){
   if(m) return { kind:'loom', id:m[1], embedSrc:`https://www.loom.com/embed/${m[1]}`, thumb:null };
   return { kind:'other', id:null, embedSrc:url, thumb:null };
 }
-function renderTutorialVideosSection(){
+function tutorialCardHTML(v, vistos){
+  const embed = parseVideoEmbed(v.url);
+  const visto = vistos.has(v.id);
+  const thumbHTML = embed && embed.thumb ? `<img src="${embed.thumb}" alt="">` : `<div class="tutorial-thumb-fallback">▶️</div>`;
+  return `<div class="tutorial-card" data-action="play-tutorial" data-id="${v.id}">
+    <div class="tutorial-thumb">${thumbHTML}<div class="tutorial-play">▶</div></div>
+    <div class="tutorial-info">
+      <div class="tutorial-title">${v.titulo}</div>
+      ${v.descripcion ? `<div class="tutorial-desc">${v.descripcion}</div>` : ''}
+      <div class="tutorial-watched" data-action="toggle-tutorial-watched" data-id="${v.id}"><span>${visto?'☑':'☐'}</span> Visto</div>
+    </div>
+  </div>`;
+}
+function renderTutorialsGrid(){
   const vistos = new Set(DB.tutorialesVistos || []);
   if(!TUTORIAL_VIDEOS.length){
-    return `<div class="panel" style="margin-top:16px;"><h3>🎥 Tutoriales</h3>
-      <div class="empty-state"><div class="big">🎬</div>Muy pronto vas a encontrar aquí videos cortos para sacarle el máximo provecho a Creatly.</div>
-    </div>`;
+    return `<div class="empty-state"><div class="big">🎬</div>Muy pronto vas a encontrar aquí videos cortos para sacarle el máximo provecho a Creatly.</div>`;
   }
-  return `<div class="panel" style="margin-top:16px;"><h3>🎥 Tutoriales</h3>
-    <div class="tutorial-row">
-      ${TUTORIAL_VIDEOS.map(v=>{
-        const embed = parseVideoEmbed(v.url);
-        const visto = vistos.has(v.id);
-        const thumbHTML = embed && embed.thumb ? `<img src="${embed.thumb}" alt="">` : `<div class="tutorial-thumb-fallback">▶️</div>`;
-        return `<div class="tutorial-card" data-action="play-tutorial" data-id="${v.id}">
-          <div class="tutorial-thumb">${thumbHTML}<div class="tutorial-play">▶</div></div>
-          <div class="tutorial-info">
-            <div class="tutorial-title">${v.titulo}</div>
-            ${v.descripcion ? `<div class="tutorial-desc">${v.descripcion}</div>` : ''}
-            <div class="tutorial-watched" data-action="toggle-tutorial-watched" data-id="${v.id}"><span>${visto?'☑':'☐'}</span> Visto</div>
-          </div>
-        </div>`;
-      }).join('')}
+  return `<div class="tutorial-grid">${TUTORIAL_VIDEOS.map(v=>tutorialCardHTML(v, vistos)).join('')}</div>`;
+}
+function findHelpArticle(id){ return HELP_ARTICLES.find(a=>a.id===id); }
+function renderHelpArticlesList(){
+  if(!HELP_ARTICLES.length){
+    return `<div class="empty-state"><div class="big">📖</div>Muy pronto vas a encontrar aquí guías cortas para sacarle el máximo provecho a Creatly.</div>`;
+  }
+  const cats = [];
+  HELP_ARTICLES.forEach(a=>{ if(!cats.includes(a.categoria)) cats.push(a.categoria); });
+  return cats.map(cat=>`
+    <div class="section-label">${cat}</div>
+    <div class="help-article-list">
+      ${HELP_ARTICLES.filter(a=>a.categoria===cat).map(a=>`
+        <div class="help-article-card" data-action="aprende-open-article" data-id="${a.id}">
+          <div class="help-article-title">${a.titulo}</div>
+          <div class="help-article-resumen">${a.resumen}</div>
+        </div>
+      `).join('')}
     </div>
+  `).join('');
+}
+function renderHelpArticleView(article){
+  return `<div class="help-article-view">
+    <button type="button" class="btn-back" data-action="aprende-back-to-list">← Todos los artículos</button>
+    <div class="help-article-eyebrow">${article.categoria}</div>
+    <h2>${article.titulo}</h2>
+    <div class="help-article-body">${article.cuerpoHTML}</div>
+  </div>`;
+}
+function renderAprendeSection(){
+  const toggleHTML = `<div class="view-toggle" id="aprendeToggle">
+    <button type="button" class="view-toggle-btn ${aprendeSection==='videos'?'active':''}" data-asec="videos">🎥 Videos</button>
+    <button type="button" class="view-toggle-btn ${aprendeSection==='articulos'?'active':''}" data-asec="articulos">📖 Artículos</button>
+  </div>`;
+  let bodyHTML;
+  if(aprendeSection==='videos'){
+    bodyHTML = renderTutorialsGrid();
+  } else {
+    const openArticle = aprendeArticleOpenId ? findHelpArticle(aprendeArticleOpenId) : null;
+    bodyHTML = openArticle ? renderHelpArticleView(openArticle) : renderHelpArticlesList();
+  }
+  document.getElementById('view-root').innerHTML = `<div class="panel">${toggleHTML}${bodyHTML}</div>`;
+  document.querySelectorAll('#aprendeToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{
+    aprendeSection = btn.dataset.asec; aprendeArticleOpenId = null; renderAprendeSection();
+  }));
+}
+function renderAprendeTeaser(){
+  if(!TUTORIAL_VIDEOS.length && !HELP_ARTICLES.length) return '';
+  const label = TUTORIAL_VIDEOS.length
+    ? `🎥 Nuevo video: ${TUTORIAL_VIDEOS[TUTORIAL_VIDEOS.length-1].titulo}`
+    : '📖 Centro de ayuda disponible — guías cortas para sacarle provecho a Creatly';
+  return `<div class="panel aprende-teaser" data-action="goto-aprende" style="margin-top:16px;">
+    <span>${label}</span><span class="aprende-teaser-arrow">Ir a Aprende →</span>
   </div>`;
 }
 function toast(msg){ const c=document.getElementById('toast-container'); const t=document.createElement('div'); t.className='toast'; t.textContent=msg; c.appendChild(t); setTimeout(()=>t.remove(),2600); }
@@ -1791,6 +1957,7 @@ const CREATOR_TABS = [
   {key:'contacts', icon:'📇', label:'Contactos'},
   {key:'calendar', icon:'📅', label:'Calendario'},
   {key:'finance', icon:'💰', label:'Finanzas'},
+  {key:'aprende', icon:'📚', label:'Aprende'},
   {key:'plan', icon:'⭐', label:'Mi plan'},
 ];
 const AGENCY_TABS = [
@@ -1800,6 +1967,7 @@ const AGENCY_TABS = [
   {key:'contracts', icon:'📄', label:'Contratos'},
   {key:'calendar', icon:'📅', label:'Calendario'},
   {key:'finance', icon:'💰', label:'Finanzas'},
+  {key:'aprende', icon:'📚', label:'Aprende'},
   {key:'plan', icon:'⭐', label:'Plan de agencia'},
 ];
 const CREATOR_TAB_META = {
@@ -1810,6 +1978,7 @@ const CREATOR_TAB_META = {
   contacts:{title:'Contactos', sub:'Tu directorio de marcas y personas de contacto.', search:true, searchPlaceholder:'🔎 Buscar marca o nombre del contacto…'},
   calendar:{title:'Calendario', sub:'Nunca más se te pasa una fecha de entrega.'},
   finance:{title:'Finanzas', sub:'Cuánto has cobrado y cuánto te deben.'},
+  aprende:{title:'Aprende', sub:'Videos cortos y guías para sacarle el máximo provecho a Creatly.'},
   plan:{title:'Mi plan', sub:'Tu suscripción en Creatly.'},
 };
 const AGENCY_TAB_META = {
@@ -1819,6 +1988,7 @@ const AGENCY_TAB_META = {
   contracts:{title:'Contratos', sub:'Todo firmado, nada vencido sin avisarte.'},
   calendar:{title:'Calendario', sub:'Entregas de todo tu roster.'},
   finance:{title:'Finanzas', sub:'Comisión ganada y lo que le corresponde a cada talento.'},
+  aprende:{title:'Aprende', sub:'Videos cortos y guías para sacarle el máximo provecho a Creatly.'},
   plan:{title:'Plan de agencia', sub:'Tu suscripción en Creatly.'},
 };
 
@@ -1900,7 +2070,7 @@ function renderCreatorDashboard(){
         }).join('') : `<div class="empty-state">Aún no hay datos.</div>`}
       </div>
     </div>
-    ${renderTutorialVideosSection()}
+    ${renderAprendeTeaser()}
   `;
 }
 
@@ -2424,7 +2594,7 @@ function renderAgencyDashboard(){
         }).join('') : `<div class="empty-state">Aún no hay datos.</div>`}
       </div>
     </div>
-    ${renderTutorialVideosSection()}
+    ${renderAprendeTeaser()}
   `;
 }
 function renderAgencyRoster(){
@@ -3555,6 +3725,18 @@ document.getElementById('view-root').addEventListener('click', e=>{
     if(idx>-1) DB.tutorialesVistos.splice(idx,1); else DB.tutorialesVistos.push(id);
     saveAll(); renderCurrent();
   }
+  if(action==='goto-aprende'){
+    currentTab = 'aprende';
+    renderCurrent();
+  }
+  if(action==='aprende-open-article'){
+    aprendeArticleOpenId = id;
+    renderAprendeSection();
+  }
+  if(action==='aprende-back-to-list'){
+    aprendeArticleOpenId = null;
+    renderAprendeSection();
+  }
 });
 
 /* ============================================================ WORKSPACE TOGGLE + MAIN RENDER ============================================================ */
@@ -3587,6 +3769,7 @@ function renderCurrent(){
     else if(currentTab==='contacts') renderCreatorContacts();
     else if(currentTab==='calendar') renderCalendar();
     else if(currentTab==='finance') renderCreatorFinance();
+    else if(currentTab==='aprende') renderAprendeSection();
     else if(currentTab==='plan') renderCreatorPlan();
   } else {
     if(currentTab==='dashboard') renderAgencyDashboard();
@@ -3595,6 +3778,7 @@ function renderCurrent(){
     else if(currentTab==='contracts') renderAgencyContracts();
     else if(currentTab==='calendar') renderCalendar();
     else if(currentTab==='finance') renderAgencyFinance();
+    else if(currentTab==='aprende') renderAprendeSection();
     else if(currentTab==='plan') renderAgencyPlan();
   }
 }
