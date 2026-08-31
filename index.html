@@ -135,6 +135,9 @@
   .help-article-body h4{margin:18px 0 6px 0; font-family:'Baloo 2'; font-size:14px;}
   .help-article-body ul{margin:0 0 12px 0; padding-left:20px; font-size:13.5px; line-height:1.55;}
   .help-article-body li{margin-bottom:4px;}
+  .help-figure{margin:14px 0 18px 0;}
+  .help-figure img{display:block; width:100%; max-width:560px; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);}
+  .help-figure figcaption{font-size:11.5px; color:var(--muted); margin-top:6px; text-align:center;}
 
   .avatar-ring{width:44px; height:44px; border-radius:50%; padding:2.5px; flex-shrink:0; background:conic-gradient(from 210deg, var(--ig-purple), var(--ig-pink), var(--ig-orange), var(--ig-yellow), var(--ig-purple));}
   .avatar-ring.sm{width:34px; height:34px;} .avatar-ring.lg{width:58px; height:58px;}
@@ -906,15 +909,43 @@ const HELP_ARTICLES = [
     titulo:'Bienvenido a Creatly: los primeros pasos',
     resumen:'Cómo está organizada la plataforma y por dónde empezar.',
     cuerpoHTML:
-      "<p>Creatly te ayuda a llevar el control de todos tus deals con marcas en un solo lugar, sin depender de notas sueltas o mensajes perdidos en el chat.</p>" +
+      "<p>Creatly te ayuda a llevar el control de todos tus deals con marcas en un solo lugar, sin depender de notas sueltas, hojas de cálculo desordenadas o mensajes perdidos en el chat. Todo lo que registras — deals, contactos, propuestas, entregables — vive conectado entre sí, así que un mismo dato (por ejemplo, una marca) alimenta automáticamente tu Dashboard, tus Finanzas y tu Calendario sin que tengas que capturarlo dos veces.</p>" +
       "<h4>Creador o Agencia</h4>" +
-      "<p>Arriba, en la barra lateral, eliges entre el workspace de <b>Creador</b> (para llevar tus propios deals) y el de <b>Agencia</b> (para gestionar el roster de talento que representas). Cada uno tiene su propio menú y su propia información — no se mezclan entre sí.</p>" +
+      "<p>Arriba, en la barra lateral, eliges entre el workspace de <b>Creador</b> (para llevar tus propios deals) y el de <b>Agencia</b> (para gestionar el roster de talento que representas). Cada uno tiene su propio menú, su propia información y su propio flujo de trabajo — no se mezclan entre sí, así que si haces ambas cosas, puedes cambiar de uno a otro sin perder nada.</p>" +
+      helpImg('workspace-toggle','El selector Creador / Agencia en la barra lateral') +
+      "<p>Si quieres entender a fondo esta diferencia, tenemos un artículo dedicado: «Creador o Agencia: diferencias y cómo elegir».</p>" +
+      "<h4>El menú lateral, sección por sección</h4>" +
+      "<ul><li><b>Dashboard:</b> tu resumen de un vistazo — cuánto llevas facturado, qué se te vence, y accesos directos a todo lo demás.</li>" +
+      "<li><b>Tablero:</b> un kanban visual para mover tus entregables de \"por hacer\" a \"publicado\" arrastrando tarjetas.</li>" +
+      "<li><b>Propuestas:</b> tus negociaciones que todavía no son un deal firmado — desde el primer contacto hasta que se gana o se pierde.</li>" +
+      "<li><b>Deals:</b> la tabla central con todos tus acuerdos ya cerrados con marcas.</li>" +
+      "<li><b>Contactos:</b> tu directorio de personas y de marcas.</li>" +
+      "<li><b>Calendario, Finanzas y Mi plan:</b> vistas de apoyo que se alimentan solas de tus deals.</li></ul>" +
+      helpImg('dashboard-overview','El Dashboard, con todas sus tarjetas y secciones') +
       "<h4>Tus datos están seguros</h4>" +
-      "<p>Todo lo que guardas en Creatly se sincroniza automáticamente a la nube (Firebase) ligado a tu cuenta de Google. No necesitas guardar manualmente: cada cambio se refleja solo, y puedes entrar desde cualquier dispositivo con la misma sesión.</p>" +
+      "<p>Todo lo que guardas en Creatly se sincroniza automáticamente a la nube (Firebase) ligado a tu cuenta de Google. No necesitas guardar manualmente: cada cambio se refleja solo, y puedes entrar desde cualquier dispositivo con la misma sesión, sin instalar nada.</p>" +
       "<h4>Por dónde empezar</h4>" +
       "<ul><li>Crea tu primer <b>Deal</b> (o impórtalos si ya los tenías en otro lado — ver el artículo de importación).</li>" +
       "<li>Revisa tu <b>Dashboard</b>: ahí ves de un vistazo cómo va tu mes y qué necesita tu atención hoy.</li>" +
-      "<li>Guarda a las personas con las que trabajas en <b>Contactos</b>, para no perder el hilo de quién te consiguió cada deal.</li></ul>"
+      "<li>Guarda a las personas con las que trabajas en <b>Contactos</b>, para no perder el hilo de quién te consiguió cada deal.</li>" +
+      "<li>Si te quedas con dudas de alguna sección específica, ya sabes: aquí en <b>Aprende</b> vamos a ir subiendo una guía por cada una.</li></ul>"
+  },
+  {
+    id:'ha-creador-o-agencia',
+    categoria:'Primeros pasos',
+    titulo:'Creador o Agencia: diferencias y cómo elegir',
+    resumen:'Qué cambia entre los dos workspaces, y si puedes usar ambos.',
+    cuerpoHTML:
+      "<p>Cuando entras a Creatly por primera vez, lo primero que decides es en qué workspace vas a trabajar: <b>Creador</b> o <b>Agencia</b>. No es una decisión permanente — el botón para cambiar está siempre visible arriba de tu menú — pero vale la pena entender qué cambia entre uno y otro antes de empezar a capturar información.</p>" +
+      helpImg('workspace-toggle','El botón para cambiar entre Creador y Agencia') +
+      "<h4>Workspace Creador</h4>" +
+      "<p>Pensado para alguien que negocia y entrega contenido directamente con las marcas, a su propio nombre. Aquí llevas tus propios <b>Deals</b>, tus <b>Propuestas</b> en negociación, tu <b>Tablero</b> de entregables y tus <b>Contactos</b> (tanto las personas con las que hablas como las marcas con las que trabajas).</p>" +
+      "<h4>Workspace Agencia</h4>" +
+      "<p>Pensado para quien representa a varios creadores o talento y negocia deals en nombre de ellos. Aquí en cambio llevas tu <b>Roster</b> (la lista de talento que representas), tu <b>Pipeline</b> (un kanban de negociaciones por talento) y tus <b>Contratos</b>, con la comisión que te corresponde por cada deal cerrado.</p>" +
+      "<h4>¿Puedo usar los dos?</h4>" +
+      "<p>Sí. Son dos espacios completamente independientes dentro de la misma cuenta — la información de uno no se mezcla con la del otro. Si eres creador y además representas a otras personas, simplemente cambias de workspace con el botón de arriba según lo que necesites revisar en ese momento.</p>" +
+      "<h4>¿Cómo sé cuál necesito?</h4>" +
+      "<p>Una buena forma de decidir: si tú eres quien sale en el contenido y cobra directo de la marca, usa Creador. Si tú negocias y cobras una comisión por el trabajo de otras personas, usa Agencia. Muchos usuarios empiezan solo en uno de los dos y activan el otro más adelante conforme su negocio crece.</p>"
   },
   {
     id:'ha-deals',
@@ -922,18 +953,61 @@ const HELP_ARTICLES = [
     titulo:'Cómo crear y editar un deal',
     resumen:'Marca, monto, entregables, contacto y todo lo que puedes registrar en un deal.',
     cuerpoHTML:
-      "<p>Un <b>deal</b> es cualquier acuerdo que tengas con una marca: un post pagado, una campaña recurrente, un intercambio de producto, etc. Para crear uno, entra a <b>Deals</b> y da clic en «+ Nuevo deal».</p>" +
+      "<p>Un <b>deal</b> es cualquier acuerdo que tengas con una marca: un post pagado, una campaña recurrente, un intercambio de producto, etc. Es el corazón de Creatly — de aquí se alimentan tu Dashboard, tus Finanzas y tu Calendario. Para crear uno, entra a <b>Deals</b> y da clic en «+ Nuevo deal».</p>" +
+      helpImg('deals-grid-overview','La tabla de Deals, con todos tus acuerdos en un solo lugar') +
       "<h4>Lo esencial</h4>" +
-      "<ul><li><b>Marca:</b> escribe el nombre; si ya trabajaste con ella antes, se autocompleta, y si es nueva, se crea sola al guardar el deal.</li>" +
+      "<ul><li><b>Marca:</b> escribe el nombre; si ya trabajaste con ella antes, se autocompleta, y si es nueva, se crea sola al guardar el deal — no necesitas darla de alta antes por separado.</li>" +
       "<li><b>Contacto:</b> selecciona quién te consiguió el deal de tu lista de Contactos, o crea uno nuevo ahí mismo sin salir del deal (ver el artículo de Contactos).</li>" +
-      "<li><b>Monto, moneda y estado de pago:</b> cuánto vale el deal, en qué moneda, y si ya te pagaron, está pendiente, o es un intercambio.</li>" +
-      "<li><b>Entregables:</b> cada pieza de contenido que debes entregar (reel, post, story…), con su propia fecha y checklist de avance.</li></ul>" +
-      "<h4>Deals recurrentes</h4>" +
-      "<p>Si marcas la casilla de «Este deal es un retainer / ingreso recurrente», aparecen campos extra de frecuencia, próximo cobro y vencimiento del contrato — así no se te pasa una renovación.</p>" +
+      "<li><b>Plataformas:</b> en cuáles se publica este deal (Instagram, TikTok, YouTube…), puedes marcar varias.</li>" +
+      "<li><b>Tipo de pago:</b> si es con presupuesto (dinero) o un intercambio de producto/servicio.</li>" +
+      "<li><b>Monto, moneda y estado de pago:</b> cuánto vale el deal, en qué moneda, y si ya te pagaron, está pendiente, o es parcial.</li>" +
+      "<li><b>Entregables:</b> cada pieza de contenido que debes entregar (reel, post, story…), con su propia fecha y estado. Puedes agregar los que necesites con «+ Agregar entregable».</li></ul>" +
+      helpImg('deal-modal-general','El modal completo de un deal, con Marca, Contacto, Monto y Moneda') +
+      "<h4>Deals recurrentes y más control</h4>" +
+      "<p>Si el deal es un retainer mensual o tiene condiciones de contrato que dar seguimiento, hay dos artículos dedicados a eso: «Deals recurrentes y retainers» y «Más control de tus deals: archivos, condiciones y bitácora».</p>" +
       "<h4>Editar más rápido</h4>" +
-      "<p>Puedes dar clic en cualquier parte de la fila del deal (no solo en el lápiz) para abrir el modal de edición completo. Y si necesitas un dato que Creatly no trae por default, agrega una <b>columna personalizada</b> directo desde el modal del deal o desde el encabezado de la tabla.</p>" +
+      "<p>Puedes dar clic en cualquier parte de la fila del deal (no solo en el lápiz) para abrir el modal de edición completo. Y si necesitas un dato que Creatly no trae por default, agrega una <b>columna personalizada</b> directo desde el modal del deal o desde el encabezado de la tabla — por ejemplo, un campo de \"código de tracking\" o \"talla enviada\".</p>" +
       "<h4>Trabajar varios a la vez</h4>" +
-      "<p>En la tabla de Deals puedes seleccionar varias filas con las casillas de la izquierda y eliminarlas juntas con el botón «🗑️ Eliminar seleccionados», en vez de una por una.</p>"
+      "<p>En la tabla de Deals puedes seleccionar varias filas con las casillas de la izquierda y eliminarlas juntas con el botón «🗑️ Eliminar seleccionados», en vez de una por una.</p>" +
+      helpImg('deal-bulk-select','Selección múltiple de deals con el botón de eliminar en bloque')
+  },
+  {
+    id:'ha-deals-recurrentes',
+    categoria:'Deals',
+    titulo:'Deals recurrentes y retainers: qué son y cómo darles seguimiento',
+    resumen:'Frecuencia, próximo cobro y vencimiento de contrato, para no perder de vista una renovación.',
+    cuerpoHTML:
+      "<p>Si trabajas con una marca de forma continua — por ejemplo, un retainer mensual de contenido — no tienes que crear un deal nuevo cada vez. Márcalo una sola vez como <b>recurrente</b> y Creatly te ayuda a darle seguimiento.</p>" +
+      "<h4>Cómo activarlo</h4>" +
+      "<p>Dentro del modal del deal, marca la casilla «Este deal es un retainer / ingreso recurrente». Al hacerlo aparecen tres campos nuevos, resaltados en un recuadro:</p>" +
+      "<ul><li><b>Frecuencia:</b> semanal, quincenal o mensual.</li>" +
+      "<li><b>Próximo cobro:</b> la fecha en la que te toca cobrar de nuevo.</li>" +
+      "<li><b>Vencimiento del contrato:</b> cuándo termina el acuerdo actual, para saber cuándo renegociar o renovar.</li></ul>" +
+      helpImg('deal-recurrente-fields','Los campos de frecuencia, próximo cobro y vencimiento, visibles solo en deals recurrentes') +
+      "<h4>Dónde lo vas a ver reflejado</h4>" +
+      "<p>La tarjeta «Ingreso recurrente / mes» del Dashboard suma automáticamente todos tus deals marcados como recurrentes, y la tarjeta «Recurrentes» te lleva directo a Deals filtrado solo con esos — útil para revisar de un vistazo si alguno está por vencer.</p>" +
+      "<h4>Un tip</h4>" +
+      "<p>Si un retainer termina y no se renueva, simplemente desmarca la casilla de recurrente (o elimina el deal si ya no aplica) — no necesitas dejarlo activo con fechas vencidas para conservar el historial, ya que el deal en sí sigue existiendo en tu tabla con su monto y fechas originales.</p>"
+  },
+  {
+    id:'ha-deals-mas-control',
+    categoria:'Deals',
+    titulo:'Más control de tus deals: archivos, condiciones y bitácora',
+    resumen:'La pestaña dentro del deal donde adjuntas el contrato, llevas un checklist y guardas notas.',
+    cuerpoHTML:
+      "<p>Además de los datos básicos (marca, monto, entregables), cada deal tiene una sección de «Más control» pensada para todo lo que normalmente se te olvida o se pierde entre chats — pagos, condiciones acordadas y el historial de qué pasó con ese deal.</p>" +
+      "<h4>📅 Pagos</h4>" +
+      "<p>Registra la fecha en que se acordó el pago y la fecha en que realmente lo recibiste. Si la fecha acordada ya pasó y no has marcado que llegó, Creatly te muestra una alerta dentro del mismo deal para que no se te escape un pago pendiente.</p>" +
+      "<h4>📎 Archivos</h4>" +
+      "<p>Sube el contrato, la factura o el brief directamente al deal, para tener todo junto sin tener que buscarlo en tu correo o WhatsApp.</p>" +
+      "<h4>✅ Condiciones / Acuerdos</h4>" +
+      "<p>Un checklist libre para las condiciones que negociaste con la marca — exclusividad de categoría, derechos de uso del contenido, número de rondas de revisión, etc. Agrega las que necesites y márcalas conforme se cumplen.</p>" +
+      helpImg('deal-mas-control-condiciones','El checklist de condiciones y acuerdos dentro de un deal') +
+      "<h4>📝 Bitácora</h4>" +
+      "<p>Un espacio de notas con fecha y hora automática, para dejar registro de cualquier cambio o conversación importante — \"la marca pidió mover la fecha de entrega\", \"aprobaron el guion sin cambios\", etc. Así, si vuelves a este deal en tres meses, no dependes de tu memoria.</p>" +
+      helpImg('deal-mas-control-bitacora','La bitácora de notas, ordenada de la más reciente a la más antigua') +
+      "<h4>¿Por qué separarlo del resto del deal?</h4>" +
+      "<p>Estos datos existen, pero no son los que consultas todos los días — por eso viven en su propia pestaña dentro del modal, para que la vista principal del deal (marca, monto, entregables) se mantenga simple y rápida de leer.</p>"
   },
   {
     id:'ha-contactos',
@@ -941,13 +1015,15 @@ const HELP_ARTICLES = [
     titulo:'Contactos: Personas vs. Marcas',
     resumen:'Por qué separamos "quién te contactó" de "con qué marca trabajas".',
     cuerpoHTML:
-      "<p>La sección de <b>Contactos</b> tiene dos partes, pensadas para responder dos preguntas distintas.</p>" +
+      "<p>La sección de <b>Contactos</b> tiene dos partes, pensadas para responder dos preguntas distintas, y se navegan con un toggle arriba de la pantalla.</p>" +
       "<h4>👤 Personas</h4>" +
-      "<p>Aquí guardas a las personas reales con las que hablas — su nombre, rol, email, teléfono y, si aplica, la marca a la que pertenecen. Esta es la lista que usas todos los días para saber «¿a quién le escribo?», y la misma que se te ofrece al elegir el contacto de un deal nuevo.</p>" +
+      "<p>Aquí guardas a las personas reales con las que hablas — su nombre, rol, email, teléfono y, si aplica, la marca a la que pertenecen. Esta es la lista que usas todos los días para saber «¿a quién le escribo?», y la misma que se te ofrece al elegir el contacto de un deal nuevo. Tiene su propio buscador arriba, para filtrar por nombre o por marca.</p>" +
+      helpImg('contactos-personas','La sección de Personas, con el buscador y la lista de contactos') +
       "<h4>🏷️ Marcas</h4>" +
       "<p>Aquí ves tus marcas como entidades: cuántos deals llevas con cada una y cuánto te ha facturado. Estos números se calculan solos a partir de tus deals, así que no los editas a mano — la marca se crea automáticamente la primera vez que la escribes en un deal nuevo.</p>" +
+      helpImg('contactos-marcas','La sección de Marcas, con sus deals, facturado y persona de contacto ligada') +
       "<h4>Cómo se conectan</h4>" +
-      "<p>Cada tarjeta de marca muestra la persona (o personas) de contacto ligada a ella, con un botón para agregar una si aún no tiene. Y en la lista de Personas, la marca de cada contacto es un botón que te lleva directo a esa tarjeta.</p>" +
+      "<p>Cada tarjeta de marca muestra la persona (o personas) de contacto ligada a ella, con un botón para agregar una si aún no tiene. Y en la lista de Personas, la marca de cada contacto es un botón que te lleva directo a esa tarjeta — así nunca pierdes el hilo entre \"quién\" y \"con cuál marca\".</p>" +
       "<h4>¿Tenías contactos guardados de antes?</h4>" +
       "<p>Si una marca ya tenía un contacto guardado a la antigua (antes de que existiera esta lista de Personas), lo vas a ver marcado como «(dato antiguo)» con un botón «Convertir a persona» — con un clic pasa a la lista de Personas sin que pierdas nada.</p>"
   },
@@ -957,13 +1033,17 @@ const HELP_ARTICLES = [
     titulo:'Importar tus deals automáticamente',
     resumen:'Dos formas de subir varios deals a la vez, sin capturarlos uno por uno.',
     cuerpoHTML:
-      "<p>Si ya llevas tus deals en otro lado (una nota, un chat, un Excel), no tienes que volver a capturarlos a mano. Desde <b>Deals</b>, en el botón «Importar», tienes dos caminos.</p>" +
+      "<p>Si ya llevas tus deals en otro lado (una nota, un chat, un Excel), no tienes que volver a capturarlos a mano. Desde <b>Deals</b>, en la parte de arriba, tienes dos caminos de importación.</p>" +
       "<h4>📋 Pegar texto (con IA)</h4>" +
-      "<p>Copia y pega el texto donde sea que tengas la info — un mensaje de WhatsApp, una nota, un correo — y Creatly interpreta automáticamente marca, monto, fechas y entregables. Antes de guardar nada, ves una vista previa editable de cada deal detectado, para corregir cualquier cosa que la IA haya interpretado distinto a lo que querías.</p>" +
+      "<p>Copia y pega el texto donde sea que tengas la info — un mensaje de WhatsApp, una nota, un correo — y Creatly interpreta automáticamente marca, monto, fechas y entregables usando inteligencia artificial.</p>" +
+      helpImg('importar-paste-step','El primer paso: pegar tu texto tal cual lo tengas') +
+      "<p>Antes de guardar nada, ves una vista previa editable de cada deal detectado, para corregir cualquier cosa que la IA haya interpretado distinto a lo que querías, o para agregar una fila manual si detectó de menos.</p>" +
       "<h4>📊 Importar desde Excel o CSV</h4>" +
-      "<p>Sube tu archivo tal cual lo tengas — no necesita venir en un formato específico. Creatly detecta con IA qué columna de tu archivo corresponde a qué campo de Creatly (marca, monto, fecha, etc.), te deja confirmar o corregir ese mapeo, y te muestra la misma vista previa editable antes de importar.</p>" +
+      "<p>Sube tu archivo tal cual lo tengas — no necesita venir en un formato específico ni con las columnas en un orden particular.</p>" +
+      helpImg('importar-upload-step','El primer paso del importador de Excel/CSV: subir tu archivo') +
+      "<p>Creatly detecta con IA qué columna de tu archivo corresponde a qué campo de Creatly (marca, monto, fecha, etc.), te deja confirmar o corregir ese mapeo, y te muestra la misma vista previa editable antes de importar.</p>" +
       "<h4>En ambos casos</h4>" +
-      "<p>Nada se guarda hasta que tú confirmas la vista previa — así que puedes revisar con calma antes de que los deals aparezcan en tu tabla.</p>"
+      "<p>Nada se guarda hasta que tú confirmas la vista previa — así que puedes revisar con calma antes de que los deals aparezcan en tu tabla, y no hay riesgo de duplicar información por error.</p>"
   },
   {
     id:'ha-dashboard',
@@ -971,15 +1051,49 @@ const HELP_ARTICLES = [
     titulo:'Sácale provecho al Dashboard',
     resumen:'Todo en el Dashboard es clickeable — úsalo como tu punto de partida del día.',
     cuerpoHTML:
-      "<p>El Dashboard no es solo para ver números: cada tarjeta y cada fila te lleva directo a donde necesitas actuar.</p>" +
+      "<p>El Dashboard no es solo para ver números: cada tarjeta y cada fila te lleva directo a donde necesitas actuar. Es el mejor lugar para empezar tu día en Creatly.</p>" +
+      helpImg('dashboard-overview','El Dashboard completo: tarjetas, próximas entregas e ingresos por marca') +
       "<h4>Las 6 tarjetas de arriba</h4>" +
       "<p>Deals activos, por cobrar, entregas en 7 días, cobrado, recurrente y valor en intercambios — dale clic a cualquiera y te manda a Deals ya filtrado con ese criterio (aparece un chip para quitar el filtro cuando quieras ver todo de nuevo).</p>" +
+      helpImg('dashboard-quick-filter','Deals ya filtrado después de dar clic en una tarjeta del Dashboard') +
       "<h4>Próximas entregas</h4>" +
       "<p>Cada fila es un entregable con fecha próxima — dale clic y se abre directo el deal correspondiente, sin tener que buscarlo en la tabla.</p>" +
       "<h4>Ingresos por marca</h4>" +
       "<p>Dale clic a cualquier marca de esta lista y llegas a Deals ya filtrado solo con los deals de esa marca.</p>" +
       "<h4>Aprende</h4>" +
       "<p>Cuando haya un video o artículo nuevo, vas a ver un aviso chiquito aquí mismo invitándote a revisarlo en la sección <b>📚 Aprende</b> del menú lateral — que es justo donde estás leyendo esto ahora.</p>"
+  },
+  {
+    id:'ha-tablero',
+    categoria:'Tablero',
+    titulo:'Tablero: organiza tus entregables arrastrando y soltando',
+    resumen:'Un kanban visual para ver en qué punto va cada pieza de contenido.',
+    cuerpoHTML:
+      "<p>Mientras que la tabla de <b>Deals</b> te muestra los acuerdos completos, el <b>Tablero</b> te muestra algo más específico: cada entregable individual (cada reel, post o story) organizado por su estado de avance, en columnas tipo kanban.</p>" +
+      helpImg('tablero-kanban','El Tablero, con los entregables organizados por columnas de avance') +
+      "<h4>Cómo se usa</h4>" +
+      "<p>Cada tarjeta es un entregable. Para avanzarlo de etapa (por ejemplo, de \"Grabación\" a \"Edición\"), simplemente arrástralo con el mouse a la columna correspondiente — se guarda solo, sin necesidad de abrir ningún modal.</p>" +
+      "<h4>¿Cuándo conviene usar el Tablero en vez de la tabla de Deals?</h4>" +
+      "<p>Cuando tienes varios entregables en proceso al mismo tiempo (por ejemplo, tres deals distintos con piezas de contenido a medio hacer) y quieres una vista rápida de \"qué me falta grabar\" o \"qué ya está listo para publicar\", sin tener que abrir deal por deal.</p>" +
+      "<p>Si en cambio necesitas ver o editar los datos completos de un deal (monto, contacto, condiciones), esa vista sigue siendo la tabla de <b>Deals</b>.</p>"
+  },
+  {
+    id:'ha-propuestas',
+    categoria:'Propuestas',
+    titulo:'Propuestas: de negociación a deal ganado',
+    resumen:'La diferencia entre una Propuesta y un Deal, y cómo llevar tu negociación con marcas.',
+    cuerpoHTML:
+      "<p>No todo lo que hablas con una marca es ya un deal cerrado. La sección de <b>Propuestas</b> existe justo para ese momento intermedio: cuando estás en pláticas, mandaste una cotización, o estás negociando un monto, pero todavía no hay nada firmado.</p>" +
+      helpImg('propuestas-board','El tablero de Propuestas activas, organizado por etapa de negociación') +
+      "<h4>Las tres etapas</h4>" +
+      "<p>Cada propuesta pasa por «Contacto inicial», «Propuesta enviada» y «Negociando» — arrástrala entre columnas conforme avanza la plática, igual que en el Tablero de entregables.</p>" +
+      "<h4>Qué registrar en cada propuesta</h4>" +
+      helpImg('propuesta-modal','El detalle de una propuesta: campaña, rango de monto y próxima acción') +
+      "<p>Marca, qué se está proponiendo, un rango de monto (mínimo y máximo, porque en negociación rara vez es un número cerrado desde el inicio), la fecha de tu último contacto, y cuál es tu próxima acción pendiente — para no dejar ninguna plática en el aire.</p>" +
+      "<h4>Cuando se gana o se pierde</h4>" +
+      "<p>Si la negociación se cae, márcala como «perdida» — no se borra, pasa a tu Historial para que conserves el registro. Si en cambio se cierra, márcala como «ganada»: Creatly abre automáticamente el modal de un <b>Deal</b> nuevo con la marca y el monto ya precargados, para que solo completes lo que falte y no captures la información dos veces.</p>" +
+      "<h4>Propuestas estancadas</h4>" +
+      "<p>Si una propuesta lleva varios días sin actividad, Creatly la marca como «estancada» directamente en su tarjeta, para que sepas cuáles necesitan un empujón antes de que se enfríen.</p>"
   },
   {
     id:'ha-agencia',
@@ -990,10 +1104,14 @@ const HELP_ARTICLES = [
       "<p>Si representas talento, el workspace de <b>Agencia</b> tiene su propia lógica, separada de tus deals personales como Creador.</p>" +
       "<h4>Roster</h4>" +
       "<p>Aquí llevas a cada persona que representas, con sus plataformas, deals activos y comisión generada — puedes verlo en tarjetas o en tabla, y agregar columnas personalizadas igual que en Deals.</p>" +
+      helpImg('roster-tarjetas','El Roster de talento, en vista de tarjetas') +
       "<h4>Pipeline</h4>" +
-      "<p>Un tablero tipo kanban para llevar tus negociaciones de prospecto a pagado, arrastrando cada deal entre columnas conforme avanza.</p>" +
+      "<p>Un tablero tipo kanban para llevar tus negociaciones de prospecto a pagado, arrastrando cada deal entre columnas conforme avanza: prospecto, negociación, contrato firmado, en producción, completado y pagado.</p>" +
+      helpImg('pipeline-kanban','El Pipeline de deals de agencia, con el talento y el monto de cada uno') +
       "<h4>Contratos</h4>" +
-      "<p>Un lugar centralizado para ver qué deals tienen contrato adjunto y cuáles no, para no perder de vista ninguno.</p>"
+      "<p>Un lugar centralizado para ver qué deals tienen contrato adjunto y cuáles no, para no perder de vista ninguno.</p>" +
+      "<h4>Comisión</h4>" +
+      "<p>Cada deal de agencia tiene su propio porcentaje de comisión — así Finanzas puede calcular automáticamente cuánto te corresponde a ti y cuánto le corresponde al talento por cada deal cerrado.</p>"
   },
 ];
 const DEAL_HEADERS = ['Marca','Plataformas','TipoPago','Monto','Moneda','DescripcionIntercambio','ValorEstimadoIntercambio','EstadoPago','FechaDelDeal','EsRecurrente','Frecuencia','ProximoCobro','Notas'];
@@ -1312,6 +1430,7 @@ function renderTutorialsGrid(){
   }
   return `<div class="tutorial-grid">${TUTORIAL_VIDEOS.map(v=>tutorialCardHTML(v, vistos)).join('')}</div>`;
 }
+function helpImg(src, alt){ return `<figure class="help-figure"><img src="images/aprende/${src}.png" alt="${alt}" loading="lazy"><figcaption>${alt}</figcaption></figure>`; }
 function findHelpArticle(id){ return HELP_ARTICLES.find(a=>a.id===id); }
 function renderHelpArticlesList(){
   if(!HELP_ARTICLES.length){
