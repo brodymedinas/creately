@@ -157,6 +157,14 @@
   .board.pipeline{grid-template-columns:repeat(6,1fr);}
   .board.board-scroll{display:flex; overflow-x:auto; padding-bottom:8px;}
   .board.board-scroll .board-col{flex:0 0 260px; width:260px;}
+  .board-scroll-wrap{position:relative;}
+  .scroll-hint-pill{display:none; align-items:center; gap:6px; width:fit-content; font-size:12px; font-weight:700; color:var(--ig-purple); background:var(--grad-soft); padding:6px 14px; border-radius:100px; margin-bottom:10px;}
+  .board-scroll-wrap.has-more .scroll-hint-pill{display:inline-flex;}
+  .scroll-edge-fade{position:absolute; top:0; right:0; bottom:8px; width:64px; background:linear-gradient(to right, rgba(247,245,251,0), var(--bg)); pointer-events:none; opacity:0; transition:opacity .2s; border-radius:0 16px 16px 0;}
+  .board-scroll-wrap.has-more .scroll-edge-fade{opacity:1;}
+  .scroll-nudge-arrow{position:absolute; top:50%; right:14px; transform:translateY(-50%); width:32px; height:32px; border-radius:50%; background:var(--grad-main); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; box-shadow:0 6px 14px rgba(120,80,160,.32); pointer-events:none; opacity:0; transition:opacity .2s;}
+  .board-scroll-wrap.has-more .scroll-nudge-arrow{opacity:1; animation:scrollNudge 1.3s ease-in-out infinite;}
+  @keyframes scrollNudge{0%,100%{transform:translateY(-50%) translateX(0);} 50%{transform:translateY(-50%) translateX(6px);}}
   .board-col{background:#faf8fd; border:1px dashed var(--border); border-radius:18px; padding:12px; min-height:120px;}
   .board-col.dragover{background:#f3e8ff; border-color:var(--ig-purple);}
   .board-col-head{display:flex; align-items:center; gap:7px; padding:6px 4px 12px 4px; font-family:'Baloo 2'; font-weight:700; font-size:13.5px;}
@@ -358,6 +366,10 @@
   .username-field-row input{flex:1; border:1px solid var(--border); border-radius:9px; padding:7px 9px; font-size:12.5px; background:#faf9fc; font-family:'Inter';}
   .modal-actions{display:flex; justify-content:space-between; align-items:center; margin-top:20px;}
   .btn-primary{background:var(--grad-main); color:#fff; border:none; padding:11px 22px; border-radius:13px; font-family:'Baloo 2'; font-weight:700; font-size:14px; cursor:pointer;}
+  .btn-cta{background:var(--grad-main); color:#fff; border:none; padding:12px 24px; border-radius:14px; font-family:'Baloo 2'; font-weight:700; font-size:14.5px; cursor:pointer; box-shadow:0 8px 18px rgba(253,29,29,0.30); transition:transform .12s, box-shadow .12s; white-space:nowrap;}
+  .btn-cta:hover{transform:translateY(-1px); box-shadow:0 11px 22px rgba(253,29,29,0.38);}
+  .toolbar-row-split{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:14px;}
+  .toolbar-row-split .toolbar-row{margin-bottom:0;}
   .btn-secondary{background:#f1edf9; color:var(--ink); border:none; padding:11px 18px; border-radius:13px; font-weight:700; font-size:13px; cursor:pointer; font-family:'Inter';}
   .btn-danger-text{background:none; border:none; color:var(--red); font-weight:700; font-size:12.5px; cursor:pointer;}
   .close-x{position:absolute; top:20px; right:24px; cursor:pointer; font-size:18px; color:var(--muted); background:none; border:none;}
@@ -412,8 +424,7 @@
 <div id="app" class="hidden">
   <aside class="sidebar">
     <div class="brand" id="brandHomeBtn" style="cursor:pointer;" title="Ir al Dashboard"><div class="brand-mark">✨</div><div class="brand-name">Crea<span>tly</span></div></div>
-    <div class="proto-badge">🔥 Conectado a Firebase</div>
-    <div class="ws-toggle" id="wsToggle">
+    <div class="ws-toggle hidden" id="wsToggle">
       <button class="ws-btn active" data-ws="creador">👤 <span class="label">Creador</span></button>
       <button class="ws-btn" data-ws="agencia">🏢 <span class="label">Agencia</span></button>
     </div>
@@ -435,7 +446,7 @@
         <button class="user-signout" id="btnSignOut">Cerrar sesión</button>
       </div>
     </div>
-    <div class="sidebar-tip">Tus datos se guardan en la nube (Firebase), ligados a tu cuenta de Google. El workspace Creador y el de Agencia no comparten información entre sí.</div>
+    <div class="sidebar-tip">Tus datos se guardan en la nube, ligados a tu cuenta de Google.</div>
   </aside>
 
   <main class="main">
@@ -477,7 +488,7 @@
         <div class="form-field"><label>Fecha del deal</label><input type="date" id="cd_fechaDeal"></div>
         <div class="form-field full"><label>Plataformas de este deal</label><div class="chip-select" id="creatorPlatChips"></div></div>
         <div class="form-field full">
-          <label>Tipo de pago</label>
+          <label>Tipo de pago <span style="font-weight:400; color:var(--muted); font-size:11.5px;">(puedes elegir uno o los dos)</span></label>
           <div class="pago-type-toggle">
             <button type="button" class="pago-type-btn selected" id="cd_tipoPresupuesto">💰 Con presupuesto</button>
             <button type="button" class="pago-type-btn" id="cd_tipoIntercambio">🎁 Intercambio</button>
@@ -1193,14 +1204,16 @@ const DEAL_QUICK_FILTERS = {
   entregas7: { label:'⏰ Entregas en 7 días', test(dl){ return (dl.entregables||[]).some(e=> e.estado!=='entregado' && daysUntil(e.fecha)!==null && daysUntil(e.fecha)>=0 && daysUntil(e.fecha)<=7); } },
   cobrado: { label:'✅ Cobrado', test(dl){ return dl.tipoPago!=='intercambio' && dl.estadoPago==='pagado'; } },
   recurrente: { label:'🔁 Recurrentes', test(dl){ return !!dl.esRecurrente; } },
-  intercambio: { label:'🎁 Intercambios', test(dl){ return dl.tipoPago==='intercambio'; } },
+  intercambio: { label:'🎁 Intercambios', test(dl){ return dealHasIntercambio(dl); } },
 };
 let creatorSelectedPlats = [];
 let agencySelectedPlats = [];
 let profileSelectedPlats = [];
 let profileUsernamesDraft = {};
 let checklistStore = {};
-let creatorTipoPagoSelected = 'presupuesto';
+let creatorPagoPresupuesto = true;
+let creatorPagoIntercambio = false;
+function dealHasIntercambio(dl){ return dl.tipoPago==='intercambio' || dl.tipoPago==='ambos'; }
 let financeDateFrom = '';
 let financeDateTo = '';
 let financeSubTab = 'general';
@@ -2347,7 +2360,7 @@ function renderCreatorDashboard(){
   const deals = creatorDealsFor(viewingCreatorId);
   const entregables = flattenCreatorEntregables(deals);
   const cash = deals.filter(dl=>dl.tipoPago!=='intercambio');
-  const barter = deals.filter(dl=>dl.tipoPago==='intercambio');
+  const barter = deals.filter(dl=>dealHasIntercambio(dl));
   const activos = deals.filter(dl=> (dl.entregables||[]).some(e=>e.estado!=='entregado') || dl.esRecurrente);
   const porCobrar = cash.reduce((s,dl)=> s + (dl.estadoPago!=='pagado' ? dl.montoTotal*(dl.estadoPago==='parcial'?0.5:1) : 0), 0);
   const ganado = cash.reduce((s,dl)=> s + (dl.estadoPago==='pagado' ? dl.montoTotal : 0), 0);
@@ -2373,7 +2386,7 @@ function renderCreatorDashboard(){
     <div class="dash-grid">
       <div class="panel"><h3>📅 Próximas entregas</h3>
         ${upcoming.length ? upcoming.map(e=>{ const b=dueBadge(e.fecha,e.estado==='entregado'); const cp=checklistProgress(e); const uc=urgencyColor(e.fecha,e.estado==='entregado');
-          return `<div class="up-row" data-action="edit-creator-deal" data-id="${e.dealId}"${uc?` style="border-left-color:${uc.border}; background:${uc.bg};"`:''}>${avatarHTML(e.marca,'sm')}<div class="up-info"><div class="up-title">${e.titulo}${e.tipoPago==='intercambio'?' 🎁':''}</div><div class="up-sub">${e.marca} · ${fmtDate(e.fecha)}${cp.total?` · ☑ ${cp.done}/${cp.total}`:''}</div></div><span class="pill ${b.cls}">${b.text}</span></div>`;
+          return `<div class="up-row" data-action="edit-creator-deal" data-id="${e.dealId}"${uc?` style="border-left-color:${uc.border}; background:${uc.bg};"`:''}>${avatarHTML(e.marca,'sm')}<div class="up-info"><div class="up-title">${e.titulo}${dealHasIntercambio(e)?' 🎁':''}</div><div class="up-sub">${e.marca} · ${fmtDate(e.fecha)}${cp.total?` · ☑ ${cp.done}/${cp.total}`:''}</div></div><span class="pill ${b.cls}">${b.text}</span></div>`;
         }).join('') : `<div class="empty-state"><div class="big">🎉</div>Sin entregas pendientes.</div>`}
       </div>
       <div class="panel"><h3>💰 Ingresos por marca (efectivo)</h3>
@@ -2394,14 +2407,20 @@ function renderCreatorBoard(){
       <div class="board-desc">🗂️ Aquí ves cada entregable de tus deals organizado por su avance — arrastra una tarjeta de una columna a otra para actualizar su estado.</div>
       <button type="button" class="btn-plain board-manage-btn" id="btnManageEstados">⚙️ Administrar etapas</button>
     </div>
-    <div class="board board-scroll">
-    ${getEstadosAll().map(col=>{
-      const items = entregables.filter(e=>e.estado===col.key);
-      return `<div class="board-col" data-status="${col.key}"><div class="board-col-head"><span class="dot" style="background:${col.color}"></span>${col.label}<span class="count-badge">${items.length}</span></div>
-      ${items.length ? items.map(e=>creatorEntregableCardHTML(e)).join('') : `<div class="empty-col">Sin entregables aquí</div>`}</div>`;
-    }).join('')}
-  </div>`;
+    <div class="board-scroll-wrap" id="tableroScrollWrap">
+      <div class="scroll-hint-pill">↔️ Desliza para ver más etapas</div>
+      <div class="board board-scroll" id="tableroBoardScroll">
+      ${getEstadosAll().map(col=>{
+        const items = entregables.filter(e=>e.estado===col.key);
+        return `<div class="board-col" data-status="${col.key}"><div class="board-col-head"><span class="dot" style="background:${col.color}"></span>${col.label}<span class="count-badge">${items.length}</span></div>
+        ${items.length ? items.map(e=>creatorEntregableCardHTML(e)).join('') : `<div class="empty-col">Sin entregables aquí</div>`}</div>`;
+      }).join('')}
+      </div>
+      <div class="scroll-edge-fade"></div>
+      <div class="scroll-nudge-arrow">➜</div>
+    </div>`;
   attachCreatorEntregableDrag();
+  setupBoardScrollHint('tableroBoardScroll');
   document.getElementById('btnManageEstados').addEventListener('click', ()=> openEtapasModal({
     title: '⚙️ Administrar etapas del Tablero',
     customKey: 'creatorEstadosCustom',
@@ -2413,10 +2432,23 @@ function renderCreatorBoard(){
     rerender: renderCreatorBoard,
   }));
 }
+function setupBoardScrollHint(scrollElId){
+  const el = document.getElementById(scrollElId);
+  if(!el) return;
+  const wrap = el.closest('.board-scroll-wrap');
+  if(!wrap) return;
+  const update = ()=>{
+    const hasOverflow = el.scrollWidth > el.clientWidth + 4;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    wrap.classList.toggle('has-more', hasOverflow && !atEnd);
+  };
+  update();
+  el.addEventListener('scroll', update);
+}
 function creatorEntregableCardHTML(e){
   const db = dueBadge(e.fecha, e.estado==='entregado'); const cp = checklistProgress(e);
   return `<div class="card-proj" draggable="true" data-eid="${e.id}" data-dealid="${e.dealId}" data-action="edit-creator-deal" data-id="${e.dealId}">
-    <div class="card-top">${avatarHTML(e.marca,'sm')}<div class="names"><div class="marca">${e.marca}${e.tipoPago==='intercambio'?' 🎁':''}</div><div class="tipo">${platChipsHTML(e.plataformas)}</div></div></div>
+    <div class="card-top">${avatarHTML(e.marca,'sm')}<div class="names"><div class="marca">${e.marca}${dealHasIntercambio(e)?' 🎁':''}</div><div class="tipo">${platChipsHTML(e.plataformas)}</div></div></div>
     <div class="card-title">${e.titulo}</div>
     <div class="card-bottom"><span class="pill ${db.cls}">${db.text}</span></div>
     ${cp.total ? `<div class="mini-progress">☑ ${cp.done}/${cp.total} pasos<div class="mini-progress-bar"><div class="mini-progress-fill" style="width:${(cp.done/cp.total*100).toFixed(0)}%"></div></div></div>` : ''}
@@ -2458,20 +2490,26 @@ function renderCreatorPropuestas(){
     <span style="font-size:20px;">💰</span><span style="font-size:13.5px;">Tienes <b style="font-family:'Baloo 2'; font-size:15px;">${fmtMoney(totalActivo,'MXN')}</b> en propuestas activas</span>
   </div>` : '';
 
-  const addBtnHTML = `<button class="btn-plain" id="btnAddPropuesta" style="margin-bottom:14px;">＋ Nueva propuesta</button>`;
-
   let bodyHTML;
   if(propuestasView==='activas'){
     bodyHTML = `<div class="board-toolbar">
       <div class="board-desc">📨 Aquí ves cada propuesta enviada organizada por su avance — arrastra una tarjeta de una columna a otra para actualizar su etapa. Al marcarla como ganada, se envía automáticamente a Deals.</div>
-      <button type="button" class="btn-plain board-manage-btn" id="btnManagePropEtapas">⚙️ Administrar etapas</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; flex-shrink:0;">
+        <button class="btn-plain" id="btnAddPropuesta">＋ Nueva propuesta</button>
+        <button type="button" class="btn-plain board-manage-btn" id="btnManagePropEtapas">⚙️ Administrar etapas</button>
+      </div>
     </div>
-    <div class="board board-scroll">
-      ${getPropuestaEtapasAll().map(col=>{
-        const items = activas.filter(p=>p.etapa===col.key).slice().sort((a,b)=>(a.fechaContacto||'9999').localeCompare(b.fechaContacto||'9999'));
-        return `<div class="board-col" data-etapa="${col.key}"><div class="board-col-head"><span class="dot" style="background:${col.color}"></span>${col.label}<span class="count-badge">${items.length}</span></div>
-        ${items.length ? items.map(p=>propuestaCardHTML(p)).join('') : `<div class="empty-col">Nada aquí</div>`}</div>`;
-      }).join('')}
+    <div class="board-scroll-wrap" id="propuestasScrollWrap">
+      <div class="scroll-hint-pill">↔️ Desliza para ver más etapas</div>
+      <div class="board board-scroll" id="propuestasBoardScroll">
+        ${getPropuestaEtapasAll().map(col=>{
+          const items = activas.filter(p=>p.etapa===col.key).slice().sort((a,b)=>(a.fechaContacto||'9999').localeCompare(b.fechaContacto||'9999'));
+          return `<div class="board-col" data-etapa="${col.key}"><div class="board-col-head"><span class="dot" style="background:${col.color}"></span>${col.label}<span class="count-badge">${items.length}</span></div>
+          ${items.length ? items.map(p=>propuestaCardHTML(p)).join('') : `<div class="empty-col">Nada aquí</div>`}</div>`;
+        }).join('')}
+      </div>
+      <div class="scroll-edge-fade"></div>
+      <div class="scroll-nudge-arrow">➜</div>
     </div>`;
   } else {
     bodyHTML = historial.length ? `<div class="panel"><table><thead><tr><th>Marca</th><th>Campaña</th><th>Resultado</th><th>Fecha</th><th></th></tr></thead><tbody>
@@ -2487,11 +2525,12 @@ function renderCreatorPropuestas(){
     </tbody></table></div>` : `<div class="empty-state"><div class="big">🗄️</div>Aún no hay propuestas ganadas o perdidas.</div>`;
   }
 
-  document.getElementById('view-root').innerHTML = toggleHTML + metricHTML + (propuestasView==='activas' ? addBtnHTML : '') + bodyHTML;
+  document.getElementById('view-root').innerHTML = toggleHTML + metricHTML + bodyHTML;
   document.querySelectorAll('#propuestasViewToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ propuestasView = btn.dataset.view; renderCreatorPropuestas(); }));
   if(propuestasView==='activas'){
     document.getElementById('btnAddPropuesta').addEventListener('click', ()=>openPropuestaModal(null));
     attachPropuestaDrag();
+    setupBoardScrollHint('propuestasBoardScroll');
     document.getElementById('btnManagePropEtapas').addEventListener('click', ()=> openEtapasModal({
       title: '⚙️ Administrar etapas de Propuestas',
       customKey: 'propuestaEtapasCustom',
@@ -2634,11 +2673,14 @@ function renderCreatorDeals(){
 
   dealsSelectedForBulk = new Set([...dealsSelectedForBulk].filter(id=> deals.some(dl=>dl.id===id)));
 
-  const toolbarHTML = `<div class="toolbar-row">
-    <button class="btn-primary" id="btnAiImport">🪄 Importar con IA</button>
-    <button class="btn-primary" id="btnTableImport">📊 Importar tabla (Excel/CSV)</button>
-    <button class="btn-plain" id="btnDealsExport">⬇️ Exportar mis deals</button>
-    ${dealsSelectedForBulk.size>0 ? `<button class="btn-plain" id="btnBulkDeleteDeals" style="color:#c0392b;">🗑️ Eliminar seleccionados (${dealsSelectedForBulk.size})</button>` : ''}
+  const toolbarHTML = `<div class="toolbar-row-split">
+    <div class="toolbar-row">
+      <button class="btn-primary" id="btnAiImport">🪄 Importar con IA</button>
+      <button class="btn-primary" id="btnTableImport">📊 Importar tabla (Excel/CSV)</button>
+      <button class="btn-plain" id="btnDealsExport">⬇️ Exportar mis deals</button>
+      ${dealsSelectedForBulk.size>0 ? `<button class="btn-plain" id="btnBulkDeleteDeals" style="color:#c0392b;">🗑️ Eliminar seleccionados (${dealsSelectedForBulk.size})</button>` : ''}
+    </div>
+    <button type="button" class="btn-cta" id="btnDealsNewCta">＋ Nuevo Deal</button>
   </div>`;
 
   const quickChipHTML = activeQuick ? `<div class="toolbar-row" style="margin-top:-6px;">
@@ -2658,6 +2700,7 @@ function renderCreatorDeals(){
   `;
   if(activeQuick) document.getElementById('btnClearQuickFilter').addEventListener('click', ()=>{ filters.quick = null; renderCreatorDeals(); });
   document.getElementById('btnDealsExport').addEventListener('click', exportDeals);
+  document.getElementById('btnDealsNewCta').addEventListener('click', ()=>openCreatorDealModal(null));
   document.getElementById('btnAiImport').addEventListener('click', openAiImportModal);
   document.getElementById('btnTableImport').addEventListener('click', openTableImportModal);
   const nudgeBtn = document.getElementById('btnAiImportNudge'); if(nudgeBtn) nudgeBtn.addEventListener('click', openAiImportModal);
@@ -2684,7 +2727,14 @@ function renderCreatorDeals(){
     fixed: [
       { key:'marca', label:'Marca', view(dl){ const b=getBrand(dl.marcaId); return `<span style="font-weight:700;">${b?b.nombre:'(sin marca)'}</span>`; }, sortValue(dl){ const b=getBrand(dl.marcaId); return (b?b.nombre:'').toLowerCase(); } },
       { key:'plataformas', label:'Plataformas', view(dl){ return platChipsHTML(dl.plataformas); } },
-      { key:'monto', label:'Monto', view(dl){ const v = dl.tipoPago==='intercambio' ? dl.intercambioValorEstimado : dl.montoTotal; return dl.tipoPago==='intercambio' ? `🎁 ${fmtMoney(v,dl.moneda)}` : fmtMoney(v,dl.moneda); }, sortValue(dl){ return Number(dl.tipoPago==='intercambio' ? dl.intercambioValorEstimado : dl.montoTotal)||0; } },
+      { key:'monto', label:'Monto', view(dl){
+          if(dl.tipoPago==='ambos') return `${fmtMoney(dl.montoTotal,dl.moneda)} <span style="color:var(--muted);">+ 🎁 ${fmtMoney(dl.intercambioValorEstimado,dl.moneda)}</span>`;
+          if(dl.tipoPago==='intercambio') return `🎁 ${fmtMoney(dl.intercambioValorEstimado,dl.moneda)}`;
+          return fmtMoney(dl.montoTotal,dl.moneda);
+        }, sortValue(dl){
+          if(dl.tipoPago==='ambos') return (Number(dl.montoTotal)||0) + (Number(dl.intercambioValorEstimado)||0);
+          return Number(dl.tipoPago==='intercambio' ? dl.intercambioValorEstimado : dl.montoTotal)||0;
+        } },
       { key:'estadoPago', label:'Estado de pago', view(dl){ const pb=pagoBadge(dl.estadoPago); return `<span class="pill ${pb.cls}">${pb.text}</span>${isPagoVencido(dl)?' <span title="El pago acordado ya venció">⚠️</span>':''}`; }, sortValue(dl){ return dl.estadoPago||''; } },
       { key:'fechaDeal', label:'Fecha del deal', view(dl){ return fmtDate(dl.fechaDeal); }, sortValue(dl){ return dl.fechaDeal||''; } },
     ],
@@ -2704,8 +2754,11 @@ function renderCreatorContacts(){
     });
   }
 
-  const toolbarHTML = `<div class="toolbar-row">
-    <button class="btn-plain" id="btnContactsExport">⬇️ Exportar mis marcas</button>
+  const toolbarHTML = `<div class="toolbar-row-split">
+    <div class="toolbar-row">
+      <button class="btn-plain" id="btnContactsExport">⬇️ Exportar mis marcas</button>
+    </div>
+    <button type="button" class="btn-cta" id="btnContactsNewCta">＋ Nuevo Contacto</button>
   </div>`;
 
   const sectionToggleHTML = `<div class="view-toggle view-toggle-switch ${contactsSection==='marcas'?'switch-right':'switch-left'}" id="contactsSectionToggle">
@@ -2750,6 +2803,7 @@ function renderCreatorContacts(){
 
   document.querySelectorAll('#contactsSectionToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ contactsSection = btn.dataset.csec; renderCreatorContacts(); }));
   document.getElementById('btnContactsExport').addEventListener('click', exportContacts);
+  document.getElementById('btnContactsNewCta').addEventListener('click', ()=>openContactPersonaModal(null));
 
   if(contactsSection==='personas'){
     renderEditableGrid({
@@ -2782,7 +2836,7 @@ function renderCreatorFinance(){
   if(financeDateFrom) deals = deals.filter(dl => (dl.fechaDeal||'') >= financeDateFrom);
   if(financeDateTo) deals = deals.filter(dl => (dl.fechaDeal||'') <= financeDateTo);
   const cash = deals.filter(dl=>dl.tipoPago!=='intercambio');
-  const barter = deals.filter(dl=>dl.tipoPago==='intercambio');
+  const barter = deals.filter(dl=>dealHasIntercambio(dl));
 
   const filterBarHTML = `
     <div class="fin-filter-bar">
@@ -2853,7 +2907,7 @@ function renderCreatorFinance(){
           <th class="sortable-th" data-sortgroup="finCash" data-sortkey="fecha">Fecha del deal${gridSortArrow('finCash','fecha')}</th>
         </tr></thead><tbody>
           ${cashSorted.map(dl=>{ const b=getBrand(dl.marcaId); const pb=pagoBadge(dl.estadoPago);
-            return `<tr><td style="font-weight:700;">${b?b.nombre:'(sin marca)'}</td><td>${fmtMoney(dl.montoTotal,dl.moneda)}</td><td><span class="pill ${pb.cls}">${pb.text}</span></td><td>${dl.esRecurrente?'🔁 Retainer':'Único'}</td><td>${fmtDate(dl.fechaDeal)}</td></tr>`;
+            return `<tr><td style="font-weight:700;">${b?b.nombre:'(sin marca)'}</td><td>${fmtMoney(dl.montoTotal,dl.moneda)}${dl.tipoPago==='ambos'?' <span title="También incluye un intercambio">🎁</span>':''}</td><td><span class="pill ${pb.cls}">${pb.text}</span></td><td>${dl.esRecurrente?'🔁 Retainer':'Único'}</td><td>${fmtDate(dl.fechaDeal)}</td></tr>`;
           }).join('')}
         </tbody></table>` : `<div class="empty-state">Sin datos en este rango.</div>`}
       </div>
@@ -3567,16 +3621,30 @@ document.getElementById('btnAddCreatorEntregable').addEventListener('click', ()=
 document.getElementById('cd_contratoFile').addEventListener('change', ev=>{ const f=ev.target.files[0]; document.getElementById('cd_contratoNombre').value = f?f.name:''; });
 document.getElementById('cd_recurrente').addEventListener('change', ev=>{ document.getElementById('cd_recurFields').classList.toggle('hidden', !ev.target.checked); });
 
-function setCreatorTipoPago(tipo){
-  creatorTipoPagoSelected = tipo;
-  document.getElementById('cd_tipoPresupuesto').classList.toggle('selected', tipo==='presupuesto');
-  document.getElementById('cd_tipoIntercambio').classList.toggle('selected', tipo==='intercambio');
-  document.getElementById('cd_presupuestoBlock').style.display = tipo==='presupuesto' ? 'contents' : 'none';
-  document.getElementById('cd_intercambioBlock').style.display = tipo==='intercambio' ? 'contents' : 'none';
-  document.getElementById('cd_estadoPagoLabel').textContent = tipo==='presupuesto' ? 'Estado de pago' : '¿Ya recibiste el intercambio?';
+function refreshCreatorTipoPagoUI(){
+  document.getElementById('cd_tipoPresupuesto').classList.toggle('selected', creatorPagoPresupuesto);
+  document.getElementById('cd_tipoIntercambio').classList.toggle('selected', creatorPagoIntercambio);
+  document.getElementById('cd_presupuestoBlock').style.display = creatorPagoPresupuesto ? 'contents' : 'none';
+  document.getElementById('cd_intercambioBlock').style.display = creatorPagoIntercambio ? 'contents' : 'none';
+  document.getElementById('cd_estadoPagoLabel').textContent = (creatorPagoPresupuesto && creatorPagoIntercambio) ? 'Estado de pago y del intercambio' : (creatorPagoIntercambio ? '¿Ya recibiste el intercambio?' : 'Estado de pago');
 }
-document.getElementById('cd_tipoPresupuesto').addEventListener('click', ()=>setCreatorTipoPago('presupuesto'));
-document.getElementById('cd_tipoIntercambio').addEventListener('click', ()=>setCreatorTipoPago('intercambio'));
+function toggleCreatorTipoPago(kind){
+  if(kind==='presupuesto'){
+    if(creatorPagoPresupuesto && !creatorPagoIntercambio) return; // no dejar ambos sin seleccionar
+    creatorPagoPresupuesto = !creatorPagoPresupuesto;
+  } else {
+    if(creatorPagoIntercambio && !creatorPagoPresupuesto) return;
+    creatorPagoIntercambio = !creatorPagoIntercambio;
+  }
+  refreshCreatorTipoPagoUI();
+}
+function setCreatorTipoPagoFromValue(tipo){
+  creatorPagoPresupuesto = tipo!=='intercambio';
+  creatorPagoIntercambio = (tipo==='intercambio' || tipo==='ambos');
+  refreshCreatorTipoPagoUI();
+}
+document.getElementById('cd_tipoPresupuesto').addEventListener('click', ()=>toggleCreatorTipoPago('presupuesto'));
+document.getElementById('cd_tipoIntercambio').addEventListener('click', ()=>toggleCreatorTipoPago('intercambio'));
 document.getElementById('btnAddDealCustomColumn').addEventListener('click', ()=>{
   openColumnModal({
     defsKey: 'creatorDealColumnDefs',
@@ -3612,7 +3680,7 @@ function openCreatorDealModal(deal){
   document.getElementById('cd_fechaDeal').value = deal ? (deal.fechaDeal||todayISO()) : todayISO();
   document.getElementById('cd_moneda').value = deal ? deal.moneda : ((DB.preferencias&&DB.preferencias.monedaDefault)||'MXN');
   refreshContactoPersonaSelect(deal ? (deal.contactoPersonaId||'') : '');
-  setCreatorTipoPago(deal ? (deal.tipoPago||'presupuesto') : 'presupuesto');
+  setCreatorTipoPagoFromValue(deal ? (deal.tipoPago||'presupuesto') : 'presupuesto');
   document.getElementById('cd_monto').value = deal ? deal.montoTotal : '';
   document.getElementById('cd_intercambioDescripcion').value = deal ? (deal.intercambioDescripcion||'') : '';
   document.getElementById('cd_intercambioValorEstimado').value = deal ? (deal.intercambioValorEstimado||'') : '';
@@ -3708,7 +3776,7 @@ creatorDealForm.addEventListener('submit', e=>{
   });
 
   const esRecurrente = document.getElementById('cd_recurrente').checked;
-  const tipoPago = creatorTipoPagoSelected;
+  const tipoPago = (creatorPagoPresupuesto && creatorPagoIntercambio) ? 'ambos' : (creatorPagoIntercambio ? 'intercambio' : 'presupuesto');
   const data = {
     creadorId: viewingCreatorId,
     marcaId: brand.id,
@@ -3716,11 +3784,11 @@ creatorDealForm.addEventListener('submit', e=>{
     plataformas: creatorSelectedPlats.slice(),
     fechaDeal: document.getElementById('cd_fechaDeal').value || todayISO(),
     tipoPago,
-    montoTotal: tipoPago==='presupuesto' ? (Number(document.getElementById('cd_monto').value) || 0) : 0,
+    montoTotal: creatorPagoPresupuesto ? (Number(document.getElementById('cd_monto').value) || 0) : 0,
     moneda: document.getElementById('cd_moneda').value,
     estadoPago: document.getElementById('cd_estadoPago').value,
-    intercambioDescripcion: tipoPago==='intercambio' ? document.getElementById('cd_intercambioDescripcion').value.trim() : '',
-    intercambioValorEstimado: tipoPago==='intercambio' ? (Number(document.getElementById('cd_intercambioValorEstimado').value) || 0) : 0,
+    intercambioDescripcion: creatorPagoIntercambio ? document.getElementById('cd_intercambioDescripcion').value.trim() : '',
+    intercambioValorEstimado: creatorPagoIntercambio ? (Number(document.getElementById('cd_intercambioValorEstimado').value) || 0) : 0,
     esRecurrente,
     frecuencia: esRecurrente ? document.getElementById('cd_frecuencia').value : '',
     proximoCobro: esRecurrente ? document.getElementById('cd_proximoCobro').value : '',
