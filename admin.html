@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Creatly · Backoffice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ig-purple:#8a3ab9; --ig-pink:#e0507b; --ig-orange:#f7a24a; --ink:#2b2130; --muted:#8a7d95; --border:#ece5f3; --card:#fff; --bg:#faf8fc; --shadow:0 2px 10px rgba(120,80,160,.08); --radius:16px; }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh;}
+  .wrap{max-width:1100px; margin:0 auto; padding:32px 24px 60px;}
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Baloo 2'; font-weight:800; font-size:20px; margin-bottom:4px;}
+  .brand .mark{width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg, var(--ig-purple), var(--ig-pink) 55%, var(--ig-orange) 100%); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px;}
+  .sub{color:var(--muted); font-size:13.5px; margin-bottom:28px;}
+  .panel{background:var(--card); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); padding:24px;}
+  .center-panel{max-width:420px; margin:60px auto; text-align:center;}
+  .btn{border:none; border-radius:12px; padding:11px 20px; font-family:'Baloo 2'; font-weight:700; font-size:13.5px; cursor:pointer; transition:.12s;}
+  .btn-primary{background:linear-gradient(135deg, var(--ig-purple), var(--ig-pink) 55%, var(--ig-orange) 100%); color:#fff;}
+  .btn-primary:hover{filter:brightness(1.05);}
+  .btn-plain{background:#f3f0fa; color:var(--ink);}
+  .btn-plain:hover{background:#ece2fb;}
+  .hidden{display:none !important;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;}
+  .user-chip{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted);}
+  .user-chip img{width:30px; height:30px; border-radius:50%;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{text-align:left; padding:10px 12px; color:var(--muted); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.03em; border-bottom:1.5px solid var(--border); white-space:nowrap;}
+  td{padding:11px 12px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .stat-row{display:flex; gap:14px; margin-bottom:20px; flex-wrap:wrap;}
+  .stat-tile{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 18px; box-shadow:var(--shadow); min-width:140px;}
+  .stat-tile .n{font-family:'Baloo 2'; font-weight:800; font-size:22px;}
+  .stat-tile .l{color:var(--muted); font-size:11.5px; margin-top:2px;}
+  .msg{padding:16px; border-radius:12px; font-size:13.5px; margin-bottom:16px;}
+  .msg-error{background:#fde2e7; color:#a8324a;}
+  .msg-info{background:#eef2ff; color:#3949ab;}
+  .grid-scroll{overflow-x:auto;}
+  .uid{font-size:11px; color:var(--muted); font-family:monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><div class="mark">✨</div>Creatly <span style="color:var(--muted); font-weight:600;">· Backoffice</span></div>
+  <div class="sub">Panel interno — no es parte de la app que usan tus usuarios.</div>
+
+  <div id="loadingState" class="center-panel"><div class="panel">Cargando…</div></div>
+
+  <div id="signedOutState" class="center-panel hidden">
+    <div class="panel">
+      <p style="margin-bottom:18px;">Inicia sesión con la cuenta de Google autorizada como administrador.</p>
+      <button class="btn btn-primary" id="btnSignIn">Iniciar sesión con Google</button>
+    </div>
+  </div>
+
+  <div id="appState" class="hidden">
+    <div class="topbar">
+      <div class="user-chip"><img id="userPhoto" src="" alt=""><span id="userName"></span></div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-plain" id="btnRefresh">↻ Actualizar</button>
+        <button class="btn btn-plain" id="btnSignOut">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <div id="messageArea"></div>
+
+    <div id="statsArea" class="stat-row hidden"></div>
+
+    <div class="panel">
+      <div class="grid-scroll">
+        <table id="usersTable">
+          <thead>
+            <tr><th>Nombre</th><th>Email</th><th>Deals</th><th>Marcas</th><th>Propuestas</th><th>Talento</th><th>Registrado</th><th>Última actividad</th><th>UID</th></tr>
+          </thead>
+          <tbody id="usersTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXNroGX2qq3OjOXFZ1x3AVxlxb6maom3g",
+  authDomain: "creately-965f0.firebaseapp.com",
+  projectId: "creately-965f0",
+  storageBucket: "creately-965f0.firebasestorage.app",
+  messagingSenderId: "58955749347",
+  appId: "1:58955749347:web:c5099b1111e9bad288b2d6",
+  measurementId: "G-1JTXDJQRFG"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const googleProvider = new GoogleAuthProvider();
+
+const $ = (id) => document.getElementById(id);
+function show(id){ $(id).classList.remove('hidden'); }
+function hide(id){ $(id).classList.add('hidden'); }
+
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('es-MX', {day:'numeric', month:'short', year:'numeric'}) + ' · ' + d.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+}
+
+function renderMessage(text, type){
+  $('messageArea').innerHTML = text ? `<div class="msg msg-${type||'error'}">${text}</div>` : '';
+}
+
+async function loadUsers(){
+  renderMessage('');
+  $('usersTbody').innerHTML = `<tr><td colspan="9" style="color:var(--muted); text-align:center; padding:24px;">Cargando usuarios…</td></tr>`;
+  hide('statsArea');
+  try{
+    const idToken = await auth.currentUser.getIdToken();
+    const res = await fetch('/api/admin-users', {
+      method: 'POST',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ idToken }),
+    });
+    const data = await res.json();
+    if(!res.ok){
+      renderMessage(data.error || 'Ocurrió un error al cargar los datos.', 'error');
+      $('usersTbody').innerHTML = '';
+      return;
+    }
+    const users = data.users || [];
+    const totalDeals = users.reduce((s,u)=>s+(u.deals||0),0);
+    const totalMarcas = users.reduce((s,u)=>s+(u.marcas||0),0);
+    $('statsArea').innerHTML = `
+      <div class="stat-tile"><div class="n">${users.length}</div><div class="l">Usuarios registrados</div></div>
+      <div class="stat-tile"><div class="n">${totalDeals}</div><div class="l">Deals totales</div></div>
+      <div class="stat-tile"><div class="n">${totalMarcas}</div><div class="l">Marcas totales</div></div>
+    `;
+    show('statsArea');
+    if(!users.length){
+      $('usersTbody').innerHTML = `<tr><td colspan="9" style="color:var(--muted); text-align:center; padding:24px;">Todavía no hay usuarios registrados.</td></tr>`;
+      return;
+    }
+    $('usersTbody').innerHTML = users.map(u => `
+      <tr>
+        <td style="font-weight:700;">${u.nombre || '(sin nombre)'}</td>
+        <td>${u.email || '—'}</td>
+        <td>${u.deals}</td>
+        <td>${u.marcas}</td>
+        <td>${u.propuestas}</td>
+        <td>${u.talento}</td>
+        <td>${fmtDate(u.creadoEn)}</td>
+        <td>${fmtDate(u.actualizadoEn)}</td>
+        <td class="uid">${u.uid}</td>
+      </tr>`).join('');
+  } catch(err){
+    console.error(err);
+    renderMessage('No se pudo conectar con el servidor. Intenta de nuevo.', 'error');
+    $('usersTbody').innerHTML = '';
+  }
+}
+
+$('btnSignIn').addEventListener('click', async () => {
+  try{ await signInWithPopup(auth, googleProvider); }
+  catch(err){ console.error(err); renderMessage('No se pudo iniciar sesión.', 'error'); }
+});
+$('btnSignOut').addEventListener('click', () => signOut(auth));
+$('btnRefresh').addEventListener('click', loadUsers);
+
+onAuthStateChanged(auth, (user) => {
+  hide('loadingState');
+  if(user){
+    hide('signedOutState'); show('appState');
+    $('userPhoto').src = user.photoURL || '';
+    $('userName').textContent = user.displayName || user.email || 'Cuenta';
+    loadUsers();
+  } else {
+    hide('appState'); show('signedOutState');
+  }
+});
+</script>
+</body>
+</html>

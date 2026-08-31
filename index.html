@@ -884,8 +884,8 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { initializeAuth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { initializeAuth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -1175,6 +1175,8 @@ let workspace = 'creador';
 let viewingCreatorId = null;
 let viewingAgencyId = null;
 let currentTab = 'dashboard';
+let appliedInitialTab = false;
+let configSubTab = 'perfil';
 let editingCreatorDealId = null;
 let editingAgencyDealId = null;
 let editingBrandId = null;
@@ -1263,6 +1265,9 @@ function ensureColumnDefs(){
   DB.propuestaEtapasCustom = DB.propuestaEtapasCustom || [];
   DB.creatorEstadosOrder = DB.creatorEstadosOrder || [];
   DB.propuestaEtapasOrder = DB.propuestaEtapasOrder || [];
+  DB.preferencias = DB.preferencias || {};
+  DB.preferencias.monedaDefault = DB.preferencias.monedaDefault || 'MXN';
+  DB.preferencias.tabInicio = DB.preferencias.tabInicio || 'dashboard';
 }
 
 /* ============================================================ AUTH (Firebase) ============================================================ */
@@ -1287,16 +1292,22 @@ async function initUserData(user){
       propuestaEtapasCustom: [],
       creatorEstadosOrder: [],
       propuestaEtapasOrder: [],
+      preferencias: { monedaDefault: 'MXN', tabInicio: 'dashboard' },
     };
     await setDoc(ref, starter);
   }
   if(unsubscribeSnapshot) unsubscribeSnapshot();
+  appliedInitialTab = false;
   unsubscribeSnapshot = onSnapshot(ref, (docSnap)=>{
     if(!docSnap.exists()) return;
     DB = docSnap.data();
     ensureColumnDefs();
     if(!viewingCreatorId || !getCreatorProfile(viewingCreatorId)) viewingCreatorId = (DB.creatorProfiles[0]||{}).id || null;
     if(!viewingAgencyId || !getAgency(viewingAgencyId)) viewingAgencyId = (DB.agencies[0]||{}).id || null;
+    if(!appliedInitialTab){
+      appliedInitialTab = true;
+      currentTab = DB.preferencias.tabInicio || 'dashboard';
+    }
     renderPersonaSelect(); renderContextBanner(); renderCurrent();
   }, err=>{
     console.error(err);
@@ -1739,6 +1750,16 @@ function downloadCSV(filename, csvString){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function downloadJSON(filename, obj){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function exportAllData(){
+  downloadJSON(`creatly_backup_${todayISO()}.json`, DB);
+  toast('Tus datos se descargaron ⬇️');
 }
 function downloadContactsTemplate(){
   const example = {Marca:'Glow Cosmetics', Contacto:'Wendy Paredes', Email:'wendy@marca.com', Instagram:'@glowcosmetics', Telefono:'55 1234 5678', AgenciaRepresentante:'', InstagramAgencia:'', Notas:'Fila de ejemplo, bórrala antes de importar'};
@@ -2246,6 +2267,7 @@ const CREATOR_TABS = [
   {key:'finance', icon:'💰', label:'Finanzas'},
   {key:'aprende', icon:'📚', label:'Aprende'},
   {key:'plan', icon:'⭐', label:'Mi plan'},
+  {key:'config', icon:'⚙️', label:'Configuración'},
 ];
 const AGENCY_TABS = [
   {key:'dashboard', icon:'🏠', label:'Dashboard'},
@@ -2256,6 +2278,7 @@ const AGENCY_TABS = [
   {key:'finance', icon:'💰', label:'Finanzas'},
   {key:'aprende', icon:'📚', label:'Aprende'},
   {key:'plan', icon:'⭐', label:'Plan de agencia'},
+  {key:'config', icon:'⚙️', label:'Configuración'},
 ];
 const CREATOR_TAB_META = {
   dashboard:{title:'Dashboard', sub:'Tu resumen de un vistazo.'},
@@ -2267,6 +2290,7 @@ const CREATOR_TAB_META = {
   finance:{title:'Finanzas', sub:'Cuánto has cobrado y cuánto te deben.'},
   aprende:{title:'Aprende', sub:'Videos cortos y guías para sacarle el máximo provecho a Creatly.'},
   plan:{title:'Mi plan', sub:'Tu suscripción en Creatly.'},
+  config:{title:'Configuración', sub:'Tu perfil, preferencias y datos de tu cuenta.'},
 };
 const AGENCY_TAB_META = {
   dashboard:{title:'Dashboard', sub:'Tu resumen de un vistazo.'},
@@ -2277,6 +2301,7 @@ const AGENCY_TAB_META = {
   finance:{title:'Finanzas', sub:'Comisión ganada y lo que le corresponde a cada talento.'},
   aprende:{title:'Aprende', sub:'Videos cortos y guías para sacarle el máximo provecho a Creatly.'},
   plan:{title:'Plan de agencia', sub:'Tu suscripción en Creatly.'},
+  config:{title:'Configuración', sub:'Tu perfil, preferencias y datos de tu cuenta.'},
 };
 
 function renderNav(){
@@ -3051,6 +3076,150 @@ function renderAgencyPlan(){
   `;
 }
 
+/* ============================================================ CONFIGURACIÓN / MI PERFIL ============================================================ */
+function renderConfiguracion(){
+  const subTabs = [
+    {key:'perfil', label:'👤 Perfil'},
+    {key:'preferencias', label:'⚙️ Preferencias'},
+    {key:'datos', label:'📦 Datos'},
+    {key:'cuenta', label:'🔒 Cuenta'},
+  ];
+  const toggleHTML = `<div class="view-toggle" id="configSubToggle">
+    ${subTabs.map(t=>`<button type="button" class="view-toggle-btn ${configSubTab===t.key?'active':''}" data-csub="${t.key}">${t.label}</button>`).join('')}
+  </div>`;
+
+  let bodyHTML = '';
+  if(configSubTab==='perfil') bodyHTML = renderConfigPerfilHTML();
+  else if(configSubTab==='preferencias') bodyHTML = renderConfigPreferenciasHTML();
+  else if(configSubTab==='datos') bodyHTML = renderConfigDatosHTML();
+  else if(configSubTab==='cuenta') bodyHTML = renderConfigCuentaHTML();
+
+  document.getElementById('view-root').innerHTML = toggleHTML + bodyHTML;
+  document.querySelectorAll('#configSubToggle .view-toggle-btn').forEach(btn=>btn.addEventListener('click', ()=>{ configSubTab = btn.dataset.csub; renderConfiguracion(); }));
+  attachConfigHandlers();
+}
+function renderConfigAccountCardHTML(){
+  const u = currentUser;
+  return `<div class="panel" style="padding:20px; margin-bottom:18px; display:flex; align-items:center; gap:16px;">
+    ${u && u.photoURL ? `<img src="${u.photoURL}" alt="" style="width:56px; height:56px; border-radius:50%; object-fit:cover; background:#f3f0fa;">` : avatarHTML(u?(u.displayName||u.email||'?'):'?','lg')}
+    <div style="min-width:0;">
+      <div style="font-weight:800; font-family:'Baloo 2'; font-size:16px;">${u?(u.displayName||'Sin nombre'):''}</div>
+      <div style="color:var(--muted); font-size:13px;">${u?u.email:''}</div>
+      <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">Iniciaste sesión con tu cuenta de Google — tu nombre y foto se administran ahí, no aquí.</div>
+    </div>
+  </div>`;
+}
+function renderConfigPerfilHTML(){
+  const accountCard = renderConfigAccountCardHTML();
+  if(workspace==='creador'){
+    const cardsHTML = DB.creatorProfiles.map(p=>`
+      <div class="panel" style="padding:16px 20px; margin-bottom:12px; display:flex; align-items:center; gap:14px;">
+        ${avatarHTML(p.nombre,'lg')}
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:800; font-family:'Baloo 2'; font-size:14.5px;">${p.nombre}</div>
+          <div style="color:var(--muted); font-size:12px; margin:2px 0 6px 0;">${p.nicho||'Sin nicho definido'}</div>
+          <div>${platChipsHTML(p.plataformas)}</div>
+        </div>
+        <button type="button" class="icon-btn" data-editcreatorprofile="${p.id}" title="Editar perfil">✏️</button>
+      </div>`).join('');
+    return accountCard + `<div class="modal-sub" style="margin:0 0 10px 0;">Tus perfiles de creador — puedes tener varios (por ejemplo, si manejas más de una marca personal) y cambiar entre ellos desde el menú lateral.</div>${cardsHTML}<button type="button" class="btn-plain" id="btnConfigAddProfile" style="margin-top:6px;">＋ Nuevo perfil</button>`;
+  }
+  const ag = getAgency(viewingAgencyId);
+  return accountCard + `<div class="panel" style="padding:18px 20px;">
+    <div class="modal-sub" style="margin:0 0 12px 0;">Nombre de tu agencia.</div>
+    <input type="text" id="configAgencyNombre" value="${(ag.nombre||'').replace(/"/g,'&quot;')}" style="width:100%; max-width:360px; border:1.5px solid var(--border); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:13.5px; color:var(--ink);">
+  </div>`;
+}
+function renderConfigPreferenciasHTML(){
+  const tabs = (workspace==='creador' ? CREATOR_TABS : AGENCY_TABS).filter(t=>t.key!=='config');
+  const pref = DB.preferencias || {};
+  return `<div class="panel" style="padding:20px; max-width:480px;">
+    <div class="form-field full" style="margin-bottom:16px;">
+      <label>Moneda por default para deals nuevos</label>
+      <select id="configMonedaDefault">
+        <option value="MXN" ${pref.monedaDefault==='MXN'?'selected':''}>MXN</option>
+        <option value="USD" ${pref.monedaDefault==='USD'?'selected':''}>USD</option>
+        <option value="EUR" ${pref.monedaDefault==='EUR'?'selected':''}>EUR</option>
+      </select>
+    </div>
+    <div class="form-field full">
+      <label>Pantalla con la que quieres empezar al iniciar sesión</label>
+      <select id="configTabInicio">${tabs.map(t=>`<option value="${t.key}" ${pref.tabInicio===t.key?'selected':''}>${t.icon} ${t.label}</option>`).join('')}</select>
+    </div>
+  </div>`;
+}
+function renderConfigDatosHTML(){
+  return `<div class="panel" style="padding:20px; max-width:560px;">
+    <div class="modal-sub" style="margin:0 0 14px 0;">Descarga una copia completa de todos tus datos en Creatly (deals, marcas, propuestas y todo lo demás) en un solo archivo, por si la quieres guardar aparte.</div>
+    <button type="button" class="btn-plain" id="btnExportAllData">⬇️ Exportar todos mis datos</button>
+  </div>`;
+}
+function renderConfigCuentaHTML(){
+  return `<div class="panel" style="padding:20px; max-width:560px; margin-bottom:14px;">
+    <div class="modal-sub" style="margin:0 0 14px 0;">Cierra tu sesión en este dispositivo.</div>
+    <button type="button" class="btn-plain" id="btnConfigSignOut">Cerrar sesión</button>
+  </div>
+  <div class="panel" style="padding:20px; max-width:560px; border-color:#fca5a5;">
+    <h3 style="color:#c0392b; margin-bottom:8px;">⚠️ Zona de peligro</h3>
+    <div class="modal-sub" style="margin:0 0 14px 0;">Elimina tu cuenta y todos tus datos de Creatly de forma permanente. Esta acción no se puede deshacer.</div>
+    <button type="button" class="btn-plain" id="btnConfigDeleteAccount" style="color:#c0392b; border-color:#fca5a5;">Eliminar mi cuenta</button>
+  </div>`;
+}
+function attachConfigHandlers(){
+  if(configSubTab==='perfil'){
+    if(workspace==='creador'){
+      document.querySelectorAll('[data-editcreatorprofile]').forEach(btn=>{
+        btn.addEventListener('click', ()=> openProfileModal(getCreatorProfile(btn.dataset.editcreatorprofile)));
+      });
+      const addBtn = document.getElementById('btnConfigAddProfile');
+      if(addBtn) addBtn.addEventListener('click', ()=>openProfileModal(null));
+    } else {
+      const input = document.getElementById('configAgencyNombre');
+      if(input) input.addEventListener('change', ()=>{
+        const ag = getAgency(viewingAgencyId);
+        ag.nombre = input.value.trim() || ag.nombre;
+        saveAll(); renderContextBanner(); toast('Nombre actualizado ✨');
+      });
+    }
+  } else if(configSubTab==='preferencias'){
+    const monedaSel = document.getElementById('configMonedaDefault');
+    if(monedaSel) monedaSel.addEventListener('change', ()=>{ DB.preferencias.monedaDefault = monedaSel.value; saveAll(); toast('Preferencia guardada ✨'); });
+    const tabSel = document.getElementById('configTabInicio');
+    if(tabSel) tabSel.addEventListener('change', ()=>{ DB.preferencias.tabInicio = tabSel.value; saveAll(); toast('Preferencia guardada ✨'); });
+  } else if(configSubTab==='datos'){
+    const btn = document.getElementById('btnExportAllData');
+    if(btn) btn.addEventListener('click', exportAllData);
+  } else if(configSubTab==='cuenta'){
+    const signOutBtn = document.getElementById('btnConfigSignOut');
+    if(signOutBtn) signOutBtn.addEventListener('click', ()=> signOut(auth));
+    const delBtn = document.getElementById('btnConfigDeleteAccount');
+    if(delBtn) delBtn.addEventListener('click', handleDeleteAccount);
+  }
+}
+async function handleDeleteAccount(){
+  if(!confirm('Esto va a eliminar tu cuenta y TODOS tus datos de Creatly de forma permanente (deals, marcas, propuestas, todo). No se puede deshacer. ¿Seguro que quieres continuar?')) return;
+  const typed = prompt('Para confirmar, escribe ELIMINAR (en mayúsculas):');
+  if(typed !== 'ELIMINAR'){ toast('Cancelado — no se eliminó nada.'); return; }
+  try{
+    toast('Eliminando tu cuenta…');
+    await deleteDoc(doc(dbFs, 'userdata', currentUser.uid));
+    await deleteUser(currentUser);
+  } catch(err){
+    if(err && err.code === 'auth/requires-recent-login'){
+      try{
+        await reauthenticateWithPopup(currentUser, googleProvider);
+        await deleteUser(currentUser);
+      } catch(err2){
+        console.error(err2);
+        toast('No se pudo eliminar tu cuenta. Vuelve a intentarlo.');
+      }
+    } else {
+      console.error(err);
+      toast('No se pudo eliminar tu cuenta. Intenta de nuevo.');
+    }
+  }
+}
+
 /* ============================================================ SHARED CALENDAR ============================================================ */
 function renderCalendar(){
   const entregables = workspace==='creador' ? flattenCreatorEntregables(creatorDealsFor(viewingCreatorId)) : flattenAgencyEntregables(agencyDealsFor(viewingAgencyId));
@@ -3441,7 +3610,7 @@ function openCreatorDealModal(deal){
   const brand = deal ? getBrand(deal.marcaId) : null;
   document.getElementById('cd_marca').value = brand ? brand.nombre : '';
   document.getElementById('cd_fechaDeal').value = deal ? (deal.fechaDeal||todayISO()) : todayISO();
-  document.getElementById('cd_moneda').value = deal ? deal.moneda : 'MXN';
+  document.getElementById('cd_moneda').value = deal ? deal.moneda : ((DB.preferencias&&DB.preferencias.monedaDefault)||'MXN');
   refreshContactoPersonaSelect(deal ? (deal.contactoPersonaId||'') : '');
   setCreatorTipoPago(deal ? (deal.tipoPago||'presupuesto') : 'presupuesto');
   document.getElementById('cd_monto').value = deal ? deal.montoTotal : '';
@@ -4092,6 +4261,7 @@ function renderCurrent(){
     else if(currentTab==='finance') renderCreatorFinance();
     else if(currentTab==='aprende') renderAprendeSection();
     else if(currentTab==='plan') renderCreatorPlan();
+    else if(currentTab==='config') renderConfiguracion();
   } else {
     if(currentTab==='dashboard') renderAgencyDashboard();
     else if(currentTab==='roster') renderAgencyRoster();
@@ -4101,6 +4271,7 @@ function renderCurrent(){
     else if(currentTab==='finance') renderAgencyFinance();
     else if(currentTab==='aprende') renderAprendeSection();
     else if(currentTab==='plan') renderAgencyPlan();
+    else if(currentTab==='config') renderConfiguracion();
   }
 }
 document.getElementById('searchInput').addEventListener('input', e=>{
