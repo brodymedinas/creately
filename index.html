@@ -179,6 +179,10 @@
   .card-top .marca{font-weight:800; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .card-top .tipo{font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .card-title{font-size:12.5px; color:var(--ink); margin-bottom:8px; line-height:1.4;}
+  .entregable-heading{font-weight:800; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ink);}
+  .entregable-heading-marca{font-weight:600; color:var(--muted); font-size:12px;}
+  .entregable-desc{font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px;}
+  .entregable-plats{margin-top:6px;}
   .card-bottom{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
   .price-tag{font-family:'Baloo 2'; font-weight:700; font-size:13px;}
   .empty-col{color:var(--muted); font-size:12px; text-align:center; padding:20px 6px;}
@@ -2445,11 +2449,18 @@ function setupBoardScrollHint(scrollElId){
   update();
   el.addEventListener('scroll', update);
 }
+const ENTREGABLE_TIPO_ICONS = { 'reel':'🎬', 'post':'🖼️', 'story':'📱', 'carrusel':'🖼️', 'video largo':'🎥', 'tiktok':'🎵', 'blog':'📝', 'ugc':'🎨', 'otro':'📦' };
+function entregableIcon(tipo){ return ENTREGABLE_TIPO_ICONS[(tipo||'').trim().toLowerCase()] || '📦'; }
+function entregableHeadingHTML(e){
+  const tipoTrim = (e.tipo||'').trim();
+  const gift = dealHasIntercambio(e) ? ' 🎁' : '';
+  if(tipoTrim) return `<div class="entregable-heading">${entregableIcon(tipoTrim)} <b>${tipoTrim}</b> <span class="entregable-heading-marca">· ${e.marca}</span>${gift}</div>${e.titulo ? `<div class="entregable-desc">${e.titulo}</div>` : ''}`;
+  return `<div class="entregable-heading"><b>${e.marca}</b>${gift}</div>${e.titulo ? `<div class="entregable-desc">${e.titulo}</div>` : ''}`;
+}
 function creatorEntregableCardHTML(e){
   const db = dueBadge(e.fecha, e.estado==='entregado'); const cp = checklistProgress(e);
   return `<div class="card-proj" draggable="true" data-eid="${e.id}" data-dealid="${e.dealId}" data-action="edit-creator-deal" data-id="${e.dealId}">
-    <div class="card-top">${avatarHTML(e.marca,'sm')}<div class="names"><div class="marca">${e.marca}${dealHasIntercambio(e)?' 🎁':''}</div><div class="tipo">${platChipsHTML(e.plataformas)}</div></div></div>
-    <div class="card-title">${e.titulo}</div>
+    <div class="card-top">${avatarHTML(e.marca,'sm')}<div class="names">${entregableHeadingHTML(e)}<div class="entregable-plats">${platChipsHTML(e.plataformas)}</div></div></div>
     <div class="card-bottom"><span class="pill ${db.cls}">${db.text}</span></div>
     ${cp.total ? `<div class="mini-progress">☑ ${cp.done}/${cp.total} pasos<div class="mini-progress-bar"><div class="mini-progress-fill" style="width:${(cp.done/cp.total*100).toFixed(0)}%"></div></div></div>` : ''}
   </div>`;
@@ -3288,7 +3299,10 @@ function renderCalendar(){
     const dayItems = entregables.filter(e=>e.fecha===iso);
     cells += `<div class="cal-cell ${iso===todayStr?'today':''}"><div class="cal-daynum">${dnum}</div>
       ${dayItems.map(e=>{ const label = workspace==='agencia' ? getTalent(e.talentoId).nombre : e.marca; const cls = e.estado==='entregado' ? 'pill-green' : 'pill-purple'; const action = workspace==='agencia' ? 'edit-agency-deal' : 'edit-creator-deal';
-        return `<div class="cal-chip pill ${cls}" data-action="${action}" data-id="${e.dealId}" title="${e.titulo}">${label}</div>`; }).join('')}
+        const tipoTrim = (e.tipo||'').trim();
+        const chipLabel = tipoTrim ? `${tipoTrim} · ${label}` : label;
+        const tooltip = [tipoTrim, e.titulo].filter(Boolean).join(' — ') || label;
+        return `<div class="cal-chip pill ${cls}" data-action="${action}" data-id="${e.dealId}" title="${tooltip}">${chipLabel}</div>`; }).join('')}
     </div>`;
   }
   document.getElementById('view-root').innerHTML = `<div class="panel">
