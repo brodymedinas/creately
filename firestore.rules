@@ -1,0 +1,32 @@
+rules_version = '2';
+
+/*
+  Reglas de seguridad de Firestore para Creately.
+
+  Modelo de datos actual: un documento por usuario en userdata/{uid}, con TODA la
+  información de esa cuenta adentro (deals, contactos, propuestas, etc). No hay
+  colecciones separadas por dato porque la app guarda/lee el documento completo.
+
+  Regla general: cada usuario autenticado solo puede leer y escribir SU PROPIO
+  documento (el id del documento debe ser igual a su uid de Firebase Auth). Nadie
+  puede leer o escribir el documento de otra persona, ni siquiera otro usuario con
+  sesión iniciada.
+
+  La colección apiUsage/{uid} (contador de usos diarios de las funciones de IA) se
+  deja fuera a propósito: solo la toca el servidor con el SDK de administrador, que
+  no pasa por estas reglas. Por eso no tiene ninguna regla "match" aquí abajo — el
+  bloque final "deny todo lo demás" ya la protege de lecturas/escrituras del cliente.
+*/
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /userdata/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Cualquier otra colección o documento no listado arriba: denegado por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

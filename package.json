@@ -1,0 +1,9 @@
+{
+  "name": "creately",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Backend serverless de Creately (funciones en /api).",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

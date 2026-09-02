@@ -899,7 +899,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { initializeAuth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { initializeAuth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup, getIdToken } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
 
@@ -1271,6 +1271,17 @@ function saveAll(){
   });
 }
 function uid(p){ return (p||'x') + '_' + Math.random().toString(36).slice(2,9); }
+/* Encabezados con el token de sesión de Firebase, para que nuestras funciones de IA en el
+   servidor (api/parse-deals, api/map-columns) puedan verificar que quien llama de verdad
+   inició sesión en Creately antes de gastar crédito de la API de IA. */
+async function authFetchHeaders(){
+  const headers = {'content-type':'application/json'};
+  if(currentUser){
+    try{ headers['Authorization'] = 'Bearer ' + await getIdToken(currentUser); }
+    catch(err){ console.error('No se pudo obtener el token de sesión:', err); }
+  }
+  return headers;
+}
 function ensureColumnDefs(){
   DB.creatorDealColumnDefs = DB.creatorDealColumnDefs || [];
   DB.creatorContactColumnDefs = DB.creatorContactColumnDefs || [];
@@ -1919,7 +1930,7 @@ document.getElementById('btnAiImportAnalyze').addEventListener('click', async ()
   if(!text){ toast('Escribe o pega algo primero'); return; }
   aiImportShowStep('loading');
   try{
-    const resp = await fetch('/api/parse-deals', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({text}) });
+    const resp = await fetch('/api/parse-deals', { method:'POST', headers: await authFetchHeaders(), body: JSON.stringify({text}) });
     const data = await resp.json();
     if(!resp.ok){ toast(data.error || 'No se pudo analizar el texto'); aiImportShowStep('paste'); return; }
     aiImportDrafts = (data.deals||[]).map(draftFromApiDeal);
@@ -2131,7 +2142,7 @@ document.getElementById('tableImportFileInput').addEventListener('change', async
     const sampleRows = cleanRows.slice(1,6);
     let suggestions = null;
     try{
-      const resp = await fetch('/api/map-columns', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({headers, sampleRows}) });
+      const resp = await fetch('/api/map-columns', { method:'POST', headers: await authFetchHeaders(), body: JSON.stringify({headers, sampleRows}) });
       const data = await resp.json();
       if(resp.ok && Array.isArray(data.columnas)) suggestions = data.columnas;
     }catch(err){ console.error(err); }

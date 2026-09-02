@@ -1,8 +1,13 @@
+const { requireAuthAndRateLimit } = require('./_lib/authGuard');
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Metodo no permitido' });
     return;
   }
+
+  const uid = await requireAuthAndRateLimit(req, res);
+  if (!uid) return;
 
   let body = req.body;
   if (typeof body === 'string') {
