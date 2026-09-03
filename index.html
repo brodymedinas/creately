@@ -1277,13 +1277,96 @@ function applyGridSort(groupId, rows, sortFns){
 }
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
+/* ============================ GUARDADO EN LA NUBE ============================
+   Toda la información de un usuario vive en UN solo documento de Firestore
+   (userdata/{uid}). Eso obliga a cuidar dos cosas:
+
+   1) Escribir en cada cambio es carísimo. Antes, cada clic en un checklist volvía a
+      subir el documento COMPLETO — con 400 deals, eso es ~1 MB por clic. Ahora
+      saveAll() no escribe de inmediato: junta los cambios de un momento y hace una
+      sola escritura. Al cambiar de pestaña, minimizar o cerrar, se guarda lo pendiente.
+
+   2) Firestore rechaza documentos de más de 1 MiB. Antes se llegaba a ese tope y el
+      guardado fallaba con un mensaje que culpaba a las reglas de seguridad. Ahora se
+      avisa desde el 80% y, si se llena, el mensaje dice la verdad.
+*/
+const LIMITE_FIRESTORE_BYTES = 1048576;   // 1 MiB: tope duro por documento
+const AVISAR_DESDE = 0.8;                 // avisar al usuario a partir del 80%
+const ESPERA_GUARDADO_MS = 800;           // cuánto esperar más cambios antes de escribir
+
+let guardadoTimer = null;
+let cambiosPendientes = false;
+let escrituraEnCurso = false;
+let yaAvisamosDelEspacio = false;
+
+function tamanoDocumentoBytes(obj){
+  return new TextEncoder().encode(JSON.stringify(obj)).length;
+}
+
 function saveAll(){
   if(!currentUser || !DB) return;
-  setDoc(doc(dbFs, 'userdata', currentUser.uid), DB).catch(err=>{
-    console.error(err);
-    toast('⚠️ No se pudo guardar en la nube: revisa las reglas de Firestore');
-  });
+  cambiosPendientes = true;
+  if(guardadoTimer) clearTimeout(guardadoTimer);
+  guardadoTimer = setTimeout(guardarAhora, ESPERA_GUARDADO_MS);
 }
+
+/* Cancela cualquier guardado pendiente. Imprescindible antes de borrar la cuenta:
+   si no, el guardado programado correría después del borrado y recrearía el documento
+   que el usuario acaba de eliminar. */
+function cancelarGuardadoPendiente(){
+  if(guardadoTimer){ clearTimeout(guardadoTimer); guardadoTimer = null; }
+  cambiosPendientes = false;
+}
+
+/* Escribe de inmediato lo que esté pendiente, sin esperar. */
+async function guardarAhora(){
+  if(guardadoTimer){ clearTimeout(guardadoTimer); guardadoTimer = null; }
+  if(escrituraEnCurso || !cambiosPendientes || !currentUser || !DB) return;
+
+  const bytes = tamanoDocumentoBytes(DB);
+  if(bytes >= LIMITE_FIRESTORE_BYTES){
+    toast('⚠️ Tu cuenta llegó al límite de espacio y este cambio NO se guardó. Escríbenos para ayudarte a liberar espacio antes de seguir.');
+    return;
+  }
+  if(bytes >= LIMITE_FIRESTORE_BYTES * AVISAR_DESDE && !yaAvisamosDelEspacio){
+    yaAvisamosDelEspacio = true;
+    toast('⚠️ Vas en el ' + Math.round(bytes / LIMITE_FIRESTORE_BYTES * 100) + '% del espacio de tu cuenta. Escríbenos antes de que se llene.');
+  }
+
+  escrituraEnCurso = true;
+  cambiosPendientes = false;
+  let exito = true;
+  try{
+    await setDoc(doc(dbFs, 'userdata', currentUser.uid), DB);
+  }catch(err){
+    exito = false;
+    console.error(err);
+    cambiosPendientes = true;   // sigue pendiente: el próximo cambio lo reintenta
+    toast(mensajeErrorGuardado(err));
+  }
+  escrituraEnCurso = false;
+
+  /* Si el usuario siguió editando mientras se escribía, guardar también esa tanda.
+     Ante un error NO reintentamos solos, para no caer en un ciclo de reintentos y
+     avisos: el siguiente cambio del usuario, o cerrar la pestaña, lo vuelve a intentar. */
+  if(exito && cambiosPendientes) saveAll();
+}
+
+function mensajeErrorGuardado(err){
+  const code = (err && err.code) || '';
+  if(code === 'permission-denied') return '⚠️ La base de datos rechazó el guardado. Cierra sesión, vuelve a entrar e intenta de nuevo.';
+  if(code === 'unavailable' || code === 'deadline-exceeded') return '⚠️ Sin conexión con la nube. Tus cambios siguen aquí y se guardarán cuando vuelva el internet.';
+  if(code === 'invalid-argument') return '⚠️ Tus datos son demasiado grandes para guardarse. Escríbenos para ayudarte.';
+  return '⚠️ No se pudo guardar en la nube. Revisa tu conexión e intenta de nuevo.';
+}
+
+/* Guardar lo pendiente cuando el usuario se va: cambiar de pestaña, minimizar, cerrar
+   o bloquear el celular. 'visibilitychange' es el evento confiable para esto;
+   'beforeunload' no siempre corre, sobre todo en móviles. */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'hidden') guardarAhora();
+});
+window.addEventListener('pagehide', ()=>{ guardarAhora(); });
 function uid(p){ return (p||'x') + '_' + Math.random().toString(36).slice(2,9); }
 /* Encabezados con el token de sesión de Firebase, para que nuestras funciones de IA en el
    servidor (api/parse-deals, api/map-columns) puedan verificar que quien llama de verdad
@@ -1342,6 +1425,10 @@ async function initUserData(user){
   appliedInitialTab = false;
   unsubscribeSnapshot = onSnapshot(ref, (docSnap)=>{
     if(!docSnap.exists()) return;
+    /* No pisar lo que el usuario acaba de escribir: si hay cambios locales sin guardar
+       (o una escritura en curso), la copia del servidor todavía está atrasada y
+       aplicarla borraría lo más reciente. */
+    if(cambiosPendientes || escrituraEnCurso) return;
     DB = docSnap.data();
     ensureColumnDefs();
     if(!viewingCreatorId || !getCreatorProfile(viewingCreatorId)) viewingCreatorId = (DB.creatorProfiles[0]||{}).id || null;
@@ -1382,7 +1469,7 @@ document.getElementById('btnGoogleSignIn').addEventListener('click', async ()=>{
   }
   signInInFlight = false;
 });
-document.getElementById('btnSignOut').addEventListener('click', ()=>{ signOut(auth); });
+document.getElementById('btnSignOut').addEventListener('click', async ()=>{ await guardarAhora(); signOut(auth); });
 
 onAuthStateChanged(auth, async (user)=>{
   document.getElementById('authLoading').classList.add('hidden');
@@ -3281,7 +3368,7 @@ function attachConfigHandlers(){
     if(btn) btn.addEventListener('click', exportAllData);
   } else if(configSubTab==='cuenta'){
     const signOutBtn = document.getElementById('btnConfigSignOut');
-    if(signOutBtn) signOutBtn.addEventListener('click', ()=> signOut(auth));
+    if(signOutBtn) signOutBtn.addEventListener('click', async ()=>{ await guardarAhora(); signOut(auth); });
     const delBtn = document.getElementById('btnConfigDeleteAccount');
     if(delBtn) delBtn.addEventListener('click', handleDeleteAccount);
   }
@@ -3292,6 +3379,9 @@ async function handleDeleteAccount(){
   if(typed !== 'ELIMINAR'){ toast('Cancelado — no se eliminó nada.'); return; }
   try{
     toast('Eliminando tu cuenta…');
+    /* Cancelar cualquier guardado programado: si corriera después del borrado,
+       volvería a crear el documento que el usuario acaba de eliminar. */
+    cancelarGuardadoPendiente();
     await deleteDoc(doc(dbFs, 'userdata', currentUser.uid));
     await deleteUser(currentUser);
   } catch(err){

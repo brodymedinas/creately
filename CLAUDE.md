@@ -38,13 +38,16 @@ en lenguaje simple, sin jerga, y di claramente qué pasos requieren que él entr
 
 ## Deudas técnicas conocidas (ordenadas por riesgo)
 
-1. **`saveAll()` reescribe el documento completo del usuario en cada cambio**
-   (`index.html`, ~línea 1280; 46 puntos de llamada, sin debounce). Firestore tiene un tope
-   duro de **1 MiB por documento**: un usuario con muchos datos lo va a topar y el guardado
-   fallará. Además `onSnapshot` (~línea 1343) reemplaza el objeto `DB` entero, así que **dos
-   pestañas abiertas del mismo usuario pueden perder datos** (gana la última escritura).
-2. **Cero pruebas versionadas.** Se corrieron suites de Playwright en sesiones pasadas pero
-   nunca se commitearon. No hay CI. Cualquier cambio en un archivo de 4,400 líneas es a ciegas.
+1. **Un solo documento por usuario, con tope de 1 MiB.** Toda la cuenta vive en
+   `userdata/{uid}`. Medido: un deal realista pesa ~2.4 KB, así que el tope se alcanza
+   alrededor de los **436 deals**. El guardado ya junta cambios y avisa desde el 80% (ver
+   el bloque GUARDADO EN LA NUBE en `index.html`), pero **el tope sigue existiendo**: la
+   solución de fondo es partir los datos en varios documentos (una colección de deals en
+   vez de un arreglo dentro del documento del usuario). Pendiente.
+2. **Dos pestañas del mismo usuario pueden perder datos.** `onSnapshot` reemplaza el objeto
+   `DB` entero. Ya se ignoran los snapshots que llegan con cambios locales sin guardar, pero
+   no hay control de versiones entre dispositivos: si dos pestañas editan a la vez, gana la
+   última en escribir. La solución sería un contador de versión (`_rev`) por documento.
 3. **~51 usos de `innerHTML` con datos del usuario sin escapar.** Hoy el impacto es bajo
    (cada usuario solo ve sus propios datos), pero rompe el UI con nombres que traen `<` o `"`,
    y se vuelve una vulnerabilidad real en cuanto exista cualquier vista compartida.
@@ -52,6 +55,17 @@ en lenguaje simple, sin jerga, y di claramente qué pasos requieren que él entr
    documento, no hay forma de recuperarlo.
 5. **App Check está cableado pero apagado** (`RECAPTCHA_V3_SITE_KEY = 'PENDIENTE...'`).
    Se activa cuando esté definido el dominio final.
+
+## Pruebas
+
+```bash
+npm test          # las 22 pruebas, ~15s
+npm run test:ui   # verlas correr paso a paso
+```
+
+Corren contra dobles de Firebase (`tests/stubs/`), nunca tocan datos reales ni gastan
+crédito de IA. Ver `tests/README.md`. **Corre `npm test` antes de proponer cualquier
+cambio a `index.html`.** GitHub también las corre solo en cada PR.
 
 ## Cosas que solo Andres puede hacer (requieren consola / contraseña)
 
