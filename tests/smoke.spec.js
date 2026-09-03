@@ -72,8 +72,13 @@ test.describe('Crear un deal', () => {
 
     await expect(page.locator('#view-root')).toContainText('Marca de Prueba');
 
+    /* Ojo con el modelo de datos: el deal NO guarda el nombre de la marca, guarda una
+       referencia (marcaId). El nombre vive en creatorBrands, que la app crea sola si
+       la marca no existía. */
     const datos = await page.evaluate(() => window.__TEST_STORE__.get('userdata/test-uid-001'));
-    expect(datos.creatorDeals.some((d) => d.marca === 'Marca de Prueba')).toBe(true);
+    const marca = datos.creatorBrands.find((b) => b.nombre === 'Marca de Prueba');
+    expect(marca, 'la marca debería quedar guardada en creatorBrands').toBeTruthy();
+    expect(datos.creatorDeals.some((d) => d.marcaId === marca.id)).toBe(true);
   });
 
   test('el deal sobrevive a recargar la página', async ({ page }) => {
