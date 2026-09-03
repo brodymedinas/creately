@@ -37,6 +37,13 @@ export async function getDoc(ref) {
 
 export async function setDoc(ref, data) {
   window.__TEST_WRITES__ = (window.__TEST_WRITES__ || 0) + 1;
+  /* Permite a una prueba simular una falla de Firestore (sin permisos, sin red, documento
+     demasiado grande) para comprobar que la app da un mensaje entendible. */
+  if (window.__TEST_WRITE_ERROR__) {
+    const err = new Error('falla simulada de Firestore');
+    err.code = window.__TEST_WRITE_ERROR__;
+    throw err;
+  }
   store.set(ref.path, JSON.parse(JSON.stringify(data)));
   persist();
   notify(ref.path);
