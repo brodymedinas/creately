@@ -902,6 +902,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/fireba
 import { initializeAuth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup, getIdToken } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app-check.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXNroGX2qq3OjOXFZ1x3AVxlxb6maom3g",
@@ -913,6 +914,19 @@ const firebaseConfig = {
   measurementId: "G-1JTXDJQRFG"
 };
 const fbApp = initializeApp(firebaseConfig);
+/* App Check: confirma ante Firebase que quien llama a Firestore/Storage es de verdad esta
+   página (creatly.app), y no un script que copió la apiKey pública y le habla directo a la
+   base de datos. La llave de abajo es la "site key" pública de reCAPTCHA v3 — no es un
+   secreto, es normal que viva en el código del navegador. Mientras diga "PENDIENTE", App
+   Check simplemente no se activa (no rompe nada) hasta que se genere esa llave y se
+   pegue aquí. Ver Creatly-Ideas-Backlog.md para los pasos pendientes. */
+const RECAPTCHA_V3_SITE_KEY = 'PENDIENTE_PEGAR_SITE_KEY_DE_RECAPTCHA_V3';
+if (RECAPTCHA_V3_SITE_KEY && !RECAPTCHA_V3_SITE_KEY.startsWith('PENDIENTE')) {
+  initializeAppCheck(fbApp, {
+    provider: new ReCaptchaV3Provider(RECAPTCHA_V3_SITE_KEY),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 /* Si el navegador de alguien no puede usar el almacenamiento local normal (IndexedDB roto,
    políticas de una laptop de trabajo, disco lleno, etc.), Firebase prueba estas opciones en
    orden y usa automáticamente la primera que funcione — así el login no se cae por completo,
