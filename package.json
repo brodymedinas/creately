@@ -5,5 +5,14 @@
   "description": "Backend serverless de Creately (funciones en /api).",
   "dependencies": {
     "firebase-admin": "^12.7.0"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "serve": "node tests/server.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
   }
 }

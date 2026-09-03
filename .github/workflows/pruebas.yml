@@ -1,0 +1,39 @@
+# Corre las pruebas automáticas en cada cambio que se proponga a main.
+# Si algo se rompe, GitHub lo marca en rojo ANTES de que llegue a los usuarios.
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  playwright:
+    name: Pruebas de navegador
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar el navegador de pruebas
+        run: npx playwright install --with-deps chromium
+
+      - name: Correr las pruebas
+        run: npm test
+
+      # Si algo falló, guarda el reporte con capturas y video para poder revisarlo.
+      - name: Guardar el reporte cuando algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-playwright
+          path: playwright-report/
+          retention-days: 14

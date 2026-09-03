@@ -1,2 +1,8 @@
 node_modules/
 .vercel/
+
+# Salidas de las pruebas
+test-results/
+playwright-report/
+blob-report/
+.playwright/
